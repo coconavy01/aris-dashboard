@@ -1,0 +1,77 @@
+<div style="background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; padding: 30px; border-radius: 16px; border: 1px solid #1e293b; max-width: 900px; margin: auto; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h2 style="margin: 0; color: #38bdf8; font-size: 1.5rem;">ARISx <span style="color: #94a3b8; font-weight: normal;">| Monitoring</span></h2>
+        <div style="background: #065f46; color: #34d399; padding: 4px 12px; border-radius: 20px; font-size: 12px;">● LIVE</div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
+        <div style="background: #1e293b; padding: 15px; border-radius: 12px;">
+            <div style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">ACCOUNT BALANCE</div>
+            <div id="balance" style="font-size: 1.5rem; font-weight: bold; color: #34d399;">$0.00</div>
+        </div>
+        <div style="background: #1e293b; padding: 15px; border-radius: 12px;">
+            <div style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">TOTAL TRADES</div>
+            <div id="totalTrades" style="font-size: 1.5rem; font-weight: bold;">0</div>
+        </div>
+        <div style="background: #1e293b; padding: 15px; border-radius: 12px;">
+            <div style="color: #94a3b8; font-size: 12px; margin-bottom: 5px;">STATUS</div>
+            <div style="font-size: 1.2rem; font-weight: bold; color: #fbbf24;">ACTIVE</div>
+        </div>
+    </div>
+
+    <div style="background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+        <canvas id="equityChart" style="width: 100%; height: 350px;"></canvas>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<script>
+    // ใส่ค่าของคุณตรงนี้
+    const SUB_URL = "https://tfnikhovkbbrhvrkobpu.supabase.co";
+    const SUB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
+    const supabaseClient = supabase.createClient(SUB_URL, SUB_KEY);
+
+    async function loadData() {
+        const { data, error } = await supabaseClient
+            .from('trade_history')
+            .select('*')
+            .order('created_at', { ascending: true });
+
+        if (error || !data || data.length === 0) return;
+
+        document.getElementById('balance').innerText = "$" + data[data.length-1].account_balance.toLocaleString(undefined, {minimumFractionDigits: 2});
+        document.getElementById('totalTrades').innerText = data.length;
+
+        const ctx = document.getElementById('equityChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.map((_, i) => i + 1),
+                datasets: [{
+                    label: 'Portfolio Equity',
+                    data: data.map(d => d.account_balance),
+                    borderColor: '#38bdf8',
+                    borderWidth: 3,
+                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } },
+                    y: { grid: { color: '#334155' }, ticks: { color: '#64748b' } }
+                }
+            }
+        });
+    }
+    loadData();
+</script>

@@ -3,182 +3,285 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARISx | Multi-Account Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>ARISx | Institutional Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #38bdf8; --bg: #030712; --card: #111827; --border: #1f2937; }
-        body { background-color: var(--bg); color: #f8fafc; font-family: 'Inter', sans-serif; margin: 0; display: flex; min-height: 100vh; }
-        
-        /* Sidebar */
-        .sidebar { width: 260px; background: var(--card); border-right: 1px solid var(--border); padding: 30px 20px; display: flex; flex-column: column; }
-        .nav-item { padding: 12px 16px; border-radius: 10px; cursor: pointer; margin-bottom: 8px; transition: 0.3s; color: #94a3b8; font-weight: 500; }
-        .nav-item:hover { background: rgba(56, 189, 248, 0.1); color: var(--primary); }
-        .nav-item.active { background: var(--primary); color: #000; font-weight: 700; }
+        :root {
+            --bg: #05070a;
+            --card: #0d1117;
+            --accent: #00d2ff;
+            --accent-glow: rgba(0, 210, 255, 0.3);
+            --border: #1f2937;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
 
-        /* Main Content */
-        .main { flex: 1; padding: 40px; overflow-y: auto; }
-        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
-        .account-title { font-size: 32px; font-weight: 700; letter-spacing: -1px; }
-        
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 30px; }
-        .stat-card { background: var(--card); border: 1px solid var(--border); padding: 24px; border-radius: 20px; position: relative; overflow: hidden; }
-        .stat-card::after { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary); }
-        .stat-label { color: #94a3b8; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 10px; }
-        .stat-value { font-size: 30px; font-weight: 700; }
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-        .chart-box { background: var(--card); border: 1px solid var(--border); padding: 30px; border-radius: 20px; margin-bottom: 30px; height: 450px; }
-        
-        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid var(--border); }
-        th { background: #1f2937; padding: 18px; text-align: left; font-size: 12px; color: #94a3b8; text-transform: uppercase; }
-        td { padding: 18px; border-top: 1px solid var(--border); font-size: 14px; }
-        .profit { color: #10b981; } .loss { color: #ef4444; }
+        /* Sidebar สไตล์มืออาชีพ */
+        .sidebar {
+            width: 280px;
+            background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 40px 20px;
+        }
+
+        .logo {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            margin-bottom: 50px;
+            background: linear-gradient(to right, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 20px;
+        }
+
+        .account-item {
+            padding: 14px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+            color: var(--text-dim);
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .account-item:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+
+        .account-item.active {
+            background: rgba(0, 210, 255, 0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent-glow);
+        }
+
+        /* Main Area */
+        .main {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .badge {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 10px #10b981; }
+
+        /* Stats Card */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; margin-bottom: 30px; }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 24px;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover { transform: translateY(-5px); border-color: var(--accent-glow); }
+        .stat-label { font-size: 12px; color: var(--text-dim); text-transform: uppercase; font-weight: 700; margin-bottom: 10px; }
+        .stat-value { font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+
+        /* Chart Area */
+        .chart-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            padding: 35px;
+            border-radius: 24px;
+            height: 450px;
+            margin-bottom: 30px;
+        }
+
+        /* Table Area */
+        .table-container {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(255,255,255,0.02); padding: 20px; text-align: left; font-size: 11px; color: var(--text-dim); text-transform: uppercase; }
+        td { padding: 18px 20px; border-top: 1px solid var(--border); font-size: 14px; }
+        .profit { color: #10b981; font-weight: 700; }
+        .loss { color: #ef4444; font-weight: 700; }
+
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div style="font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 40px;">ARIS<span style="color:#fff">x</span></div>
-        <div style="font-size: 12px; color: #4b5563; font-weight: 700; margin-bottom: 15px; text-transform: uppercase;">My Accounts</div>
+        <div class="logo">ARISx QUANT</div>
+        <div class="nav-label">Portfolios</div>
         <div id="accountList">
-            <div class="nav-item active" onclick="switchAccount('All')">Overview (Total)</div>
+            <div class="account-item active">Connecting...</div>
         </div>
     </div>
 
     <div class="main">
         <div class="header">
             <div>
-                <div style="color: var(--primary); font-size: 14px; font-weight: 600; margin-bottom: 5px;">Trading Performance</div>
-                <div id="currentAccountDisplay" class="account-title">Real-time Overview</div>
+                <h1 id="currentAccount" style="margin:0; font-size: 32px;">Overview</h1>
+                <p style="color: var(--text-dim); margin-top: 5px;">Performance Analytics Monitoring</p>
             </div>
-            <div style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 8px 20px; border-radius: 100px; font-size: 13px; font-weight: 600; border: 1px solid #10b981;">● System Live</div>
+            <div class="badge"><div class="dot"></div> ENGINE ONLINE</div>
         </div>
 
-        <div class="stats-grid">
+        <div class="grid">
             <div class="stat-card">
                 <div class="stat-label">Net Equity</div>
                 <div id="balance" class="stat-value">$0.00</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Total Executions</div>
+                <div class="stat-label">Total Trades</div>
                 <div id="totalTrades" class="stat-value">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Last Synchronization</div>
-                <div id="lastUpdate" class="stat-value" style="font-size: 18px; color: var(--primary);">Syncing...</div>
+                <div class="stat-label">Sync Time</div>
+                <div id="lastUpdate" class="stat-value" style="font-size: 20px; color: var(--accent);">Ready</div>
             </div>
         </div>
 
-        <div class="chart-box">
+        <div class="chart-container">
             <canvas id="equityChart"></canvas>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Account</th>
-                    <th>Symbol</th>
-                    <th>Profit</th>
-                    <th>Equity</th>
-                </tr>
-            </thead>
-            <tbody id="historyTable"></tbody>
-        </table>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Account</th>
+                        <th>Pair</th>
+                        <th>Profit</th>
+                        <th>Equity Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTable"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
         const SUB_URL = "https://tfnikhovkbbrhvrkobpu.supabase.co";
-        const SUB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
+        const SUB_KEY = "ใส่_API_KEY_ของคุณที่นี่";
         const supabaseClient = supabase.createClient(SUB_URL, SUB_KEY);
-        let currentAccount = "All";
-        let chartInstance = null;
+        let currentAcc = "All";
+        let chart;
 
-        async function loadData() {
-            let query = supabaseClient.from('trade_history').select('*').order('created_at', { ascending: true });
-            
-            // ถ้าเลือกบัญชีเฉพาะ ให้กรองข้อมูล (สมมติว่าคุณมีคอลัมน์ account_name ใน Supabase)
-            if (currentAccount !== "All") {
-                query = query.eq('account_name', currentAccount);
-            }
-
+        async function updateUI() {
             const { data, error } = await supabaseClient.from('trade_history').select('*').order('created_at', { ascending: true });
             if (error || !data || data.length === 0) return;
 
-            // กรองข้อมูลในฝั่ง Client เพื่อความเร็ว (ถ้ายังไม่ได้แก้ DB)
-            const filteredData = currentAccount === "All" ? data : data.filter(d => d.account_name === currentAccount);
-            if (filteredData.length === 0) return;
+            // จัดการ Sidebar รายชื่อพอร์ต
+            const accounts = [...new Set(data.map(d => d.account_name || 'Main Account'))];
+            let listHtml = `<div class="account-item ${currentAcc === 'All' ? 'active' : ''}" onclick="changeAcc('All')">Global Overview</div>`;
+            accounts.forEach(acc => {
+                listHtml += `<div class="account-item ${currentAcc === acc ? 'active' : ''}" onclick="changeAcc('${acc}')">${acc}</div>`;
+            });
+            document.getElementById('accountList').innerHTML = listHtml;
 
-            const last = filteredData[filteredData.length - 1];
-            document.getElementById('balance').innerText = "$" + last.account_balance.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('totalTrades').innerText = filteredData.length;
-            document.getElementById('lastUpdate').innerText = new Date(last.created_at).toLocaleTimeString();
+            // กรองข้อมูลตามพอร์ตที่เลือก
+            const filtered = currentAcc === "All" ? data : data.filter(d => d.account_name === currentAcc);
+            const latest = filtered[filtered.length - 1];
 
-            updateChart(filteredData);
-            updateTable(filteredData);
-            updateAccountList(data);
+            document.getElementById('balance').innerText = "$" + latest.account_balance.toLocaleString();
+            document.getElementById('totalTrades').innerText = filtered.length;
+            document.getElementById('lastUpdate').innerText = new Date(latest.created_at).toLocaleTimeString();
+
+            renderChart(filtered);
+            renderTable(filtered);
         }
 
-        function updateChart(data) {
+        function renderChart(data) {
             const ctx = document.getElementById('equityChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(56, 189, 248, 0.2)');
-            gradient.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            gradient.addColorStop(0, 'rgba(0, 210, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 210, 255, 0)');
 
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
+            if(chart) chart.destroy();
+            chart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: data.map((_, i) => i + 1),
                     datasets: [{
                         data: data.map(d => d.account_balance),
-                        borderColor: '#38bdf8',
-                        borderWidth: 3,
+                        borderColor: '#00d2ff',
+                        borderWidth: 4,
                         pointRadius: 0,
                         fill: true,
                         backgroundColor: gradient,
                         tension: 0.4
                     }]
                 },
-                options: { 
+                options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { 
-                        x: { grid: { display: false }, ticks: { color: '#4b5563' } },
-                        y: { grid: { color: '#1f2937' }, ticks: { color: '#4b5563' } }
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#475569' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#475569' } }
                     }
                 }
             });
         }
 
-        function updateTable(data) {
-            const html = data.slice().reverse().map(row => `
+        function renderTable(data) {
+            document.getElementById('historyTable').innerHTML = data.slice().reverse().map(row => `
                 <tr>
-                    <td>${new Date(row.created_at).toLocaleString()}</td>
-                    <td style="font-weight:700">${row.account_name || 'Main'}</td>
+                    <td>${new Date(row.created_at).toLocaleTimeString()}</td>
+                    <td><b>${row.account_name || 'Main'}</b></td>
                     <td>${row.symbol || 'XAUUSD'}</td>
                     <td class="${row.profit >= 0 ? 'profit' : 'loss'}">${row.profit >= 0 ? '+' : ''}${row.profit}</td>
                     <td>$${row.account_balance.toLocaleString()}</td>
                 </tr>
             `).join('');
-            document.getElementById('historyTable').innerHTML = html;
         }
 
-        function updateAccountList(data) {
-            const accounts = [...new Set(data.map(d => d.account_name || 'Main Account'))];
-            const listHtml = `<div class="nav-item ${currentAccount === 'All' ? 'active' : ''}" onclick="switchAccount('All')">Overview (Total)</div>` + 
-                accounts.map(acc => `<div class="nav-item ${currentAccount === acc ? 'active' : ''}" onclick="switchAccount('${acc}')">${acc}</div>`).join('');
-            document.getElementById('accountList').innerHTML = listHtml;
+        function changeAcc(acc) {
+            currentAcc = acc;
+            document.getElementById('currentAccount').innerText = acc === 'All' ? 'Global Overview' : acc;
+            updateUI();
         }
 
-        function switchAccount(acc) {
-            currentAccount = acc;
-            document.getElementById('currentAccountDisplay').innerText = acc === 'All' ? 'Real-time Overview' : acc;
-            loadData();
-        }
-
-        loadData();
-        setInterval(loadData, 30000);
+        updateUI();
+        setInterval(updateUI, 10000);
     </script>
 </body>
 </html>

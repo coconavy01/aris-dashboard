@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ARISx QUANT — Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;height:100%}
+:root{
+  --bg:#060608;--s1:#0c0e14;--s2:#111420;--s3:#161926;
+  --purple:#6366f1;--purple-d:rgba(99,102,241,.12);--purple-g:rgba(99,102,241,.25);
+  --green:#10b981;--green-d:rgba(16,185,129,.1);
+  --red:#f43f5e;--red-d:rgba(244,63,94,.1);
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.04);
+  --txt:#f1f5f9;--txt-mid:#94a3b8;--txt-dim:#475569;
+}
+body{
+  background:var(--bg);color:var(--txt);
+  font-family:'DM Sans',sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;position:relative;overflow:hidden;
+}
+/* scanline */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.011) 2px,rgba(255,255,255,.011) 4px);pointer-events:none;z-index:0}
+/* ambient glow */
+.glow-a{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.08) 0%,transparent 70%);top:-200px;left:-100px;animation:drift 10s ease-in-out infinite alternate;pointer-events:none}
+.glow-b{position:fixed;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.05) 0%,transparent 70%);bottom:-150px;right:-50px;animation:drift 12s ease-in-out infinite alternate-reverse;pointer-events:none}
+@keyframes drift{0%{transform:translate(0,0)}100%{transform:translate(40px,25px)}}
+
+/* card */
+.card{
+  background:rgba(255,255,255,.032);
+  border:1px solid var(--border2);
+  clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,0 100%);
+  padding:48px 44px;
+  width:100%;max-width:420px;
+  position:relative;z-index:10;
+  animation:slideUp .5s ease;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.card-corner{position:absolute;top:0;right:0;width:20px;height:20px;background:var(--purple-d);clip-path:polygon(0 0,100% 100%,100% 0)}
+
+/* logo */
+.logo-wrap{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.logo-mark{width:36px;height:36px;background:linear-gradient(135deg,var(--purple),#8b5cf6);clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#fff;font-family:'DM Mono',monospace}
+.logo-name{font-size:22px;font-weight:600;color:#fff;letter-spacing:-.3px}
+.logo-sub{font-size:10px;letter-spacing:2.5px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:36px}
+
+/* tabs */
+.tabs{display:flex;gap:3px;margin-bottom:28px}
+.tab{flex:1;padding:9px;font-size:12px;font-weight:500;cursor:pointer;color:var(--txt-dim);background:var(--s2);border:1px solid var(--border2);font-family:'DM Mono',monospace;text-align:center;transition:all .15s;letter-spacing:.5px;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.tab.active{background:var(--purple-d);color:#a5b4fc;border-color:rgba(99,102,241,.22)}
+
+/* form */
+.form-group{margin-bottom:18px}
+.form-label{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:8px;display:block}
+.form-input{width:100%;background:var(--s2);border:1px solid var(--border2);padding:12px 16px;color:var(--txt);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border .15s;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.form-input:focus{border-color:rgba(99,102,241,.4)}
+.form-input::placeholder{color:var(--txt-dim)}
+
+/* button */
+.submit-btn{
+  width:100%;
+  background:linear-gradient(135deg,var(--purple),#8b5cf6);
+  color:#fff;border:none;
+  padding:13px;
+  font-size:14px;font-weight:500;
+  cursor:pointer;font-family:'DM Sans',sans-serif;
+  letter-spacing:.5px;
+  transition:all .2s;
+  clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);
+  margin-top:8px;
+  position:relative;overflow:hidden;
+}
+.submit-btn::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);animation:shimmer 2.5s ease-in-out infinite}
+@keyframes shimmer{0%{left:-60%}70%,100%{left:110%}}
+.submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.35)}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* alert */
+.alert{display:none;padding:12px 16px;margin-bottom:16px;font-size:12px;font-family:'DM Mono',monospace;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+.alert.error{background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red)}
+.alert.success{background:var(--green-d);border:1px solid rgba(16,185,129,.2);color:var(--green)}
+.alert.show{display:block}
+
+/* spinner */
+.spinner{display:inline-block;width:14px;height:14px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* divider */
+.divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--txt-dim);font-size:10px;font-family:'DM Mono',monospace;letter-spacing:1px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border2)}
+
+/* bottom text */
+.bottom-text{margin-top:20px;text-align:center;font-size:11px;color:var(--txt-dim);font-family:'DM Mono',monospace;line-height:1.6}
+.bottom-text a{color:#a5b4fc;text-decoration:none}
+
+/* live badge */
+.live-badge{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:24px;font-size:10px;font-family:'DM Mono',monospace;color:var(--green);letter-spacing:.5px}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:ping 1.5s ease infinite}
+@keyframes ping{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
+</style>
+</head>
+<body>
+<div class="glow-a"></div>
+<div class="glow-b"></div>
+
+<div class="card">
+  <div class="card-corner"></div>
+
+  <div class="logo-wrap">
+    <div class="logo-mark">Ax</div>
+    <div class="logo-name">ARISx QUANT</div>
+  </div>
+  <div class="logo-sub">Quantitative Trading Platform</div>
+
+  <div class="live-badge"><div class="live-dot"></div>SYSTEM ONLINE</div>
+
+  <div class="tabs">
+    <div class="tab active" id="tab-login" onclick="switchTab('login')">SIGN IN</div>
+    <div class="tab" id="tab-register" onclick="switchTab('register')">REGISTER</div>
+  </div>
+
+  <div id="alertBox" class="alert"></div>
+
+  <!-- LOGIN FORM -->
+  <div id="loginForm">
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="submit-btn" id="loginBtn" onclick="doLogin()">SIGN IN →</button>
+    <div class="divider">or</div>
+    <div class="bottom-text">
+      ยังไม่มีบัญชี? <a href="#" onclick="switchTab('register')">ลงทะเบียน</a><br>
+      <a href="#" onclick="forgotPassword()" style="margin-top:6px;display:inline-block">ลืมรหัสผ่าน?</a>
+    </div>
+  </div>
+
+  <!-- REGISTER FORM -->
+  <div id="registerForm" style="display:none">
+    <div class="form-group">
+      <label class="form-label">Display Name</label>
+      <input type="text" class="form-input" id="regName" placeholder="ชื่อที่ต้องการแสดง">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input type="email" class="form-input" id="regEmail" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="regPassword" placeholder="อย่างน้อย 8 ตัวอักษร" onkeydown="if(event.key==='Enter')doRegister()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">License Key</label>
+      <input type="text" class="form-input" id="regLicenseKey" placeholder="License Key ที่ได้รับจากผู้ดูแล" style="text-transform:uppercase">
+    </div>
+    <button class="submit-btn" id="registerBtn" onclick="doRegister()">CREATE ACCOUNT →</button>
+    <div class="bottom-text" style="margin-top:16px">
+      มีบัญชีแล้ว? <a href="#" onclick="switchTab('login')">เข้าสู่ระบบ</a>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
+const sbc=supabase.createClient(SB_URL,SB_KEY);
+
+/* Check if already logged in */
+async function checkSession(){
+  const{data:{session}}=await sbc.auth.getSession();
+  if(session) window.location.href='index.html';
+}
+checkSession();
+
+/* Tab switch */
+function switchTab(tab){
+  document.getElementById('loginForm').style.display=tab==='login'?'block':'none';
+  document.getElementById('registerForm').style.display=tab==='register'?'block':'none';
+  document.getElementById('tab-login').className='tab'+(tab==='login'?' active':'');
+  document.getElementById('tab-register').className='tab'+(tab==='register'?' active':'');
+  hideAlert();
+}
+
+/* Alert helpers */
+function showAlert(msg,type){
+  const el=document.getElementById('alertBox');
+  el.textContent=msg;el.className='alert '+type+' show';
+}
+function hideAlert(){
+  document.getElementById('alertBox').className='alert';
+}
+
+/* LOGIN */
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass){showAlert('กรุณาใส่ Email และ Password','error');return}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>กำลังเข้าสู่ระบบ…';
+  hideAlert();
+  const{error}=await sbc.auth.signInWithPassword({email,password:pass});
+  if(error){
+    showAlert(error.message==='Invalid login credentials'?'Email หรือ Password ไม่ถูกต้อง':error.message,'error');
+    btn.disabled=false;btn.innerHTML='SIGN IN →';
+  } else {
+    showAlert('เข้าสู่ระบบสำเร็จ กำลังโหลด…','success');
+    setTimeout(()=>window.location.href='index.html',800);
+  }
+}
+
+/* REGISTER */
+async function doRegister(){
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const pass=document.getElementById('regPassword').value;
+  const licKey=document.getElementById('regLicenseKey').value.trim().toUpperCase();
+  if(!name||!email||!pass||!licKey){showAlert('กรุณากรอกข้อมูลให้ครบ','error');return}
+  if(pass.length<8){showAlert('Password ต้องมีอย่างน้อย 8 ตัวอักษร','error');return}
+  const btn=document.getElementById('registerBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>กำลังสร้างบัญชี…';
+  hideAlert();
+
+  /* 1. Check if license_key exists and not already taken */
+  const{data:existingKey,error:keyErr}=await sbc
+    .from('license_keys').select('user_id').eq('license_key',licKey).single();
+
+  if(keyErr||!existingKey){
+    showAlert('License Key ไม่ถูกต้องหรือไม่มีในระบบ กรุณาติดต่อผู้ดูแล','error');
+    btn.disabled=false;btn.innerHTML='CREATE ACCOUNT →';return;
+  }
+  if(existingKey.user_id){
+    showAlert('License Key นี้ถูกใช้งานแล้ว','error');
+    btn.disabled=false;btn.innerHTML='CREATE ACCOUNT →';return;
+  }
+
+  /* 2. Create auth user */
+  const{data:authData,error:authErr}=await sbc.auth.signUp({
+    email,password:pass,
+    options:{data:{display_name:name}}
+  });
+  if(authErr){
+    showAlert(authErr.message,'error');
+    btn.disabled=false;btn.innerHTML='CREATE ACCOUNT →';return;
+  }
+
+  /* 3. Link license_key to new user */
+  const{error:updateErr}=await sbc
+    .from('license_keys')
+    .update({user_id:authData.user.id,display_name:name})
+    .eq('license_key',licKey);
+
+  if(updateErr){
+    showAlert('เกิดข้อผิดพลาดในการเชื่อมบัญชี กรุณาติดต่อผู้ดูแล','error');
+    btn.disabled=false;btn.innerHTML='CREATE ACCOUNT →';return;
+  }
+
+  showAlert('สร้างบัญชีสำเร็จ! กรุณาตรวจสอบ Email เพื่อยืนยัน','success');
+  btn.disabled=false;btn.innerHTML='CREATE ACCOUNT →';
+}
+
+/* FORGOT PASSWORD */
+async function forgotPassword(){
+  const email=document.getElementById('loginEmail').value.trim();
+  if(!email){showAlert('กรุณาใส่ Email ก่อนกดลืมรหัสผ่าน','error');return}
+  const{error}=await sbc.auth.resetPasswordForEmail(email,{
+    redirectTo:'https://aris-co.com/login.html'
+  });
+  if(error)showAlert(error.message,'error');
+  else showAlert('ส่ง Email รีเซ็ตรหัสผ่านแล้ว กรุณาตรวจสอบ Email','success');
+}
+</script>
+</body>
+</html>

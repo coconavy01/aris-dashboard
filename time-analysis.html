@@ -8,6 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>
+(async()=>{
+  const _sbc=supabase.createClient(
+    "https://tfnikhovkbbrhvrkobpu.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo"
+  );
+  const{data:{session}}=await _sbc.auth.getSession();
+  if(!session){window.location.href='login.html';return;}
+  window._userSession=session;
+  window._userEmail=session.user.email;
+  window._userId=session.user.id;
+})();
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;max-width:100vw}
@@ -287,6 +300,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <div><div class="page-title">◈ Time Analysis</div><div class="page-sub">ZONE DETECTION · HOURLY BREAKDOWN · AI ADVISOR</div></div>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="clock-chip" id="clockEl">——</div>
+      <button onclick="doLogout()" style="background:var(--red-d);border:1px solid rgba(244,63,94,.22);color:var(--red);padding:6px 14px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)">⏻ Logout</button>
     </div>
   </div>
 
@@ -427,6 +441,7 @@ setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLoc
 
 function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show')}
 function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('show')}
+async function doLogout(){await sbc.auth.signOut();window.location.href='login.html';}
 
 /* API Key */
 function loadKey(){const k=localStorage.getItem('arisx_api_key')||'';if(k){document.getElementById('apiInput').value=k;setKeyUI(true)}}

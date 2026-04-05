@@ -23,6 +23,9 @@
   window._userId=session.user.id;
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
+  /* show admin nav if admin */
+  const{data:lk}=await _sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
+  if(lk&&lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
 })();
 </script>
 <style>
@@ -225,6 +228,7 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     <div class="nav-sect">Navigation</div>
     <a class="nav-btn active" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
     <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
+    <a class="nav-btn" href="admin.html" id="adminNav" style="display:none"><div class="nav-icon">👑</div>Admin Panel</a>
   </div>
   <div class="sb-accs">
     <div class="nav-sect" style="margin-bottom:8px">License Keys</div>

@@ -11,366 +11,235 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden}
 :root{
-  --purple:#6366f1;--purple-d:rgba(99,102,241,.12);--purple-g:rgba(99,102,241,.3);
+  --bg:#060608;--s1:#0c0e14;--s2:#111420;
+  --purple:#6366f1;--purple-d:rgba(99,102,241,.12);
   --green:#10b981;--red:#f43f5e;--red-d:rgba(244,63,94,.1);
+  --border2:rgba(255,255,255,.06);
   --txt:#f1f5f9;--txt-dim:#475569;
 }
-body{background:#060608;color:var(--txt);font-family:'DM Sans',sans-serif;position:relative;height:100vh;overflow:hidden}
-body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.008) 2px,rgba(255,255,255,.008) 4px);pointer-events:none;z-index:1}
+body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;display:flex;height:100vh;position:relative}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.009) 2px,rgba(255,255,255,.009) 4px);pointer-events:none;z-index:0}
+#ltCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;pointer-events:none}
 
-/* canvas bg */
-#cv{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+/* LEFT */
+.left{width:55%;height:100%;position:relative;z-index:5;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:0 0 0 8%;overflow:hidden}
+.left::after{content:'';position:absolute;top:0;right:-1px;width:80px;height:100%;background:linear-gradient(to bottom right,transparent 50%,#07080e 50%);z-index:2;pointer-events:none}
+.split-line{position:absolute;right:0;top:0;bottom:0;width:1px;background:linear-gradient(to bottom,transparent 0%,rgba(99,102,241,.8) 30%,rgba(139,92,246,1) 50%,rgba(99,102,241,.8) 70%,transparent 100%);z-index:10;box-shadow:0 0 30px rgba(99,102,241,.5),0 0 60px rgba(99,102,241,.2);animation:linePulse 3s ease-in-out infinite}
+@keyframes linePulse{0%,100%{opacity:.7}50%{opacity:1}}
+.brand-area{position:relative;z-index:3;animation:fsi .8s ease both}
+@keyframes fsi{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+.logo-huge{font-size:clamp(42px,5vw,68px);font-weight:600;color:#fff;letter-spacing:-3px;line-height:1}
+.logo-huge em{color:transparent;-webkit-text-stroke:1.5px rgba(99,102,241,.6);font-style:normal}
+.logo-tagline{font-size:11px;letter-spacing:4px;color:rgba(255,255,255,.22);text-transform:uppercase;font-family:'DM Mono',monospace;margin-top:10px}
+.stats-list{margin-top:48px;display:flex;flex-direction:column;gap:14px;animation:fsi 1s ease .3s both}
+.stat-row{display:flex;align-items:center;gap:12px}
+.stat-line{width:24px;height:1px;background:rgba(99,102,241,.5)}
+.stat-label{font-size:10px;letter-spacing:2px;color:var(--txt-dim);font-family:'DM Mono',monospace;text-transform:uppercase}
+.stat-val{font-size:10px;letter-spacing:1px;font-family:'DM Mono',monospace;margin-left:auto;padding-right:12%}
+.sv-g{color:rgba(16,185,129,.8)}.sv-p{color:rgba(165,180,252,.7)}.sv-d{color:rgba(255,255,255,.25)}
+.watermark{position:absolute;bottom:32px;left:8%;font-size:9.5px;letter-spacing:2px;color:rgba(255,255,255,.07);font-family:'DM Mono',monospace;text-transform:uppercase;z-index:3}
 
-/* top bar */
-.topbar{position:fixed;top:0;left:0;right:0;padding:18px 32px;display:flex;justify-content:space-between;align-items:center;z-index:20;background:linear-gradient(to bottom,rgba(6,6,8,.8),transparent)}
-.tb-logo{display:flex;align-items:center;gap:9px}
-.tb-mark{width:30px;height:30px;background:linear-gradient(135deg,var(--purple),#8b5cf6);clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff;font-family:'DM Mono',monospace}
-.tb-name{font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px}
-.tb-status{display:flex;align-items:center;gap:6px;font-size:9.5px;font-family:'DM Mono',monospace;color:rgba(16,185,129,.85);letter-spacing:.5px}
-.tb-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:ping 1.5s ease infinite}
+/* RIGHT */
+.right{width:45%;height:100%;background:#07080e;border-left:1px solid rgba(99,102,241,.12);display:flex;align-items:center;justify-content:center;position:relative;z-index:5;padding:40px 36px}
+.right::before{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.05) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:gp 4s ease-in-out infinite}
+@keyframes gp{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.1)}}
+.form-box{width:100%;max-width:340px;position:relative;z-index:2;animation:fsi .8s ease .2s both}
+.form-logo{display:flex;align-items:center;gap:9px;margin-bottom:5px}
+.form-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--purple),#8b5cf6);clip-path:polygon(0 0,calc(100% - 9px) 0,100% 9px,100% 100%,0 100%);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0}
+.form-name{font-size:18px;font-weight:600;color:#fff;letter-spacing:-.3px}
+.form-sub{font-size:9px;letter-spacing:2.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:24px}
+.live-badge{display:flex;align-items:center;gap:7px;margin-bottom:28px;padding:6px 12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.15);width:fit-content;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:ping 1.5s ease infinite;flex-shrink:0}
 @keyframes ping{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 5px rgba(16,185,129,0)}}
-
-/* center form */
-.center{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;padding:80px 20px 100px}
-.glass{
-  background:rgba(8,9,16,.8);
-  border:1px solid rgba(99,102,241,.18);
-  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
-  padding:40px 44px;width:100%;max-width:400px;
-  position:relative;
-  clip-path:polygon(0 0,calc(100% - 22px) 0,100% 22px,100% 100%,22px 100%,0 calc(100% - 22px));
-  box-shadow:0 0 80px rgba(99,102,241,.07),0 0 160px rgba(99,102,241,.04),inset 0 1px 0 rgba(255,255,255,.05);
-  animation:cardIn .6s cubic-bezier(.22,1,.36,1) both;
-}
-@keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
-
-/* corner accents */
-.gc{position:absolute;width:16px;height:16px;animation:gcPulse 3s ease-in-out infinite}
-.gc-tl{top:-1px;left:-1px;border-top:1px solid rgba(99,102,241,.7);border-left:1px solid rgba(99,102,241,.7);animation-delay:0s}
-.gc-tr{top:-1px;right:-1px;border-top:1px solid rgba(99,102,241,.7);border-right:1px solid rgba(99,102,241,.7);animation-delay:.75s}
-.gc-bl{bottom:-1px;left:-1px;border-bottom:1px solid rgba(99,102,241,.7);border-left:1px solid rgba(99,102,241,.7);animation-delay:1.5s}
-.gc-br{bottom:-1px;right:-1px;border-bottom:1px solid rgba(99,102,241,.7);border-right:1px solid rgba(99,102,241,.7);animation-delay:2.25s}
-@keyframes gcPulse{0%,100%{opacity:.5}50%{opacity:1}}
-
-/* card logo */
-.c-logo{font-size:32px;font-weight:600;color:#fff;letter-spacing:-2px;line-height:1;margin-bottom:3px}
-.c-logo em{color:transparent;-webkit-text-stroke:1.5px rgba(99,102,241,.65);font-style:normal}
-.c-sub{font-size:9px;letter-spacing:3px;color:rgba(255,255,255,.18);text-transform:uppercase;font-family:'DM Mono',monospace;margin-bottom:26px}
-
-/* secure badge */
-.sec-badge{display:flex;align-items:center;gap:7px;margin-bottom:24px;padding:6px 12px;background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.14);width:fit-content;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
-.sec-dot{width:5px;height:5px;background:var(--green);border-radius:50%;animation:ping 1.5s ease infinite}
-.sec-txt{font-size:9px;color:var(--green);font-family:'DM Mono',monospace;letter-spacing:.5px}
-
-/* tabs */
-.tabs{display:flex;gap:3px;margin-bottom:22px}
-.tab{flex:1;padding:9px;font-size:11px;cursor:pointer;color:rgba(255,255,255,.22);background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);font-family:'DM Mono',monospace;text-align:center;letter-spacing:.5px;transition:all .2s;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-.tab.on{background:rgba(99,102,241,.15);color:#a5b4fc;border-color:rgba(99,102,241,.28)}
-
-/* alert */
-.alert{display:none;padding:10px 14px;margin-bottom:14px;font-size:11px;font-family:'DM Mono',monospace;animation:cardIn .25s ease;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,0 100%)}
+.live-txt{font-size:9.5px;color:var(--green);font-family:'DM Mono',monospace;letter-spacing:.5px}
+.tabs{display:flex;gap:3px;margin-bottom:24px}
+.tab{flex:1;padding:8px;font-size:11px;font-weight:500;cursor:pointer;color:var(--txt-dim);background:var(--s2);border:1px solid var(--border2);font-family:'DM Mono',monospace;text-align:center;transition:all .2s;letter-spacing:.5px;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.tab.active{background:var(--purple-d);color:#a5b4fc;border-color:rgba(99,102,241,.25)}
+.alert{display:none;padding:10px 14px;margin-bottom:14px;font-size:11px;font-family:'DM Mono',monospace;clip-path:polygon(0 0,calc(100% - 7px) 0,100% 7px,100% 100%,0 100%);animation:fsi .3s ease}
 .alert.err{background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red)}
-.alert.ok{background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.18);color:var(--green)}
+.alert.ok{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);color:var(--green)}
 .alert.show{display:block}
-
-/* form */
 .fg{margin-bottom:14px}
-.fl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.22);font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
-.fi{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);padding:11px 14px;color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:all .2s;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-.fi:focus{border-color:rgba(99,102,241,.45);background:rgba(99,102,241,.05)}
-.fi::placeholder{color:rgba(255,255,255,.1)}
-
-/* button */
-.sbtn{width:100%;background:linear-gradient(135deg,#4f52c8,#6366f1,#8b5cf6);background-size:200% 100%;color:#fff;border:none;padding:13px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.5px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);margin-top:4px;position:relative;overflow:hidden;transition:background-position .4s,transform .15s}
+.fl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:6px;display:block}
+.fi{width:100%;background:var(--s2);border:1px solid var(--border2);padding:11px 14px;color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border .15s,background .15s;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.fi:focus{border-color:rgba(99,102,241,.45);background:rgba(99,102,241,.04)}
+.fi::placeholder{color:rgba(255,255,255,.12)}
+.sbtn{width:100%;background:linear-gradient(135deg,#5254cc,#6366f1,#8b5cf6);background-size:200% 100%;color:#fff;border:none;padding:13px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.5px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);margin-top:4px;position:relative;overflow:hidden;transition:background-position .4s}
 .sbtn:hover{background-position:100% 0}
 .sbtn:active{transform:scale(.99)}
 .sbtn:disabled{opacity:.45;cursor:not-allowed}
-.sbtn::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.11),transparent);animation:sw 2.5s ease-in-out infinite}
+.sbtn::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent);animation:sw 2.5s ease-in-out infinite}
 @keyframes sw{0%{left:-60%}70%,100%{left:110%}}
 .spin{display:inline-block;width:12px;height:12px;border:1.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;margin-right:7px;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
-
-/* divider + footer */
-.fdiv{display:flex;align-items:center;gap:10px;margin:16px 0;color:rgba(255,255,255,.12);font-size:9px;font-family:'DM Mono',monospace}
-.fdiv::before,.fdiv::after{content:'';flex:1;height:1px;background:rgba(255,255,255,.06)}
-.ffoot{text-align:center;font-size:10.5px;color:rgba(255,255,255,.2);font-family:'DM Mono',monospace;line-height:1.7}
-.ffoot a{color:rgba(99,102,241,.75);text-decoration:none;transition:color .15s}
+.ffoot{margin-top:18px;text-align:center;font-size:10.5px;color:#334155;font-family:'DM Mono',monospace;line-height:1.7}
+.ffoot a{color:rgba(99,102,241,.8);text-decoration:none}
 .ffoot a:hover{color:#a5b4fc}
+.fdiv{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--txt-dim);font-size:9.5px;font-family:'DM Mono',monospace}
+.fdiv::before,.fdiv::after{content:'';flex:1;height:1px;background:var(--border2)}
 
-/* bottom stats bar */
-.bstats{position:fixed;bottom:0;left:0;right:0;padding:16px 32px;display:flex;justify-content:space-between;align-items:center;z-index:20;background:linear-gradient(to top,rgba(6,6,8,.85),transparent)}
-.bs-row{display:flex;gap:32px}
-.bs-item .bs-lbl{font-size:8px;letter-spacing:2px;color:rgba(255,255,255,.14);font-family:'DM Mono',monospace;text-transform:uppercase;margin-bottom:2px}
-.bs-item .bs-val{font-size:13px;font-weight:500;font-family:'DM Mono',monospace}
-.v-g{color:rgba(16,185,129,.8)}.v-p{color:rgba(165,180,252,.7)}.v-a{color:rgba(245,158,11,.7)}
-.bs-copy{font-size:8.5px;color:rgba(255,255,255,.08);font-family:'DM Mono',monospace;letter-spacing:1px}
-
-/* mobile */
-@media(max-width:480px){
-  .glass{padding:28px 24px}
-  .topbar{padding:14px 16px}
-  .bstats{padding:12px 16px}
-  .bs-row{gap:18px}
-  .bs-copy{display:none}
+@media(max-width:640px){
+  body{flex-direction:column}
+  .left{width:100%;height:auto;padding:32px 24px 48px}
+  .left::after{display:none}.split-line{display:none}
+  .logo-huge{font-size:38px}
+  .stats-list{margin-top:20px;flex-direction:row;flex-wrap:wrap;gap:8px}
+  .stat-val{margin-left:8px;padding-right:0}
+  .watermark{display:none}
+  .right{width:100%;flex:1;border-left:none;border-top:1px solid rgba(99,102,241,.12)}
 }
 </style>
 </head>
 <body>
+<canvas id="ltCanvas"></canvas>
 
-<canvas id="cv"></canvas>
-
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="tb-logo">
-    <div class="tb-mark">Ax</div>
-    <div class="tb-name">ARISx QUANT</div>
+<div class="left">
+  <div class="split-line"></div>
+  <div class="brand-area">
+    <div class="logo-huge">ARIS<em>x</em></div>
+    <div class="logo-tagline">Quantitative Trading Platform</div>
   </div>
-  <div class="tb-status"><div class="tb-dot"></div>ENGINE ONLINE</div>
+  <div class="stats-list">
+    <div class="stat-row"><div class="stat-line"></div><span class="stat-label">Engine</span><span class="stat-val sv-g">ONLINE</span></div>
+    <div class="stat-row"><div class="stat-line"></div><span class="stat-label">Database</span><span class="stat-val sv-p">SUPABASE RT</span></div>
+    <div class="stat-row"><div class="stat-line"></div><span class="stat-label">Sync</span><span class="stat-val sv-d">10s INTERVAL</span></div>
+    <div class="stat-row"><div class="stat-line"></div><span class="stat-label">Security</span><span class="stat-val sv-g">TLS 1.3</span></div>
+  </div>
+  <div class="watermark">aris-co.com · signal dark v2</div>
 </div>
 
-<!-- GLASS FORM -->
-<div class="center">
-  <div class="glass">
-    <div class="gc gc-tl"></div><div class="gc gc-tr"></div>
-    <div class="gc gc-bl"></div><div class="gc gc-br"></div>
-
-    <div class="c-logo">ARIS<em>x</em></div>
-    <div class="c-sub">Quantitative Trading Platform</div>
-
-    <div class="sec-badge"><div class="sec-dot"></div><span class="sec-txt">SECURE · ENCRYPTED CONNECTION</span></div>
-
+<div class="right">
+  <div class="form-box">
+    <div class="form-logo"><div class="form-mark">Ax</div><div class="form-name">ARISx QUANT</div></div>
+    <div class="form-sub">Signal · Dark Platform</div>
+    <div class="live-badge"><div class="live-dot"></div><span class="live-txt">SECURE · ENCRYPTED CONNECTION</span></div>
     <div class="tabs">
-      <div class="tab on" id="tab-login" onclick="sw('login')">SIGN IN</div>
-      <div class="tab" id="tab-reg" onclick="sw('register')">REGISTER</div>
+      <div class="tab active" id="tab-login" onclick="switchTab('login')">SIGN IN</div>
+      <div class="tab" id="tab-register" onclick="switchTab('register')">REGISTER</div>
     </div>
-
     <div id="alertBox" class="alert"></div>
 
     <!-- LOGIN -->
     <div id="loginForm">
-      <div class="fg"><label class="fl">Email Address</label><input type="email" class="fi" id="lEmail" placeholder="your@email.com" autocomplete="email"></div>
-      <div class="fg"><label class="fl">Password</label><input type="password" class="fi" id="lPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="fg"><label class="fl">Email Address</label><input type="email" class="fi" id="lEmail" placeholder="your@email.com"></div>
+      <div class="fg"><label class="fl">Password</label><input type="password" class="fi" id="lPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="sbtn" id="loginBtn" onclick="doLogin()">SIGN IN →</button>
       <div class="fdiv">or</div>
-      <div class="ffoot">ยังไม่มีบัญชี? <a href="#" onclick="sw('register')">ลงทะเบียน</a><br><a href="#" onclick="forgotPwd()">ลืมรหัสผ่าน?</a></div>
+      <div class="ffoot">ยังไม่มีบัญชี? <a href="#" onclick="switchTab('register')">ลงทะเบียน</a><br><a href="#" onclick="forgotPwd()">ลืมรหัสผ่าน?</a></div>
     </div>
 
     <!-- REGISTER -->
-    <div id="regForm" style="display:none">
+    <div id="registerForm" style="display:none">
       <div class="fg"><label class="fl">Display Name</label><input type="text" class="fi" id="rName" placeholder="ชื่อที่ต้องการแสดง"></div>
-      <div class="fg"><label class="fl">Email Address</label><input type="email" class="fi" id="rEmail" placeholder="your@email.com" autocomplete="email"></div>
-      <div class="fg"><label class="fl">Password</label><input type="password" class="fi" id="rPass" placeholder="อย่างน้อย 8 ตัวอักษร" autocomplete="new-password"></div>
-      <div class="fg"><label class="fl">License Key</label><input type="text" class="fi" id="rKey" placeholder="Key ที่ได้รับจากผู้ดูแล" style="text-transform:uppercase" onkeydown="if(event.key==='Enter')doRegister()"></div>
-      <button class="sbtn" id="regBtn" onclick="doRegister()">CREATE ACCOUNT →</button>
-      <div class="ffoot" style="margin-top:14px">มีบัญชีแล้ว? <a href="#" onclick="sw('login')">เข้าสู่ระบบ</a></div>
+      <div class="fg"><label class="fl">Email Address</label><input type="email" class="fi" id="rEmail" placeholder="your@email.com"></div>
+      <div class="fg"><label class="fl">Password</label><input type="password" class="fi" id="rPass" placeholder="อย่างน้อย 8 ตัวอักษร"></div>
+      <div class="fg"><label class="fl">License Key</label><input type="text" class="fi" id="rKey" placeholder="Key ที่ได้รับจากผู้ดูแล" onkeydown="if(event.key==='Enter')doRegister()" style="text-transform:uppercase"></div>
+      <button class="sbtn" id="registerBtn" onclick="doRegister()">CREATE ACCOUNT →</button>
+      <div class="ffoot" style="margin-top:14px">มีบัญชีแล้ว? <a href="#" onclick="switchTab('login')">เข้าสู่ระบบ</a></div>
     </div>
   </div>
 </div>
 
-<!-- BOTTOM STATS -->
-<div class="bstats">
-  <div class="bs-row">
-    <div class="bs-item"><div class="bs-lbl">Today P/L</div><div class="bs-val v-g" id="bsPnl">+$0</div></div>
-    <div class="bs-item"><div class="bs-lbl">Active Traders</div><div class="bs-val v-p" id="bsTraders">—</div></div>
-    <div class="bs-item"><div class="bs-lbl">Uptime</div><div class="bs-val v-a">99.9%</div></div>
-  </div>
-  <div class="bs-copy">ARIS-CO.COM · SIGNAL DARK V2</div>
-</div>
-
 <script>
-/* ══ SUPABASE ══ */
 const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
 const sbc=supabase.createClient(SB_URL,SB_KEY);
+(async()=>{const{data:{session}}=await sbc.auth.getSession();if(session)window.location.href='index.html';})();
 
-/* redirect if already logged in */
-(async()=>{const{data:{session}}=await sbc.auth.getSession();if(session)window.location.replace('index.html');})();
-
-/* ══ LIVE STATS (fetch from Supabase) ══ */
-async function loadStats(){
-  try{
-    /* Today P/L from trade_history CLOSE rows today */
-    const today=new Date();today.setHours(0,0,0,0);
-    const{data}=await sbc.from('trade_history').select('profit').eq('trade_action','CLOSE').gte('created_at',today.toISOString());
-    if(data&&data.length){
-      const pnl=data.reduce((a,r)=>a+(+r.profit||0),0);
-      const el=document.getElementById('bsPnl');
-      el.textContent=(pnl>=0?'+$':'-$')+Math.abs(pnl).toFixed(2);
-      el.className='bs-val '+(pnl>=0?'v-g':'v-r');
-      el.style.color=pnl>=0?'rgba(16,185,129,.8)':'rgba(244,63,94,.8)';
-    }
-    /* Active traders = count distinct license_keys with user_id */
-    const{data:lk}=await sbc.from('license_keys').select('user_id').not('user_id','is',null);
-    if(lk)document.getElementById('bsTraders').textContent=lk.length;
-  }catch(e){}
-}
-loadStats();
-
-/* ══ LIGHTNING CANVAS ══ */
-const cv=document.getElementById('cv');
-const ctx=cv.getContext('2d');
+/* ══ LIGHTNING ══ */
+const cv=document.getElementById('ltCanvas'),ctx=cv.getContext('2d');
 function resize(){cv.width=window.innerWidth;cv.height=window.innerHeight}
 resize();window.addEventListener('resize',resize);
-
 function rand(a,b){return a+Math.random()*(b-a)}
-
 function boltPath(x1,y1,x2,y2,r,d){
   if(d===0){ctx.lineTo(x2,y2);return}
-  const mx=(x1+x2)/2+(y2-y1)*rand(-.5,.5)*r;
-  const my=(y1+y2)/2+(x1-x2)*rand(-.5,.5)*r;
-  boltPath(x1,y1,mx,my,r*.62,d-1);
-  boltPath(mx,my,x2,y2,r*.62,d-1);
+  const mx=(x1+x2)/2+(y2-y1)*rand(-.5,.5)*r,my=(y1+y2)/2+(x1-x2)*rand(-.5,.5)*r;
+  boltPath(x1,y1,mx,my,r*.62,d-1);boltPath(mx,my,x2,y2,r*.62,d-1);
 }
-
-function drawBolt(sx,sy,ex,ey,alpha,w,col){
-  const c=col||`rgba(139,92,246,${alpha})`;
-  /* outer glow */
-  ctx.save();ctx.strokeStyle=c;ctx.lineWidth=w*5;ctx.globalAlpha=alpha*.08;ctx.shadowBlur=50;ctx.shadowColor=c;
-  ctx.beginPath();ctx.moveTo(sx,sy);boltPath(sx,sy,ex,ey,.4,7);ctx.stroke();ctx.restore();
-  /* mid */
-  ctx.save();ctx.strokeStyle=c;ctx.lineWidth=w*1.8;ctx.globalAlpha=alpha*.25;ctx.shadowBlur=25;ctx.shadowColor=c;
-  ctx.beginPath();ctx.moveTo(sx,sy);boltPath(sx,sy,ex,ey,.4,7);ctx.stroke();ctx.restore();
-  /* core white */
-  ctx.save();ctx.strokeStyle=`rgba(235,225,255,${alpha*.9})`;ctx.lineWidth=w*.35;ctx.shadowBlur=6;ctx.shadowColor=c;
-  ctx.beginPath();ctx.moveTo(sx,sy);boltPath(sx,sy,ex,ey,.4,7);ctx.stroke();ctx.restore();
+function drawBolt(sx,sy,ex,ey,alpha,w,c){
+  const col=c||`rgba(139,92,246,${alpha})`;
+  ctx.save();ctx.strokeStyle=col;ctx.lineWidth=w*3;ctx.globalAlpha=alpha*.15;ctx.shadowBlur=30;ctx.shadowColor=col;
+  ctx.beginPath();ctx.moveTo(sx,sy);boltPath(sx,sy,ex,ey,.42,6);ctx.stroke();ctx.restore();
+  ctx.save();ctx.strokeStyle=`rgba(220,210,255,${alpha*.9})`;ctx.lineWidth=w*.5;ctx.shadowBlur=12;ctx.shadowColor=col;
+  ctx.beginPath();ctx.moveTo(sx,sy);boltPath(sx,sy,ex,ey,.42,6);ctx.stroke();ctx.restore();
 }
-
-/* particles */
-const pts=[];
-for(let i=0;i<55;i++)pts.push({
-  x:rand(0,window.innerWidth),y:rand(0,window.innerHeight),
-  r:rand(.3,1.8),spd:rand(.1,.55),
-  op:rand(.03,.22),col:Math.random()>.5?'99,102,241':'139,92,246'
-});
-
+const ptcls=[];
+for(let i=0;i<45;i++)ptcls.push({x:rand(0,window.innerWidth*.58),y:rand(0,window.innerHeight),r:rand(.4,1.8),spd:rand(.15,.6),op:rand(.05,.3),col:Math.random()>.5?'99,102,241':'139,92,246'});
 let bolts=[],bTick=0,frame=0;
 const mouse={x:-999,y:-999};
-document.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
-document.addEventListener('mouseleave',()=>{mouse.x=-999;});
-
+window.addEventListener('mousemove',e=>{if(e.clientX<window.innerWidth*.58){mouse.x=e.clientX;mouse.y=e.clientY;}else{mouse.x=-999;}});
 function spawnBolt(){
-  const W=cv.width,H=cv.height,cx=W/2,cy=H/2;
-  /* always from edge toward center area */
-  const origins=[
-    {sx:rand(0,W*.15),sy:rand(0,H*.15)},   /* top-left corner */
-    {sx:rand(W*.85,W),sy:rand(0,H*.15)},   /* top-right corner */
-    {sx:rand(0,W*.15),sy:rand(H*.85,H)},   /* bottom-left corner */
-    {sx:rand(W*.85,W),sy:rand(H*.85,H)},   /* bottom-right corner */
-    {sx:rand(0,W*.1),sy:rand(H*.3,H*.7)},  /* left mid */
-    {sx:rand(W*.9,W),sy:rand(H*.3,H*.7)},  /* right mid */
-    {sx:rand(W*.3,W*.7),sy:rand(0,H*.05)}, /* top mid */
-    {sx:rand(W*.3,W*.7),sy:rand(H*.95,H)}, /* bottom mid */
+  const W=cv.width*.58,H=cv.height;
+  const tpl=[
+    {sx:rand(0,W*.25),sy:0,ex:rand(W*.35,W*.6),ey:rand(H*.3,H*.65)},
+    {sx:rand(W*.1,W*.45),sy:H,ex:rand(W*.3,W*.55),ey:rand(H*.3,H*.6)},
+    {sx:0,sy:rand(H*.1,H*.5),ex:rand(W*.4,W*.7),ey:rand(H*.4,H*.7)},
+    {sx:rand(W*.5,W*.7),sy:rand(0,H*.2),ex:rand(W*.2,W*.5),ey:rand(H*.5,H*.9)},
   ];
-  const o=origins[Math.floor(Math.random()*origins.length)];
-  const ex=cx+rand(-120,120),ey=cy+rand(-100,100);
-  const life=Math.round(rand(14,28));
-  bolts.push({...o,ex,ey,life,maxLife:life,w:rand(.7,2),alpha:rand(.5,.9)});
-  /* branch bolt */
-  if(Math.random()>.4){
-    const bx=o.sx+(ex-o.sx)*rand(.3,.65),by=o.sy+(ey-o.sy)*rand(.3,.65);
-    const bl=Math.round(rand(8,18));
-    bolts.push({sx:bx,sy:by,ex:bx+rand(-90,90),ey:by+rand(-90,90),life:bl,maxLife:bl,w:.5,alpha:.4});
+  const t=tpl[Math.floor(Math.random()*tpl.length)];
+  const life=Math.round(rand(12,22));
+  bolts.push({...t,life,maxLife:life,w:rand(.6,1.8),alpha:rand(.55,.95)});
+  if(Math.random()>.45){
+    const bx=t.sx+(t.ex-t.sx)*rand(.25,.65),by=t.sy+(t.ey-t.sy)*rand(.25,.65);
+    const bl=Math.round(rand(8,14));
+    bolts.push({sx:bx,sy:by,ex:bx+rand(-70,70),ey:by+rand(40,120),life:bl,maxLife:bl,w:.45,alpha:.5});
   }
 }
-
 function draw(){
   ctx.clearRect(0,0,cv.width,cv.height);
-  const W=cv.width,H=cv.height;
-
-  /* vignette */
-  const vig=ctx.createRadialGradient(W/2,H/2,H*.05,W/2,H/2,H*.95);
-  vig.addColorStop(0,'rgba(0,0,0,0)');vig.addColorStop(1,'rgba(0,0,0,.75)');
-  ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
-
-  /* center ambient */
-  const cg=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*.45);
-  cg.addColorStop(0,'rgba(99,102,241,.06)');cg.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=cg;ctx.fillRect(0,0,W,H);
-
-  /* particles */
-  pts.forEach(p=>{
-    p.y-=p.spd;if(p.y<-4){p.y=H+4;p.x=rand(0,W)}
-    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle=`rgba(${p.col},${p.op})`;ctx.fill();
-  });
-
-  /* subtle grid */
-  ctx.save();ctx.strokeStyle='rgba(99,102,241,.025)';ctx.lineWidth=.5;
-  for(let x=0;x<W;x+=70){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
-  for(let y=0;y<H;y+=70){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
-  ctx.restore();
-
-  /* spawn bolts */
-  bTick++;if(bTick>rand(5,14)){bTick=0;spawnBolt();if(Math.random()>.5)spawnBolt();}
-
-  /* mouse interaction — thin bolt from all 4 corners to mouse */
-  if(mouse.x>0&&frame%3===0){
-    [[0,0],[W,0],[0,H],[W,H]].forEach(([cx,cy],i)=>{
-      if(i%2===frame%2){
-        drawBolt(cx,cy,mouse.x,mouse.y,.28,.6,'rgba(99,102,241,.45)');
-      }
-    });
+  const W=cv.width*.58;
+  const g=ctx.createRadialGradient(W*.45,cv.height*.5,0,W*.45,cv.height*.5,W*.7);
+  g.addColorStop(0,'rgba(99,102,241,.05)');g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,cv.height);
+  ptcls.forEach(p=>{p.y-=p.spd;if(p.y<-5){p.y=cv.height+5;p.x=rand(0,W)}ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${p.col},${p.op})`;ctx.fill();});
+  bTick++;if(bTick>rand(6,18)){bTick=0;spawnBolt();if(Math.random()>.55)spawnBolt();}
+  if(mouse.x>0&&frame%4===0){
+    drawBolt(rand(0,W*.3),rand(0,cv.height*.4),mouse.x,mouse.y,.6,.8,'rgba(99,102,241,.7)');
+    drawBolt(rand(W*.1,W*.5),rand(cv.height*.6,cv.height),mouse.x,mouse.y,.4,.6,'rgba(139,92,246,.6)');
   }
-
-  /* active bolts */
   bolts=bolts.filter(b=>b.life>0);
-  bolts.forEach(b=>{
-    const t=b.life/b.maxLife;
-    drawBolt(b.sx,b.sy,b.ex,b.ey,b.alpha*t,b.w);
-    b.life--;
-  });
-
-  /* impact flash at center */
-  if(frame%50<2){
-    const fx=W/2+rand(-80,80),fy=H/2+rand(-60,60);
-    ctx.save();ctx.globalAlpha=rand(.25,.55);
-    const fl=ctx.createRadialGradient(fx,fy,0,fx,fy,rand(25,55));
-    fl.addColorStop(0,'rgba(210,200,255,.9)');fl.addColorStop(1,'rgba(99,102,241,0)');
-    ctx.fillStyle=fl;ctx.beginPath();ctx.arc(fx,fy,55,0,Math.PI*2);ctx.fill();ctx.restore();
+  bolts.forEach(b=>{const t=b.life/b.maxLife;drawBolt(b.sx,b.sy,b.ex,b.ey,b.alpha*t,b.w);b.life--;});
+  const pulse=0.4+Math.sin(frame*.04)*.15;
+  const gl=ctx.createLinearGradient(W-80,0,W,cv.height);
+  gl.addColorStop(0,'rgba(99,102,241,0)');gl.addColorStop(.3,`rgba(99,102,241,${pulse})`);
+  gl.addColorStop(.5,`rgba(139,92,246,${pulse+.1})`);gl.addColorStop(.7,`rgba(99,102,241,${pulse})`);gl.addColorStop(1,'rgba(99,102,241,0)');
+  ctx.save();ctx.strokeStyle=gl;ctx.lineWidth=1.5;ctx.shadowBlur=20;ctx.shadowColor='rgba(99,102,241,.6)';
+  ctx.beginPath();ctx.moveTo(W-80,0);ctx.lineTo(W+10,cv.height);ctx.stroke();ctx.restore();
+  if(frame%60<3){
+    const fx=W-30,fy=cv.height*.5;ctx.save();ctx.globalAlpha=.6;
+    const fg=ctx.createRadialGradient(fx,fy,0,fx,fy,40);fg.addColorStop(0,'rgba(200,180,255,.8)');fg.addColorStop(1,'rgba(99,102,241,0)');
+    ctx.fillStyle=fg;ctx.beginPath();ctx.arc(fx,fy,40,0,Math.PI*2);ctx.fill();ctx.restore();
   }
-
   frame++;requestAnimationFrame(draw);
 }
 draw();
 
 /* ══ UI ══ */
-function sw(t){
+function switchTab(t){
   document.getElementById('loginForm').style.display=t==='login'?'block':'none';
-  document.getElementById('regForm').style.display=t==='register'?'block':'none';
-  document.getElementById('tab-login').className='tab'+(t==='login'?' on':'');
-  document.getElementById('tab-reg').className='tab'+(t==='register'?' on':'');
+  document.getElementById('registerForm').style.display=t==='register'?'block':'none';
+  document.getElementById('tab-login').className='tab'+(t==='login'?' active':'');
+  document.getElementById('tab-register').className='tab'+(t==='register'?' active':'');
   hideAlert();
 }
 function showAlert(msg,type){const el=document.getElementById('alertBox');el.textContent=msg;el.className='alert '+type+' show'}
 function hideAlert(){document.getElementById('alertBox').className='alert'}
 
 async function doLogin(){
-  const email=document.getElementById('lEmail').value.trim();
-  const pass=document.getElementById('lPass').value;
+  const email=document.getElementById('lEmail').value.trim(),pass=document.getElementById('lPass').value;
   if(!email||!pass){showAlert('กรุณาใส่ Email และ Password','err');return}
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span>กำลังเข้าสู่ระบบ…';
-  hideAlert();
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>กำลังเข้าสู่ระบบ…';hideAlert();
   const{error}=await sbc.auth.signInWithPassword({email,password:pass});
-  if(error){
-    showAlert(error.message.includes('Invalid')?'Email หรือ Password ไม่ถูกต้อง':error.message,'err');
-    btn.disabled=false;btn.innerHTML='SIGN IN →';
-  } else {
-    showAlert('✓ เข้าสู่ระบบสำเร็จ กำลังโหลด…','ok');
-    setTimeout(()=>window.location.replace('index.html'),700);
-  }
+  if(error){showAlert(error.message.includes('Invalid')?'Email หรือ Password ไม่ถูกต้อง':error.message,'err');btn.disabled=false;btn.innerHTML='SIGN IN →';}
+  else{showAlert('✓ เข้าสู่ระบบสำเร็จ กำลังโหลด…','ok');setTimeout(()=>window.location.href='index.html',700);}
 }
 
 async function doRegister(){
-  const name=document.getElementById('rName').value.trim();
-  const email=document.getElementById('rEmail').value.trim();
-  const pass=document.getElementById('rPass').value;
-  const key=document.getElementById('rKey').value.trim().toUpperCase();
+  const name=document.getElementById('rName').value.trim(),email=document.getElementById('rEmail').value.trim();
+  const pass=document.getElementById('rPass').value,key=document.getElementById('rKey').value.trim().toUpperCase();
   if(!name||!email||!pass||!key){showAlert('กรุณากรอกข้อมูลให้ครบ','err');return}
   if(pass.length<8){showAlert('Password ต้องมีอย่างน้อย 8 ตัวอักษร','err');return}
-  const btn=document.getElementById('regBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span>กำลังสร้างบัญชี…';
-  hideAlert();
+  const btn=document.getElementById('registerBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>กำลังสร้างบัญชี…';hideAlert();
   const{data:kd,error:ke}=await sbc.from('license_keys').select('user_id').eq('license_key',key).single();
   if(ke||!kd){showAlert('License Key ไม่ถูกต้อง กรุณาติดต่อผู้ดูแล','err');btn.disabled=false;btn.innerHTML='CREATE ACCOUNT →';return}
   if(kd.user_id){showAlert('License Key นี้ถูกใช้งานแล้ว','err');btn.disabled=false;btn.innerHTML='CREATE ACCOUNT →';return}
@@ -385,8 +254,7 @@ async function forgotPwd(){
   const email=document.getElementById('lEmail').value.trim();
   if(!email){showAlert('กรุณาใส่ Email ก่อน','err');return}
   const{error}=await sbc.auth.resetPasswordForEmail(email,{redirectTo:'https://aris-co.com/login.html'});
-  if(error)showAlert(error.message,'err');
-  else showAlert('✓ ส่ง Email รีเซ็ตรหัสผ่านแล้ว กรุณาตรวจสอบ Email','ok');
+  if(error)showAlert(error.message,'err');else showAlert('✓ ส่ง Email รีเซ็ตรหัสผ่านแล้ว กรุณาตรวจสอบ Email','ok');
 }
 </script>
 </body>

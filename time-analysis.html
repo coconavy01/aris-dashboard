@@ -22,6 +22,8 @@
   window._userId=session.user.id;
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
+  const{data:lk}=await _sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
+  if(lk&&lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
 })();
 </script>
 <style>
@@ -291,6 +293,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <div class="nav-sect">Navigation</div>
     <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
     <a class="nav-btn active" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
+    <a class="nav-btn" href="admin.html" id="adminNav" style="display:none"><div class="nav-icon">👑</div>Admin Panel</a>
   </div>
   <div class="sb-foot">
     <div class="lat-row">▸ <span class="lat-v" id="latVal">—</span> ms &nbsp;<span style="margin-left:auto;font-size:9.5px" id="syncLbl">SYNC #0</span></div>

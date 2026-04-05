@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ARISx QUANT — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100vw}
+/* AUTH GUARD — hide until verified */
+body{visibility:hidden;opacity:0}
+:root{
+  --bg:#060608;--s1:#0c0e14;--s2:#111420;--s3:#161926;
+  --purple:#6366f1;--purple-d:rgba(99,102,241,.12);--purple-g:rgba(99,102,241,.28);
+  --green:#10b981;--green-d:rgba(16,185,129,.1);
+  --red:#f43f5e;--red-d:rgba(244,63,94,.1);
+  --amber:#f59e0b;--amber-d:rgba(245,158,11,.1);
+  --blue:#38bdf8;--blue-d:rgba(56,189,248,.1);
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.04);
+  --txt:#f1f5f9;--txt-mid:#94a3b8;--txt-dim:#475569;
+}
+body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;display:flex;height:100vh;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.009) 2px,rgba(255,255,255,.009) 4px);pointer-events:none;z-index:0}
+
+/* ── SIDEBAR ── */
+.sidebar{width:260px;min-width:260px;background:var(--s1);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:relative;z-index:20}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--purple-g),transparent)}
+.sb-top{padding:28px 22px 20px;border-bottom:1px solid var(--border2)}
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--purple),#8b5cf6);clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0}
+.logo-name{font-size:19px;font-weight:600;color:#fff;letter-spacing:-.3px}
+.logo-sub{font-size:9.5px;letter-spacing:2.5px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-top:1px}
+.admin-badge{display:flex;align-items:center;gap:6px;margin-top:12px;padding:5px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);width:fit-content}
+.admin-badge span{font-size:9px;color:var(--amber);font-family:'DM Mono',monospace;letter-spacing:1px}
+.sb-nav{padding:18px 14px}
+.nav-sect{font-size:9px;letter-spacing:2.5px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace;padding:0 8px;margin-bottom:8px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 10px;cursor:pointer;transition:all .15s;color:var(--txt-dim);font-size:13px;font-weight:500;text-decoration:none;border:1px solid transparent;margin-bottom:2px;position:relative;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+.nav-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--purple);transform:scaleY(0);transition:transform .15s}
+.nav-btn:hover{background:rgba(255,255,255,.04);color:var(--txt)}
+.nav-btn.active{background:var(--purple-d);color:#a5b4fc;border-color:rgba(99,102,241,.18)}
+.nav-btn.active::before{transform:scaleY(1)}
+.nav-btn.amber-active{background:var(--amber-d);color:var(--amber);border-color:rgba(245,158,11,.2)}
+.nav-btn.amber-active::before{background:var(--amber);transform:scaleY(1)}
+.nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.sb-foot{padding:14px 22px;border-top:1px solid var(--border2);margin-top:auto}
+.lat-row{display:flex;align-items:center;gap:6px;font-size:10.5px;font-family:'DM Mono',monospace;color:var(--txt-dim)}
+.lat-v{color:var(--blue);font-weight:500}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;z-index:5}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 36px;border-bottom:1px solid var(--border2);background:rgba(6,6,8,.92);backdrop-filter:blur(16px);flex-shrink:0;position:relative;z-index:10}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber-d),transparent)}
+.page-title{font-size:20px;font-weight:600;color:#fff;letter-spacing:-.3px}
+.page-sub{font-size:10px;color:var(--txt-dim);margin-top:2px;font-family:'DM Mono',monospace}
+.topbar-r{display:flex;align-items:center;gap:10px}
+.clock-chip{background:var(--s2);border:1px solid var(--border2);padding:6px 14px;font-size:11px;font-family:'DM Mono',monospace;color:var(--txt-mid);clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+.logout-btn{background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);padding:6px 14px;cursor:pointer;font-size:11px;font-family:'DM Mono',monospace;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+
+.content{flex:1;overflow-y:auto;padding:24px 36px}
+.content::-webkit-scrollbar{width:3px}
+.content::-webkit-scrollbar-thumb{background:rgba(245,158,11,.2)}
+
+/* ── SUMMARY CARDS ── */
+.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sc{background:rgba(255,255,255,.028);border:1px solid var(--border2);padding:18px 20px;position:relative;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);transition:transform .2s}
+.sc:hover{transform:translateY(-2px)}
+.sc-corner{position:absolute;top:0;right:0;width:12px;height:12px;clip-path:polygon(0 0,100% 100%,100% 0)}
+.sc.am .sc-corner{background:rgba(245,158,11,.4)}.sc.pu .sc-corner{background:rgba(99,102,241,.4)}.sc.gr .sc-corner{background:rgba(16,185,129,.4)}.sc.re .sc-corner{background:rgba(244,63,94,.4)}
+.sc::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px}
+.sc.am::before{background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.sc.pu::before{background:linear-gradient(90deg,transparent,var(--purple),transparent)}
+.sc.gr::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.sc.re::before{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.sc-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:8px}
+.sc-val{font-size:24px;font-weight:500;font-family:'DM Mono',monospace}
+.sc.am .sc-val{color:var(--amber)}.sc.pu .sc-val{color:#a5b4fc}.sc.gr .sc-val{color:var(--green)}.sc.re .sc-val{color:var(--red)}
+.sc-sub{font-size:10px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:4px}
+
+/* ── CREATE KEY PANEL ── */
+.create-panel{background:rgba(255,255,255,.022);border:1px solid rgba(245,158,11,.15);padding:20px 24px;margin-bottom:20px;position:relative;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
+.create-corner{position:absolute;top:0;right:0;width:16px;height:16px;background:var(--amber-d);clip-path:polygon(0 0,100% 100%,100% 0)}
+.cp-title{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--amber);font-family:'DM Mono',monospace;margin-bottom:14px;text-transform:uppercase}
+.cp-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cp-inp{background:var(--s2);border:1px solid var(--border2);padding:9px 14px;color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border .15s;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.cp-inp:focus{border-color:rgba(245,158,11,.4)}
+.cp-inp::placeholder{color:var(--txt-dim)}
+.cp-inp.wide{flex:1;min-width:140px}
+.cp-btn{padding:9px 20px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:.5px;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);transition:all .15s;border:1px solid transparent;white-space:nowrap}
+.btn-amber{background:var(--amber-d);border-color:rgba(245,158,11,.25);color:var(--amber)}
+.btn-amber:hover{background:rgba(245,158,11,.18)}
+.cp-alert{display:none;font-size:11px;font-family:'DM Mono',monospace;padding:7px 12px;margin-top:10px;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)}
+.cp-alert.ok{background:var(--green-d);border:1px solid rgba(16,185,129,.2);color:var(--green);display:block}
+.cp-alert.err{background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);display:block}
+
+/* ── USER TABLE ── */
+.tbl-panel{background:rgba(255,255,255,.022);border:1px solid var(--border2);overflow:hidden;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
+.tbl-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 12px;border-bottom:1px solid var(--border2)}
+.tbl-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-mid);font-family:'DM Mono',monospace}
+.search-inp{background:var(--s2);border:1px solid var(--border2);padding:6px 12px;color:var(--txt);font-family:'DM Mono',monospace;font-size:11px;outline:none;transition:border .15s;width:200px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%)}
+.search-inp:focus{border-color:rgba(99,102,241,.3)}
+.search-inp::placeholder{color:var(--txt-dim)}
+.tbl-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 16px;text-align:left;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-weight:500;background:rgba(255,255,255,.018);border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;white-space:nowrap}
+tbody td{padding:13px 16px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025);font-family:'DM Mono',monospace;vertical-align:middle;white-space:nowrap;color:var(--txt-dim)}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:rgba(255,255,255,.02)}
+
+/* status badges */
+.badge{display:inline-flex;padding:3px 10px;font-size:9.5px;font-weight:500;font-family:'DM Mono',monospace;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.badge-active{background:var(--green-d);color:var(--green)}
+.badge-pending{background:var(--amber-d);color:var(--amber)}
+.badge-suspended{background:var(--red-d);color:var(--red)}
+.badge-admin{background:var(--purple-d);color:#a5b4fc}
+
+/* action buttons */
+.act-btn{padding:4px 10px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;border:1px solid transparent;transition:all .15s;clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%);margin-right:4px}
+.btn-suspend{background:var(--amber-d);border-color:rgba(245,158,11,.2);color:var(--amber)}
+.btn-suspend:hover{background:rgba(245,158,11,.18)}
+.btn-delete{background:var(--red-d);border-color:rgba(244,63,94,.2);color:var(--red)}
+.btn-delete:hover{background:rgba(244,63,94,.18)}
+.btn-restore{background:var(--green-d);border-color:rgba(16,185,129,.2);color:var(--green)}
+.btn-restore:hover{background:rgba(16,185,129,.18)}
+
+/* perf numbers */
+.pnl-pos{color:var(--green);font-weight:500}
+.pnl-neg{color:var(--red);font-weight:500}
+.pnl-zero{color:var(--txt-dim)}
+
+/* modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--s1);border:1px solid rgba(244,63,94,.25);padding:28px 32px;max-width:380px;width:90%;position:relative;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%);animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.modal-title{font-size:15px;font-weight:600;color:#fff;margin-bottom:8px}
+.modal-sub{font-size:12px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:22px;line-height:1.6}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end}
+.modal-cancel{padding:8px 18px;font-size:12px;cursor:pointer;font-family:'DM Mono',monospace;background:var(--s2);border:1px solid var(--border2);color:var(--txt-dim);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.modal-confirm{padding:8px 18px;font-size:12px;cursor:pointer;font-family:'DM Mono',monospace;background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+
+/* loading */
+.tbl-loading{text-align:center;padding:40px;color:var(--txt-dim);font-family:'DM Mono',monospace;font-size:12px}
+.spin{display:inline-block;width:14px;height:14px;border:1.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:rot .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* mobile */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:1px solid var(--border2);z-index:100;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
+.mob-nav-inner{display:flex;justify-content:space-around}
+.mob-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;cursor:pointer;color:var(--txt-dim);font-size:10px;font-weight:500;transition:color .15s;text-decoration:none;font-family:'DM Mono',monospace}
+.mob-btn.active{color:var(--amber)}
+.mob-icon{font-size:19px}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:19;backdrop-filter:blur(4px)}
+.sb-overlay.show{display:block}
+
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-260px;top:0;bottom:0;transition:left .3s ease;z-index:20}
+  .sidebar.open{left:0}
+  .main{padding-bottom:68px}
+  .mob-nav{display:block}
+  .topbar{padding:14px 16px}
+  .content{padding:16px}
+  .sum-row{grid-template-columns:1fr 1fr;gap:10px}
+  .cp-row{flex-direction:column;align-items:stretch}
+  .cp-inp.wide{width:100%}
+  .topbar-r .clock-chip{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-top">
+    <div class="logo-row"><div class="logo-mark">Ax</div><div><div class="logo-name">ARISx QUANT</div><div class="logo-sub">Signal · Dark</div></div></div>
+    <div class="admin-badge"><span>👑 ADMIN MODE</span></div>
+  </div>
+  <div class="sb-nav">
+    <div class="nav-sect">Navigation</div>
+    <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
+    <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
+    <a class="nav-btn amber-active" href="admin.html"><div class="nav-icon">👑</div>Admin Panel</a>
+  </div>
+  <div class="sb-foot">
+    <div class="lat-row">▸ Admin: <span class="lat-v" id="adminEmail">—</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div><div class="page-title">👑 Admin Panel</div><div class="page-sub">USER MANAGEMENT · LICENSE KEYS · PERFORMANCE</div></div>
+    <div class="topbar-r">
+      <div class="clock-chip" id="clockEl">——</div>
+      <button class="logout-btn" onclick="doLogout()">⏻ Logout</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- SUMMARY CARDS -->
+    <div class="sum-row">
+      <div class="sc am"><div class="sc-corner"></div>
+        <div class="sc-lbl">Total Users</div>
+        <div class="sc-val" id="scTotal">—</div>
+        <div class="sc-sub">registered accounts</div>
+      </div>
+      <div class="sc gr"><div class="sc-corner"></div>
+        <div class="sc-lbl">Active</div>
+        <div class="sc-val" id="scActive">—</div>
+        <div class="sc-sub">linked license keys</div>
+      </div>
+      <div class="sc pu"><div class="sc-corner"></div>
+        <div class="sc-lbl">Pending</div>
+        <div class="sc-val" id="scPending">—</div>
+        <div class="sc-sub">keys not registered</div>
+      </div>
+      <div class="sc re"><div class="sc-corner"></div>
+        <div class="sc-lbl">Suspended</div>
+        <div class="sc-val" id="scSuspended">—</div>
+        <div class="sc-sub">inactive accounts</div>
+      </div>
+    </div>
+
+    <!-- CREATE LICENSE KEY -->
+    <div class="create-panel"><div class="create-corner"></div>
+      <div class="cp-title">✦ Create New License Key</div>
+      <div class="cp-row">
+        <input class="cp-inp wide" type="text" id="newKey" placeholder="LICENSE KEY (e.g. JOHN_001)" style="text-transform:uppercase">
+        <input class="cp-inp wide" type="text" id="newName" placeholder="Display Name">
+        <button class="cp-btn btn-amber" onclick="createKey()">CREATE KEY →</button>
+      </div>
+      <div class="cp-alert" id="cpAlert"></div>
+    </div>
+
+    <!-- USER TABLE -->
+    <div class="tbl-panel">
+      <div class="tbl-hd">
+        <div><div class="tbl-title">All Users & License Keys</div><div style="font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:2px" id="userCount">Loading…</div></div>
+        <input class="search-inp" type="text" id="searchInp" placeholder="Search name / key / email…" oninput="filterUsers()">
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>License Key</th>
+              <th>Display Name</th>
+              <th>Email</th>
+              <th>Status</th>
+              <th>Net P/L</th>
+              <th>Win Rate</th>
+              <th>Trades</th>
+              <th>Last Trade</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userTable">
+            <tr><td colspan="9" class="tbl-loading"><span class="spin"></span>Loading users…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MOBILE NAV -->
+<div class="mob-nav">
+  <div class="mob-nav-inner">
+    <a class="mob-btn" href="index.html"><div class="mob-icon">▣</div>Dashboard</a>
+    <a class="mob-btn" href="time-analysis.html"><div class="mob-icon">◈</div>Analysis</a>
+    <a class="mob-btn active" href="admin.html"><div class="mob-icon">👑</div>Admin</a>
+    <div class="mob-btn" onclick="toggleSb()"><div class="mob-icon">☰</div>Menu</div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <div class="modal-title">⚠ ยืนยันการลบ</div>
+    <div class="modal-sub" id="modalMsg">คุณต้องการลบ user นี้?<br>การกระทำนี้ไม่สามารถย้อนกลับได้</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">ยกเลิก</button>
+      <button class="modal-confirm" id="modalConfirm">ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
+const sbc=supabase.createClient(SB_URL,SB_KEY);
+
+let allUsers=[];
+
+/* ══ AUTH GUARD + ADMIN CHECK ══ */
+(async()=>{
+  const{data:{session}}=await sbc.auth.getSession();
+  if(!session){window.location.replace('login.html');return;}
+  /* check is_admin */
+  const{data:lk}=await sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
+  if(!lk||!lk.is_admin){window.location.replace('index.html');return;}
+  document.getElementById('adminEmail').textContent=session.user.email;
+  document.body.style.visibility='visible';
+  document.body.style.opacity='1';
+  init();
+})();
+
+/* clock */
+setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
+
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show')}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('show')}
+async function doLogout(){await sbc.auth.signOut();window.location.replace('login.html')}
+
+/* ══ INIT ══ */
+async function init(){
+  await loadUsers();
+}
+
+/* ══ LOAD USERS ══ */
+async function loadUsers(){
+  document.getElementById('userTable').innerHTML=`<tr><td colspan="9" class="tbl-loading"><span class="spin"></span>Loading…</td></tr>`;
+
+  /* Get all license keys */
+  const{data:keys,error}=await sbc.from('license_keys').select('*').order('created_at',{ascending:true});
+  if(error||!keys){document.getElementById('userTable').innerHTML=`<tr><td colspan="9" class="tbl-loading">Error loading data</td></tr>`;return}
+
+  /* Get trade stats per license_key */
+  const{data:trades}=await sbc.from('trade_history').select('license_key,profit,created_at').eq('trade_action','CLOSE');
+
+  /* Build stats map */
+  const statsMap={};
+  if(trades){
+    trades.forEach(t=>{
+      const k=t.license_key;
+      if(!statsMap[k])statsMap[k]={pnl:0,cnt:0,wins:0,lastTrade:null};
+      const p=+t.profit||0;
+      statsMap[k].pnl+=p;statsMap[k].cnt++;
+      if(p>0)statsMap[k].wins++;
+      if(!statsMap[k].lastTrade||new Date(t.created_at)>new Date(statsMap[k].lastTrade))
+        statsMap[k].lastTrade=t.created_at;
+    });
+  }
+
+  /* Get auth users emails via listing (only admin can do this via service role — we use display_name instead) */
+  allUsers=keys.map(k=>({...k,stats:statsMap[k.license_key]||{pnl:0,cnt:0,wins:0,lastTrade:null}}));
+
+  /* Summary counts */
+  const total=keys.length;
+  const active=keys.filter(k=>k.user_id&&!k.suspended).length;
+  const pending=keys.filter(k=>!k.user_id).length;
+  const suspended=keys.filter(k=>k.suspended).length;
+  document.getElementById('scTotal').textContent=total;
+  document.getElementById('scActive').textContent=active;
+  document.getElementById('scPending').textContent=pending;
+  document.getElementById('scSuspended').textContent=suspended;
+  document.getElementById('userCount').textContent=total+' records';
+
+  renderTable(allUsers);
+}
+
+/* ══ RENDER TABLE ══ */
+function renderTable(users){
+  if(!users.length){document.getElementById('userTable').innerHTML=`<tr><td colspan="9" class="tbl-loading">No users found</td></tr>`;return}
+  document.getElementById('userTable').innerHTML=users.map(u=>{
+    const s=u.stats;
+    const wr=s.cnt>0?Math.round(s.wins/s.cnt*100):0;
+    const pnlCls=s.pnl>0?'pnl-pos':s.pnl<0?'pnl-neg':'pnl-zero';
+    const pnlTxt=s.pnl>0?'+$'+s.pnl.toFixed(2):s.pnl<0?'-$'+Math.abs(s.pnl).toFixed(2):'$0.00';
+    const lastT=s.lastTrade?new Date(s.lastTrade).toLocaleDateString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+
+    /* status */
+    let statusBadge='';
+    if(u.is_admin)statusBadge=`<span class="badge badge-admin">ADMIN</span>`;
+    else if(u.suspended)statusBadge=`<span class="badge badge-suspended">SUSPENDED</span>`;
+    else if(u.user_id)statusBadge=`<span class="badge badge-active">ACTIVE</span>`;
+    else statusBadge=`<span class="badge badge-pending">PENDING</span>`;
+
+    /* actions */
+    let actions='';
+    if(!u.is_admin){
+      if(u.suspended){
+        actions+=`<button class="act-btn btn-restore" onclick="restoreUser('${u.id}','${u.license_key}')">RESTORE</button>`;
+      } else if(u.user_id){
+        actions+=`<button class="act-btn btn-suspend" onclick="suspendUser('${u.id}','${u.license_key}')">SUSPEND</button>`;
+      }
+      actions+=`<button class="act-btn btn-delete" onclick="confirmDelete('${u.id}','${u.license_key}','${u.display_name||u.license_key}')">DELETE</button>`;
+    }
+
+    return`<tr>
+      <td style="color:var(--amber);font-weight:500">${u.license_key}</td>
+      <td style="color:var(--txt)">${u.display_name||'—'}</td>
+      <td>${u.user_id?'<span style="color:rgba(99,102,241,.7)">Registered</span>':'<span style="color:var(--txt-dim)">—</span>'}</td>
+      <td>${statusBadge}</td>
+      <td class="${pnlCls}">${pnlTxt}</td>
+      <td style="color:${wr>=60?'var(--green)':wr>=40?'var(--amber)':'var(--red)'}">${s.cnt>0?wr+'%':'—'}</td>
+      <td>${s.cnt||'—'}</td>
+      <td style="font-size:10.5px">${lastT}</td>
+      <td>${actions||'<span style="color:var(--txt-dim);font-size:10px">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ══ FILTER ══ */
+function filterUsers(){
+  const q=document.getElementById('searchInp').value.toLowerCase();
+  if(!q){renderTable(allUsers);return}
+  const filtered=allUsers.filter(u=>
+    (u.license_key||'').toLowerCase().includes(q)||
+    (u.display_name||'').toLowerCase().includes(q)
+  );
+  renderTable(filtered);
+}
+
+/* ══ CREATE KEY ══ */
+async function createKey(){
+  const key=document.getElementById('newKey').value.trim().toUpperCase();
+  const name=document.getElementById('newName').value.trim();
+  const alert=document.getElementById('cpAlert');
+  alert.className='cp-alert';
+  if(!key||!name){alert.textContent='กรุณาใส่ License Key และ Display Name';alert.className='cp-alert err';return}
+  if(!/^[A-Z0-9_]+$/.test(key)){alert.textContent='License Key ใช้ได้เฉพาะตัวอักษร A-Z, 0-9 และ _ เท่านั้น';alert.className='cp-alert err';return}
+  const{error}=await sbc.from('license_keys').insert({license_key:key,display_name:name,is_admin:false});
+  if(error){
+    alert.textContent=error.message.includes('duplicate')?`License Key "${key}" มีอยู่แล้ว`:error.message;
+    alert.className='cp-alert err';
+  } else {
+    alert.textContent=`✓ สร้าง License Key "${key}" สำหรับ "${name}" สำเร็จแล้ว`;
+    alert.className='cp-alert ok';
+    document.getElementById('newKey').value='';
+    document.getElementById('newName').value='';
+    setTimeout(()=>{alert.className='cp-alert';},4000);
+    loadUsers();
+  }
+}
+
+/* ══ SUSPEND ══ */
+async function suspendUser(id,key){
+  const{error}=await sbc.from('license_keys').update({suspended:true}).eq('id',id);
+  if(!error)loadUsers();
+  else alert('Error: '+error.message);
+}
+
+/* ══ RESTORE ══ */
+async function restoreUser(id,key){
+  const{error}=await sbc.from('license_keys').update({suspended:false}).eq('id',id);
+  if(!error)loadUsers();
+  else alert('Error: '+error.message);
+}
+
+/* ══ DELETE MODAL ══ */
+let pendingDeleteId=null;
+function confirmDelete(id,key,name){
+  pendingDeleteId=id;
+  document.getElementById('modalMsg').innerHTML=`คุณต้องการลบ <b style="color:var(--amber)">${name}</b> (${key})?<br><span style="color:var(--red)">การกระทำนี้ไม่สามารถย้อนกลับได้</span>`;
+  document.getElementById('modalConfirm').onclick=()=>deleteUser(id);
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeModal(){document.getElementById('deleteModal').classList.remove('show');pendingDeleteId=null}
+async function deleteUser(id){
+  closeModal();
+  const{error}=await sbc.from('license_keys').delete().eq('id',id);
+  if(!error)loadUsers();
+  else alert('Error: '+error.message);
+}
+</script>
+</body>
+</html>

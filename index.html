@@ -8,24 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<style>body{visibility:hidden;opacity:0}</style>
 <script>
-/* AUTH GUARD — hide body until session confirmed */
+/* AUTH GUARD — runs before page renders */
 (async()=>{
   const _sbc=supabase.createClient(
     "https://tfnikhovkbbrhvrkobpu.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo"
   );
   const{data:{session}}=await _sbc.auth.getSession();
-  if(!session){window.location.replace('login.html');return;}
+  if(!session){window.location.href='login.html';return;}
+  /* store user info globally */
   window._userSession=session;
   window._userEmail=session.user.email;
   window._userId=session.user.id;
-  document.body.style.visibility='visible';
-  document.body.style.opacity='1';
-  /* show admin nav if admin */
-  const{data:lk}=await _sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
-  if(lk&&lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
 })();
 </script>
 <style>
@@ -228,7 +223,6 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     <div class="nav-sect">Navigation</div>
     <a class="nav-btn active" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
     <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
-    <a class="nav-btn" href="admin.html" id="adminNav" style="display:none"><div class="nav-icon">👑</div>Admin Panel</a>
   </div>
   <div class="sb-accs">
     <div class="nav-sect" style="margin-bottom:8px">License Keys</div>

@@ -21,11 +21,15 @@
   window._userSession=session;
   window._userEmail=session.user.email;
   window._userId=session.user.id;
+  /* get license key + admin status */
+  const{data:lk}=await _sbc.from('license_keys').select('license_key,is_admin').eq('user_id',session.user.id).single();
+  if(lk){
+    window._isAdmin=lk.is_admin;
+    window._myLicenseKey=lk.license_key;
+    if(lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
+  }
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
-  /* show admin nav if admin */
-  const{data:lk}=await _sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
-  if(lk&&lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
 })();
 </script>
 <style>
@@ -231,6 +235,7 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
     <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
     <a class="nav-btn" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
+    <a class="nav-btn" href="ea-settings.html"><div class="nav-icon">⚙️</div>EA Settings</a>
 
   </div>
   <div class="sb-accs">
@@ -384,7 +389,7 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 <script>
 const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
-let sbc,allData=[],curKey='All',tFilter='all',cRange='all',syncN=0,eqCh=null,donutCh=null,firstLoad=true;
+let sbc,allData=[],curKey='All',tFilter='all',cRange='all',syncN=0,eqCh=null,donutCh=null,firstLoad=true,isAdmin=false,myLicenseKey='';
 try{sbc=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
 
 /* clock */
@@ -427,13 +432,24 @@ function countTo(id,to,fmt,dur,delay){
 /* fetch */
 async function fetchAll(){
   if(!sbc)return[];
-  const{data,error}=await sbc.from('trade_history').select('*').order('created_at',{ascending:true});
+  isAdmin=window._isAdmin||false;
+  myLicenseKey=window._myLicenseKey||'';
+  let q=sbc.from('trade_history').select('*').order('created_at',{ascending:true});
+  /* non-admin: filter by own license key only */
+  if(!isAdmin&&myLicenseKey) q=q.eq('license_key',myLicenseKey);
+  const{data,error}=await q;
   if(error){showAlert(error.message);return[]}
   hideAlert();return data||[];
 }
 const isClose=r=>(r.trade_action||'').toUpperCase()==='CLOSE';
 function getFiltered(d){
-  let r=curKey==='All'?d:d.filter(x=>x.license_key===curKey);
+  /* non-admin: always force their own key, ignore curKey */
+  let r=d;
+  if(!isAdmin&&myLicenseKey){
+    r=d.filter(x=>x.license_key===myLicenseKey);
+  } else {
+    r=curKey==='All'?d:d.filter(x=>x.license_key===curKey);
+  }
   if(cRange==='30'){const c=Date.now()-30*86400000;r=r.filter(x=>new Date(x.created_at)>=c)}
   if(cRange==='7'){const c=Date.now()-7*86400000;r=r.filter(x=>new Date(x.created_at)>=c)}
   return r;
@@ -441,10 +457,23 @@ function getFiltered(d){
 
 /* sidebar */
 function renderSidebar(d){
-  const keys=[...new Set(d.map(r=>r.license_key||'N/A'))].sort();
-  let h=bAcc('All','G','Global Overview',lBal(d,'All'));
-  keys.forEach(k=>h+=bAcc(k,k[0].toUpperCase(),k,lBal(d,k)));
-  document.getElementById('accList').innerHTML=h;
+  /* sync global vars from window (set by auth guard) */
+  isAdmin=window._isAdmin||false;
+  myLicenseKey=window._myLicenseKey||'';
+  /* admin sees all keys, user sees only their own */
+  if(isAdmin){
+    const keys=[...new Set(d.map(r=>r.license_key||'N/A'))].sort();
+    let h=bAcc('All','G','Global Overview',lBal(d,'All'));
+    keys.forEach(k=>h+=bAcc(k,k[0].toUpperCase(),k,lBal(d,k)));
+    document.getElementById('accList').innerHTML=h;
+  } else {
+    /* user sees only their own key — set curKey automatically */
+    if(myLicenseKey&&curKey==='All'){curKey=myLicenseKey;firstLoad=true;}
+    const bal=lBal(d,myLicenseKey);
+    document.getElementById('accList').innerHTML=bAcc(myLicenseKey,myLicenseKey[0]?.toUpperCase()||'?',myLicenseKey,bal);
+    /* hide "Global Overview" section label */
+    const sect=document.querySelector('.sb-accs .nav-sect');if(sect)sect.style.display='none';
+  }
   document.getElementById('engStatus').textContent='ENGINE ONLINE';
 }
 function bAcc(key,l,name,bal){

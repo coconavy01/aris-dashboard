@@ -171,6 +171,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
     <a class="nav-btn active" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
     <a class="nav-btn" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
+    <a class="nav-btn" href="ea-settings.html"><div class="nav-icon">⚙️</div>EA Settings</a>
     <a class="nav-btn" href="admin.html" id="adminNav" style="display:none"><div class="nav-icon">👑</div>Admin Panel</a>
   </div>
   <div class="sb-accs">
@@ -260,8 +261,12 @@ let curKey='All',vY=new Date().getFullYear(),vM=new Date().getMonth(),all=[],syn
 (async()=>{
   const{data:{session}}=await sbc.auth.getSession();
   if(!session){window.location.replace('login.html');return;}
-  const{data:lk}=await sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
-  if(lk?.is_admin){['adminNav','adminTopBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex'});}
+  const{data:lk}=await sbc.from('license_keys').select('license_key,is_admin').eq('user_id',session.user.id).single();
+  if(lk){
+    window._isAdmin=lk.is_admin;
+    window._myLicenseKey=lk.license_key;
+    if(lk.is_admin){['adminNav','adminTopBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex'});}
+  }
   document.body.style.visibility='visible';document.body.style.opacity='1';
   loadAll();
 })();
@@ -276,24 +281,38 @@ function closeModal(){document.getElementById('modal').classList.remove('show')}
 
 async function loadAll(){
   const t0=performance.now();
-  const{data}=await sbc.from('trade_history').select('*').eq('trade_action','CLOSE').order('created_at',{ascending:true});
+  const isAdm=window._isAdmin||false,myKey=window._myLicenseKey||'';
+  let q=sbc.from('trade_history').select('*').eq('trade_action','CLOSE').order('created_at',{ascending:true});
+  if(!isAdm&&myKey) q=q.eq('license_key',myKey);
+  const{data}=await q;
   syncN++;document.getElementById('latVal').textContent=Math.round(performance.now()-t0);
   document.getElementById('syncLbl').textContent='SYNC #'+syncN;
   all=data||[];buildSidebar();render();
 }
 
 function buildSidebar(){
-  const keys=[...new Set(all.map(r=>r.license_key).filter(Boolean))].sort();
-  let h=acc('All','G','Global Overview');
-  keys.forEach(k=>h+=acc(k,k[0]?.toUpperCase()||'?',k));
-  document.getElementById('accList').innerHTML=h;
+  const isAdm=window._isAdmin||false,myKey=window._myLicenseKey||'';
+  if(isAdm){
+    const keys=[...new Set(all.map(r=>r.license_key).filter(Boolean))].sort();
+    let h=acc('All','G','Global Overview');
+    keys.forEach(k=>h+=acc(k,k[0]?.toUpperCase()||'?',k));
+    document.getElementById('accList').innerHTML=h;
+  } else {
+    if(myKey&&curKey==='All') curKey=myKey;
+    document.getElementById('accList').innerHTML=acc(myKey,myKey[0]?.toUpperCase()||'?',myKey);
+    const sect=document.querySelector('.sb-accs .nav-sect');if(sect)sect.style.display='none';
+  }
 }
 function acc(key,l,name){
   return`<div class="acc-item${curKey===key?' active':''}" onclick="setKey('${key.replace(/'/g,"\\'")}')"><div class="acc-av">${l}</div><span style="font-size:12px">${name}</span></div>`;
 }
 function setKey(k){curKey=k;document.getElementById('pageSub').textContent=(k==='All'?'ALL LICENSE KEYS':k)+' · DAILY P/L';buildSidebar();render();}
 
-function getFil(){return curKey==='All'?all:all.filter(r=>r.license_key===curKey)}
+function getFil(){
+  const isAdm=window._isAdmin||false,myKey=window._myLicenseKey||'';
+  if(!isAdm&&myKey) return all.filter(r=>r.license_key===myKey);
+  return curKey==='All'?all:all.filter(r=>r.license_key===curKey);
+}
 
 function render(){
   const fil=getFil();

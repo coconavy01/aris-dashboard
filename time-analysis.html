@@ -22,8 +22,12 @@
   window._userId=session.user.id;
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
-  const{data:lk}=await _sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
-  if(lk&&lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
+  const{data:lk}=await _sbc.from('license_keys').select('license_key,is_admin').eq('user_id',session.user.id).single();
+  if(lk){
+    window._isAdmin=lk.is_admin;
+    window._myLicenseKey=lk.license_key;
+    if(lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
+  }
 })();
 </script>
 <style>
@@ -296,6 +300,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <a class="nav-btn active" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
     <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
     <a class="nav-btn" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
+    <a class="nav-btn" href="ea-settings.html"><div class="nav-icon">⚙️</div>EA Settings</a>
 
   </div>
   <div class="sb-foot">
@@ -468,17 +473,33 @@ function setKeyUI(has){
 /* Fetch */
 async function fetchTA(){
   if(!sbc)return[];
-  const from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value,k=document.getElementById('kSel').value;
+  const from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
+  const isAdm=window._isAdmin||false,myKey=window._myLicenseKey||'';
   let q=sbc.from('trade_history').select('*').gte('created_at',from+'T00:00:00').lte('created_at',to+'T23:59:59').eq('trade_action','CLOSE').order('created_at',{ascending:true});
-  if(k!=='All')q=q.eq('license_key',k);
+  if(!isAdm&&myKey){
+    /* non-admin: always their own key only */
+    q=q.eq('license_key',myKey);
+  } else {
+    const k=document.getElementById('kSel').value;
+    if(k!=='All')q=q.eq('license_key',k);
+  }
   const{data,error}=await q;if(error){console.error(error);return[]}return data||[];
 }
 async function fetchKeys(){
   if(!sbc)return;
+  const isAdm=window._isAdmin||false,myKey=window._myLicenseKey||'';
+  const sel=document.getElementById('kSel');
+  const kLabel=sel?.parentElement;
+  if(!isAdm){
+    /* non-admin: hide key selector entirely */
+    if(kLabel)kLabel.style.display='none';
+    if(sel)sel.style.display='none';
+    return;
+  }
   const{data}=await sbc.from('trade_history').select('license_key');
   if(!data)return;
   const keys=[...new Set(data.map(r=>r.license_key).filter(Boolean))].sort();
-  const sel=document.getElementById('kSel');const cur=sel.value;
+  const cur=sel.value;
   sel.innerHTML='<option value="All">All Keys</option>'+keys.map(k=>`<option value="${k}">${k}</option>`).join('');
   sel.value=cur;
 }

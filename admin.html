@@ -10,7 +10,6 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;max-width:100vw}
-/* AUTH GUARD — hide until verified */
 body{visibility:hidden;opacity:0}
 :root{
   --bg:#060608;--s1:#0c0e14;--s2:#111420;--s3:#161926;
@@ -25,50 +24,58 @@ body{visibility:hidden;opacity:0}
 body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;display:flex;height:100vh;overflow:hidden}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.009) 2px,rgba(255,255,255,.009) 4px);pointer-events:none;z-index:0}
 
-/* ── SIDEBAR ── */
+/* SIDEBAR */
 .sidebar{width:260px;min-width:260px;background:var(--s1);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:relative;z-index:20}
-.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--purple-g),transparent)}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--amber-d),transparent)}
 .sb-top{padding:28px 22px 20px;border-bottom:1px solid var(--border2)}
 .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--purple),#8b5cf6);clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0}
 .logo-name{font-size:19px;font-weight:600;color:#fff;letter-spacing:-.3px}
 .logo-sub{font-size:9.5px;letter-spacing:2.5px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace;margin-top:1px}
-.admin-badge{display:flex;align-items:center;gap:6px;margin-top:12px;padding:5px 10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);width:fit-content}
+.admin-badge{display:flex;align-items:center;gap:6px;margin-top:12px;padding:5px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);width:fit-content}
 .admin-badge span{font-size:9px;color:var(--amber);font-family:'DM Mono',monospace;letter-spacing:1px}
 .sb-nav{padding:18px 14px}
 .nav-sect{font-size:9px;letter-spacing:2.5px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace;padding:0 8px;margin-bottom:8px}
 .nav-btn{display:flex;align-items:center;gap:10px;padding:10px 10px;cursor:pointer;transition:all .15s;color:var(--txt-dim);font-size:13px;font-weight:500;text-decoration:none;border:1px solid transparent;margin-bottom:2px;position:relative;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
 .nav-btn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--purple);transform:scaleY(0);transition:transform .15s}
 .nav-btn:hover{background:rgba(255,255,255,.04);color:var(--txt)}
-.nav-btn.active{background:var(--purple-d);color:#a5b4fc;border-color:rgba(99,102,241,.18)}
-.nav-btn.active::before{transform:scaleY(1)}
-.nav-btn.amber-active{background:var(--amber-d);color:var(--amber);border-color:rgba(245,158,11,.2)}
-.nav-btn.amber-active::before{background:var(--amber);transform:scaleY(1)}
+.nav-btn.active{background:var(--amber-d);color:var(--amber);border-color:rgba(245,158,11,.18)}
+.nav-btn.active::before{background:var(--amber);transform:scaleY(1)}
 .nav-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
 .sb-foot{padding:14px 22px;border-top:1px solid var(--border2);margin-top:auto}
-.lat-row{display:flex;align-items:center;gap:6px;font-size:10.5px;font-family:'DM Mono',monospace;color:var(--txt-dim)}
-.lat-v{color:var(--blue);font-weight:500}
+.admin-email{font-size:10px;color:var(--txt-dim);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-/* ── MAIN ── */
+/* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;z-index:5}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 36px;border-bottom:1px solid var(--border2);background:rgba(6,6,8,.92);backdrop-filter:blur(16px);flex-shrink:0;position:relative;z-index:10}
-.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--amber-d),transparent)}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 32px;border-bottom:1px solid var(--border2);background:rgba(6,6,8,.92);backdrop-filter:blur(16px);flex-shrink:0;position:relative;z-index:10}
+.topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(245,158,11,.3),transparent)}
 .page-title{font-size:20px;font-weight:600;color:#fff;letter-spacing:-.3px}
 .page-sub{font-size:10px;color:var(--txt-dim);margin-top:2px;font-family:'DM Mono',monospace}
-.topbar-r{display:flex;align-items:center;gap:10px}
+.topbar-r{display:flex;align-items:center;gap:8px}
 .clock-chip{background:var(--s2);border:1px solid var(--border2);padding:6px 14px;font-size:11px;font-family:'DM Mono',monospace;color:var(--txt-mid);clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
-.logout-btn{background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);padding:6px 14px;cursor:pointer;font-size:11px;font-family:'DM Mono',monospace;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.back-btn{background:var(--purple-d);border:1px solid rgba(99,102,241,.2);color:#a5b4fc;padding:6px 14px;font-size:11px;font-family:'DM Mono',monospace;text-decoration:none;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);transition:all .15s}
+.back-btn:hover{background:rgba(99,102,241,.2)}
+.logout-btn{background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);padding:6px 14px;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
 
-.content{flex:1;overflow-y:auto;padding:24px 36px}
+/* TABS */
+.tabs-nav{display:flex;gap:3px;padding:14px 32px 0;background:var(--s1);border-bottom:1px solid var(--border2);flex-shrink:0}
+.tnav{padding:9px 20px;font-size:11px;font-weight:500;cursor:pointer;color:var(--txt-dim);font-family:'DM Mono',monospace;letter-spacing:.5px;transition:all .15s;border-bottom:2px solid transparent;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.tnav:hover{color:var(--txt)}
+.tnav.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+.tab-page{display:none}
+.tab-page.active{display:block}
+
+.content{flex:1;overflow-y:auto;padding:24px 32px}
 .content::-webkit-scrollbar{width:3px}
 .content::-webkit-scrollbar-thumb{background:rgba(245,158,11,.2)}
 
-/* ── SUMMARY CARDS ── */
-.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.sc{background:rgba(255,255,255,.028);border:1px solid var(--border2);padding:18px 20px;position:relative;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);transition:transform .2s}
+/* CARDS */
+.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:rgba(255,255,255,.028);border:1px solid var(--border2);padding:16px 18px;position:relative;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);transition:transform .2s}
 .sc:hover{transform:translateY(-2px)}
-.sc-corner{position:absolute;top:0;right:0;width:12px;height:12px;clip-path:polygon(0 0,100% 100%,100% 0)}
-.sc.am .sc-corner{background:rgba(245,158,11,.4)}.sc.pu .sc-corner{background:rgba(99,102,241,.4)}.sc.gr .sc-corner{background:rgba(16,185,129,.4)}.sc.re .sc-corner{background:rgba(244,63,94,.4)}
+.sc-c{position:absolute;top:0;right:0;width:12px;height:12px;clip-path:polygon(0 0,100% 100%,100% 0)}
+.sc.am .sc-c{background:rgba(245,158,11,.4)}.sc.pu .sc-c{background:rgba(99,102,241,.4)}.sc.gr .sc-c{background:rgba(16,185,129,.4)}.sc.re .sc-c{background:rgba(244,63,94,.4)}
 .sc::before{content:'';position:absolute;bottom:0;left:0;right:0;height:1px}
 .sc.am::before{background:linear-gradient(90deg,transparent,var(--amber),transparent)}
 .sc.pu::before{background:linear-gradient(90deg,transparent,var(--purple),transparent)}
@@ -79,99 +86,118 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .sc.am .sc-val{color:var(--amber)}.sc.pu .sc-val{color:#a5b4fc}.sc.gr .sc-val{color:var(--green)}.sc.re .sc-val{color:var(--red)}
 .sc-sub{font-size:10px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:4px}
 
-/* ── CREATE KEY PANEL ── */
-.create-panel{background:rgba(255,255,255,.022);border:1px solid rgba(245,158,11,.15);padding:20px 24px;margin-bottom:20px;position:relative;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
-.create-corner{position:absolute;top:0;right:0;width:16px;height:16px;background:var(--amber-d);clip-path:polygon(0 0,100% 100%,100% 0)}
-.cp-title{font-size:12px;font-weight:600;letter-spacing:1px;color:var(--amber);font-family:'DM Mono',monospace;margin-bottom:14px;text-transform:uppercase}
-.cp-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* CREATE KEY PANEL */
+.create-panel{background:rgba(255,255,255,.022);border:1px solid rgba(245,158,11,.15);padding:18px 22px;margin-bottom:18px;position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.create-c{position:absolute;top:0;right:0;width:14px;height:14px;background:var(--amber-d);clip-path:polygon(0 0,100% 100%,100% 0)}
+.cp-title{font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--amber);font-family:'DM Mono',monospace;margin-bottom:12px;text-transform:uppercase}
+.cp-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .cp-inp{background:var(--s2);border:1px solid var(--border2);padding:9px 14px;color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;outline:none;transition:border .15s;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
 .cp-inp:focus{border-color:rgba(245,158,11,.4)}
 .cp-inp::placeholder{color:var(--txt-dim)}
-.cp-inp.wide{flex:1;min-width:140px}
-.cp-btn{padding:9px 20px;font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:.5px;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);transition:all .15s;border:1px solid transparent;white-space:nowrap}
-.btn-amber{background:var(--amber-d);border-color:rgba(245,158,11,.25);color:var(--amber)}
-.btn-amber:hover{background:rgba(245,158,11,.18)}
+.cp-inp.w{flex:1;min-width:130px}
+.cp-btn{padding:9px 18px;font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Mono',monospace;letter-spacing:.5px;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);transition:all .15s;border:1px solid transparent;white-space:nowrap}
+.btn-a{background:var(--amber-d);border-color:rgba(245,158,11,.25);color:var(--amber)}
+.btn-a:hover{background:rgba(245,158,11,.18)}
+.btn-g{background:var(--green-d);border-color:rgba(16,185,129,.2);color:var(--green)}
+.btn-g:hover{background:rgba(16,185,129,.18)}
+.btn-r{background:var(--red-d);border-color:rgba(244,63,94,.2);color:var(--red)}
+.btn-p{background:var(--purple-d);border-color:rgba(99,102,241,.2);color:#a5b4fc}
 .cp-alert{display:none;font-size:11px;font-family:'DM Mono',monospace;padding:7px 12px;margin-top:10px;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)}
 .cp-alert.ok{background:var(--green-d);border:1px solid rgba(16,185,129,.2);color:var(--green);display:block}
 .cp-alert.err{background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);display:block}
 
-/* ── USER TABLE ── */
-.tbl-panel{background:rgba(255,255,255,.022);border:1px solid var(--border2);overflow:hidden;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
-.tbl-hd{display:flex;align-items:center;justify-content:space-between;padding:16px 22px 12px;border-bottom:1px solid var(--border2)}
+/* TABLE */
+.tbl-panel{background:rgba(255,255,255,.022);border:1px solid var(--border2);overflow:hidden;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);margin-bottom:18px}
+.tbl-hd{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 10px;border-bottom:1px solid var(--border2);flex-wrap:wrap;gap:8px}
 .tbl-title{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-mid);font-family:'DM Mono',monospace}
-.search-inp{background:var(--s2);border:1px solid var(--border2);padding:6px 12px;color:var(--txt);font-family:'DM Mono',monospace;font-size:11px;outline:none;transition:border .15s;width:200px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%)}
+.search-inp{background:var(--s2);border:1px solid var(--border2);padding:6px 12px;color:var(--txt);font-family:'DM Mono',monospace;font-size:11px;outline:none;width:190px;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%)}
 .search-inp:focus{border-color:rgba(99,102,241,.3)}
 .search-inp::placeholder{color:var(--txt-dim)}
 .tbl-scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse}
-thead th{padding:10px 16px;text-align:left;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-weight:500;background:rgba(255,255,255,.018);border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;white-space:nowrap}
-tbody td{padding:13px 16px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025);font-family:'DM Mono',monospace;vertical-align:middle;white-space:nowrap;color:var(--txt-dim)}
-tbody tr{transition:background .12s}
+thead th{padding:9px 14px;text-align:left;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-weight:500;background:rgba(255,255,255,.018);border-bottom:1px solid var(--border2);font-family:'DM Mono',monospace;white-space:nowrap}
+tbody td{padding:12px 14px;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,.025);font-family:'DM Mono',monospace;vertical-align:middle;white-space:nowrap;color:var(--txt-dim)}
 tbody tr:hover{background:rgba(255,255,255,.02)}
-
-/* status badges */
 .badge{display:inline-flex;padding:3px 10px;font-size:9.5px;font-weight:500;font-family:'DM Mono',monospace;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-.badge-active{background:var(--green-d);color:var(--green)}
-.badge-pending{background:var(--amber-d);color:var(--amber)}
-.badge-suspended{background:var(--red-d);color:var(--red)}
-.badge-admin{background:var(--purple-d);color:#a5b4fc}
-
-/* action buttons */
-.act-btn{padding:4px 10px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;border:1px solid transparent;transition:all .15s;clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%);margin-right:4px}
-.btn-suspend{background:var(--amber-d);border-color:rgba(245,158,11,.2);color:var(--amber)}
-.btn-suspend:hover{background:rgba(245,158,11,.18)}
-.btn-delete{background:var(--red-d);border-color:rgba(244,63,94,.2);color:var(--red)}
-.btn-delete:hover{background:rgba(244,63,94,.18)}
-.btn-restore{background:var(--green-d);border-color:rgba(16,185,129,.2);color:var(--green)}
-.btn-restore:hover{background:rgba(16,185,129,.18)}
-
-/* perf numbers */
+.b-active{background:var(--green-d);color:var(--green)}
+.b-pending{background:var(--amber-d);color:var(--amber)}
+.b-suspended{background:var(--red-d);color:var(--red)}
+.b-admin{background:var(--purple-d);color:#a5b4fc}
+.act-btn{padding:4px 10px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;border:1px solid transparent;transition:all .15s;clip-path:polygon(3px 0,100% 0,calc(100% - 3px) 100%,0 100%);margin-right:3px}
 .pnl-pos{color:var(--green);font-weight:500}
 .pnl-neg{color:var(--red);font-weight:500}
-.pnl-zero{color:var(--txt-dim)}
+.tbl-load{text-align:center;padding:36px;color:var(--txt-dim);font-family:'DM Mono',monospace;font-size:12px}
+.spin{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:rot .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ═══ REVENUE SHARE ═══ */
+.rev-header{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.rev-filter{background:rgba(255,255,255,.022);border:1px solid var(--border2);padding:20px 22px;position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%)}
+.rev-filter-c{position:absolute;top:0;right:0;width:14px;height:14px;background:var(--green-d);clip-path:polygon(0 0,100% 100%,100% 0)}
+.rf-title{font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--green);font-family:'DM Mono',monospace;margin-bottom:14px;text-transform:uppercase}
+.rf-row{display:flex;flex-direction:column;gap:10px}
+.rf-item{display:flex;flex-direction:column;gap:5px}
+.rf-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace}
+.rf-inp{background:var(--s2);border:1px solid var(--border2);padding:9px 12px;color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:100%;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.rf-inp:focus{border-color:rgba(16,185,129,.35)}
+.rf-inp::placeholder{color:var(--txt-dim)}
+.rf-sel{background:var(--s2);border:1px solid var(--border2);padding:9px 12px;color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;outline:none;width:100%;cursor:pointer}
+.rf-sel option{background:var(--s2)}
+.calc-btn{width:100%;padding:11px;background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(16,185,129,.1));border:1px solid rgba(16,185,129,.3);color:var(--green);font-family:'DM Mono',monospace;font-size:12px;font-weight:500;cursor:pointer;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);margin-top:4px;letter-spacing:.5px;transition:all .2s}
+.calc-btn:hover{background:linear-gradient(135deg,rgba(16,185,129,.3),rgba(16,185,129,.15))}
+
+/* result card */
+.rev-result{background:rgba(255,255,255,.022);border:1px solid var(--border2);padding:20px 22px;position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);display:flex;flex-direction:column;justify-content:space-between}
+.rr-title{font-size:11px;font-weight:500;letter-spacing:1.5px;color:var(--amber);font-family:'DM Mono',monospace;margin-bottom:14px;text-transform:uppercase}
+.rr-big{font-size:36px;font-weight:500;font-family:'DM Mono',monospace;color:var(--green);letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.rr-sub{font-size:11px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:16px}
+.rr-rows{display:flex;flex-direction:column;gap:8px}
+.rr-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border2);font-size:11.5px}
+.rr-row:last-child{border-bottom:none}
+.rr-lbl{color:var(--txt-dim);font-family:'DM Mono',monospace;font-size:10px}
+.rr-val{font-family:'DM Mono',monospace;font-weight:500;color:var(--txt)}
+.save-btn{width:100%;padding:10px;background:var(--amber-d);border:1px solid rgba(245,158,11,.25);color:var(--amber);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);margin-top:14px;letter-spacing:.5px;transition:all .2s}
+.save-btn:hover{background:rgba(245,158,11,.18)}
+.save-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* history table */
+.rev-hist{margin-top:18px}
 
 /* modal */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center}
-.modal-overlay.show{display:flex}
-.modal{background:var(--s1);border:1px solid rgba(244,63,94,.25);padding:28px 32px;max-width:380px;width:90%;position:relative;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%);animation:fadeIn .2s ease}
-@keyframes fadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
-.modal-title{font-size:15px;font-weight:600;color:#fff;margin-bottom:8px}
-.modal-sub{font-size:12px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:22px;line-height:1.6}
-.modal-btns{display:flex;gap:8px;justify-content:flex-end}
-.modal-cancel{padding:8px 18px;font-size:12px;cursor:pointer;font-family:'DM Mono',monospace;background:var(--s2);border:1px solid var(--border2);color:var(--txt-dim);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-.modal-confirm{padding:8px 18px;font-size:12px;cursor:pointer;font-family:'DM Mono',monospace;background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-
-/* loading */
-.tbl-loading{text-align:center;padding:40px;color:var(--txt-dim);font-family:'DM Mono',monospace;font-size:12px}
-.spin{display:inline-block;width:14px;height:14px;border:1.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:rot .7s linear infinite;margin-right:8px;vertical-align:middle}
-@keyframes rot{to{transform:rotate(360deg)}}
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center}
+.modal-ov.show{display:flex}
+.modal{background:var(--s1);border:1px solid rgba(244,63,94,.25);padding:26px 30px;max-width:360px;width:90%;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,0 100%);animation:mi .2s ease}
+@keyframes mi{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.m-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:6px}
+.m-sub{font-size:11.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:20px;line-height:1.6}
+.m-btns{display:flex;gap:8px;justify-content:flex-end}
+.m-cancel{padding:7px 16px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;background:var(--s2);border:1px solid var(--border2);color:var(--txt-dim);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.m-confirm{padding:7px 16px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;background:var(--red-d);border:1px solid rgba(244,63,94,.2);color:var(--red);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
 
 /* mobile */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s1);border-top:1px solid var(--border2);z-index:100;padding:8px 0 calc(8px + env(safe-area-inset-bottom))}
 .mob-nav-inner{display:flex;justify-content:space-around}
-.mob-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;cursor:pointer;color:var(--txt-dim);font-size:10px;font-weight:500;transition:color .15s;text-decoration:none;font-family:'DM Mono',monospace}
+.mob-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 14px;cursor:pointer;color:var(--txt-dim);font-size:10px;transition:color .15s;text-decoration:none;font-family:'DM Mono',monospace}
 .mob-btn.active{color:var(--amber)}
-.mob-icon{font-size:19px}
-.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:19;backdrop-filter:blur(4px)}
-.sb-overlay.show{display:block}
+.mob-icon{font-size:18px}
+.sb-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:19;backdrop-filter:blur(4px)}
+.sb-ov.show{display:block}
 
 @media(max-width:768px){
   .sidebar{position:fixed;left:-260px;top:0;bottom:0;transition:left .3s ease;z-index:20}
   .sidebar.open{left:0}
   .main{padding-bottom:68px}
   .mob-nav{display:block}
-  .topbar{padding:14px 16px}
+  .topbar{padding:12px 16px}
   .content{padding:16px}
   .sum-row{grid-template-columns:1fr 1fr;gap:10px}
-  .cp-row{flex-direction:column;align-items:stretch}
-  .cp-inp.wide{width:100%}
+  .rev-header{grid-template-columns:1fr}
   .topbar-r .clock-chip{display:none}
 }
 </style>
 </head>
 <body>
-
-<div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
+<div class="sb-ov" id="sbOv" onclick="closeSb()"></div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
@@ -183,85 +209,134 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
     <div class="nav-sect">Navigation</div>
     <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
     <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
-    <a class="nav-btn amber-active" href="admin.html"><div class="nav-icon">👑</div>Admin Panel</a>
+    <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
+    <a class="nav-btn active" href="admin.html"><div class="nav-icon">👑</div>Admin Panel</a>
   </div>
   <div class="sb-foot">
-    <div class="lat-row">▸ Admin: <span class="lat-v" id="adminEmail">—</span></div>
+    <div class="admin-email" id="adminEmail">—</div>
   </div>
 </aside>
 
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <div><div class="page-title">👑 Admin Panel</div><div class="page-sub">USER MANAGEMENT · LICENSE KEYS · PERFORMANCE</div></div>
+    <div><div class="page-title">👑 Admin Panel</div><div class="page-sub" id="tabSub">USER MANAGEMENT · LICENSE KEYS · PERFORMANCE</div></div>
     <div class="topbar-r">
       <div class="clock-chip" id="clockEl">——</div>
+      <a class="back-btn" href="index.html">← Dashboard</a>
       <button class="logout-btn" onclick="doLogout()">⏻ Logout</button>
     </div>
   </div>
 
+  <!-- TAB NAV -->
+  <div class="tabs-nav">
+    <div class="tnav active" onclick="swTab('users',this)">👥 Users & Keys</div>
+    <div class="tnav" onclick="swTab('revenue',this)">💰 Revenue Share</div>
+  </div>
+
   <div class="content">
 
-    <!-- SUMMARY CARDS -->
-    <div class="sum-row">
-      <div class="sc am"><div class="sc-corner"></div>
-        <div class="sc-lbl">Total Users</div>
-        <div class="sc-val" id="scTotal">—</div>
-        <div class="sc-sub">registered accounts</div>
+    <!-- ══ TAB: USERS ══ -->
+    <div class="tab-page active" id="tab-users">
+      <div class="sum-row">
+        <div class="sc am"><div class="sc-c"></div><div class="sc-lbl">Total Users</div><div class="sc-val" id="scTotal">—</div><div class="sc-sub">registered accounts</div></div>
+        <div class="sc gr"><div class="sc-c"></div><div class="sc-lbl">Active</div><div class="sc-val" id="scActive">—</div><div class="sc-sub">linked license keys</div></div>
+        <div class="sc pu"><div class="sc-c"></div><div class="sc-lbl">Pending</div><div class="sc-val" id="scPending">—</div><div class="sc-sub">keys not registered</div></div>
+        <div class="sc re"><div class="sc-c"></div><div class="sc-lbl">Suspended</div><div class="sc-val" id="scSuspended">—</div><div class="sc-sub">inactive accounts</div></div>
       </div>
-      <div class="sc gr"><div class="sc-corner"></div>
-        <div class="sc-lbl">Active</div>
-        <div class="sc-val" id="scActive">—</div>
-        <div class="sc-sub">linked license keys</div>
+
+      <div class="create-panel"><div class="create-c"></div>
+        <div class="cp-title">✦ Create New License Key</div>
+        <div class="cp-row">
+          <input class="cp-inp w" type="text" id="newKey" placeholder="LICENSE KEY (e.g. JOHN_001)" style="text-transform:uppercase">
+          <input class="cp-inp w" type="text" id="newName" placeholder="Display Name">
+          <button class="cp-btn btn-a" onclick="createKey()">CREATE KEY →</button>
+        </div>
+        <div class="cp-alert" id="cpAlert"></div>
       </div>
-      <div class="sc pu"><div class="sc-corner"></div>
-        <div class="sc-lbl">Pending</div>
-        <div class="sc-val" id="scPending">—</div>
-        <div class="sc-sub">keys not registered</div>
-      </div>
-      <div class="sc re"><div class="sc-corner"></div>
-        <div class="sc-lbl">Suspended</div>
-        <div class="sc-val" id="scSuspended">—</div>
-        <div class="sc-sub">inactive accounts</div>
+
+      <div class="tbl-panel">
+        <div class="tbl-hd">
+          <div><div class="tbl-title">All Users & License Keys</div><div style="font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:2px" id="userCount">Loading…</div></div>
+          <input class="search-inp" type="text" id="searchInp" placeholder="Search name / key…" oninput="filterUsers()">
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>License Key</th><th>Display Name</th><th>Status</th><th>Net P/L</th><th>Win Rate</th><th>Trades</th><th>Last Trade</th><th>Actions</th></tr></thead>
+            <tbody id="userTable"><tr><td colspan="8" class="tbl-load"><span class="spin"></span>Loading users…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- CREATE LICENSE KEY -->
-    <div class="create-panel"><div class="create-corner"></div>
-      <div class="cp-title">✦ Create New License Key</div>
-      <div class="cp-row">
-        <input class="cp-inp wide" type="text" id="newKey" placeholder="LICENSE KEY (e.g. JOHN_001)" style="text-transform:uppercase">
-        <input class="cp-inp wide" type="text" id="newName" placeholder="Display Name">
-        <button class="cp-btn btn-amber" onclick="createKey()">CREATE KEY →</button>
-      </div>
-      <div class="cp-alert" id="cpAlert"></div>
-    </div>
+    <!-- ══ TAB: REVENUE ══ -->
+    <div class="tab-page" id="tab-revenue">
+      <div class="rev-header">
 
-    <!-- USER TABLE -->
-    <div class="tbl-panel">
-      <div class="tbl-hd">
-        <div><div class="tbl-title">All Users & License Keys</div><div style="font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:2px" id="userCount">Loading…</div></div>
-        <input class="search-inp" type="text" id="searchInp" placeholder="Search name / key / email…" oninput="filterUsers()">
+        <!-- Filter/Calculator -->
+        <div class="rev-filter"><div class="rev-filter-c"></div>
+          <div class="rf-title">💰 Revenue Share Calculator</div>
+          <div class="rf-row">
+            <div class="rf-item">
+              <span class="rf-lbl">License Key (User)</span>
+              <select class="rf-sel" id="revKey"><option value="">— เลือก License Key —</option></select>
+            </div>
+            <div class="rf-item">
+              <span class="rf-lbl">ช่วงเวลาเริ่มต้น</span>
+              <input type="date" class="rf-inp" id="revFrom">
+            </div>
+            <div class="rf-item">
+              <span class="rf-lbl">ช่วงเวลาสิ้นสุด</span>
+              <input type="date" class="rf-inp" id="revTo">
+            </div>
+            <div class="rf-item">
+              <span class="rf-lbl">% ค่าบริการ</span>
+              <input type="number" class="rf-inp" id="revPct" placeholder="เช่น 30" min="0" max="100" step="0.5" value="30">
+            </div>
+            <div class="rf-item">
+              <span class="rf-lbl">อัตรา USD/THB</span>
+              <input type="number" class="rf-inp" id="revRate" placeholder="เช่น 36.5" step="0.1" value="36.5">
+              <button class="cp-btn btn-p" style="margin-top:4px;width:100%;text-align:center" onclick="fetchUSDTHB()">⟳ ดึงราคาปัจจุบัน</button>
+            </div>
+            <button class="calc-btn" onclick="calcRevenue()">✦ คำนวณ Revenue Share</button>
+          </div>
+        </div>
+
+        <!-- Result -->
+        <div class="rev-result" id="revResult">
+          <div>
+            <div class="rr-title">📊 ผลการคำนวณ</div>
+            <div class="rr-big" id="rrFeeTHB">฿0.00</div>
+            <div class="rr-sub" id="rrSubtitle">เลือก user และช่วงเวลาแล้วกด คำนวณ</div>
+            <div class="rr-rows">
+              <div class="rr-row"><span class="rr-lbl">User</span><span class="rr-val" id="rrUser">—</span></div>
+              <div class="rr-row"><span class="rr-lbl">ช่วงเวลา</span><span class="rr-val" id="rrPeriod">—</span></div>
+              <div class="rr-row"><span class="rr-lbl">Gross Profit</span><span class="rr-val pnl-pos" id="rrGrossP">$0.00</span></div>
+              <div class="rr-row"><span class="rr-lbl">Gross Loss</span><span class="rr-val pnl-neg" id="rrGrossL">$0.00</span></div>
+              <div class="rr-row"><span class="rr-lbl">Net Profit</span><span class="rr-val" id="rrNetP">$0.00</span></div>
+              <div class="rr-row"><span class="rr-lbl">ค่าบริการ (<span id="rrPctLabel">30</span>%)</span><span class="rr-val" style="color:var(--amber)" id="rrFeeUSD">$0.00</span></div>
+              <div class="rr-row"><span class="rr-lbl">อัตรา USD/THB</span><span class="rr-val" id="rrRate">36.50</span></div>
+              <div class="rr-row" style="border-bottom:1px solid rgba(245,158,11,.2)"><span class="rr-lbl" style="color:var(--amber)">ต้องจ่าย (THB)</span><span class="rr-val" style="color:var(--amber);font-size:15px" id="rrFeeTHB2">฿0.00</span></div>
+            </div>
+          </div>
+          <button class="save-btn" id="saveRevBtn" onclick="saveRevenue()" disabled>💾 บันทึกและแจ้ง User</button>
+        </div>
       </div>
-      <div class="tbl-scroll">
-        <table>
-          <thead>
-            <tr>
-              <th>License Key</th>
-              <th>Display Name</th>
-              <th>Email</th>
-              <th>Status</th>
-              <th>Net P/L</th>
-              <th>Win Rate</th>
-              <th>Trades</th>
-              <th>Last Trade</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="userTable">
-            <tr><td colspan="9" class="tbl-loading"><span class="spin"></span>Loading users…</td></tr>
-          </tbody>
-        </table>
+
+      <!-- Revenue History -->
+      <div class="tbl-panel rev-hist">
+        <div class="tbl-hd">
+          <div><div class="tbl-title">Revenue Share History</div><div style="font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:2px">ประวัติการคำนวณทั้งหมด</div></div>
+          <div style="display:flex;gap:6px">
+            <button class="cp-btn btn-a" onclick="loadRevHistory()">↻ Refresh</button>
+          </div>
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>License Key</th><th>ช่วงเวลา</th><th>Net Profit</th><th>%</th><th>Fee (USD)</th><th>Fee (THB)</th><th>Rate</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="revHistTable"><tr><td colspan="9" class="tbl-load">Loading…</td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -272,20 +347,20 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 <div class="mob-nav">
   <div class="mob-nav-inner">
     <a class="mob-btn" href="index.html"><div class="mob-icon">▣</div>Dashboard</a>
-    <a class="mob-btn" href="time-analysis.html"><div class="mob-icon">◈</div>Analysis</a>
+    <a class="mob-btn" href="calendar.html"><div class="mob-icon">📅</div>Calendar</a>
     <a class="mob-btn active" href="admin.html"><div class="mob-icon">👑</div>Admin</a>
     <div class="mob-btn" onclick="toggleSb()"><div class="mob-icon">☰</div>Menu</div>
   </div>
 </div>
 
 <!-- DELETE MODAL -->
-<div class="modal-overlay" id="deleteModal">
+<div class="modal-ov" id="delModal">
   <div class="modal">
-    <div class="modal-title">⚠ ยืนยันการลบ</div>
-    <div class="modal-sub" id="modalMsg">คุณต้องการลบ user นี้?<br>การกระทำนี้ไม่สามารถย้อนกลับได้</div>
-    <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeModal()">ยกเลิก</button>
-      <button class="modal-confirm" id="modalConfirm">ลบเลย</button>
+    <div class="m-title">⚠ ยืนยันการลบ</div>
+    <div class="m-sub" id="mMsg">คุณต้องการลบ user นี้?</div>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeModal()">ยกเลิก</button>
+      <button class="m-confirm" id="mConfirm">ลบเลย</button>
     </div>
   </div>
 </div>
@@ -294,14 +369,12 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
 const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
 const sbc=supabase.createClient(SB_URL,SB_KEY);
+let allUsers=[],calcResult=null;
 
-let allUsers=[];
-
-/* ══ AUTH GUARD + ADMIN CHECK ══ */
+/* ══ AUTH GUARD ══ */
 (async()=>{
   const{data:{session}}=await sbc.auth.getSession();
   if(!session){window.location.replace('login.html');return;}
-  /* check is_admin */
   const{data:lk}=await sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
   if(!lk||!lk.is_admin){window.location.replace('index.html');return;}
   document.getElementById('adminEmail').textContent=session.user.email;
@@ -310,164 +383,195 @@ let allUsers=[];
   init();
 })();
 
-/* clock */
 setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
-
-function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show')}
-function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('show')}
+function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOv').classList.toggle('show')}
+function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOv').classList.remove('show')}
 async function doLogout(){await sbc.auth.signOut();window.location.replace('login.html')}
 
-/* ══ INIT ══ */
-async function init(){
-  await loadUsers();
+/* ══ TABS ══ */
+function swTab(name,btn){
+  document.querySelectorAll('.tab-page').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tnav').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='revenue'){loadRevHistory();loadRevKeys();}
+  const subs={users:'USER MANAGEMENT · LICENSE KEYS · PERFORMANCE',revenue:'REVENUE SHARE · CALCULATOR · HISTORY'};
+  document.getElementById('tabSub').textContent=subs[name]||'';
 }
 
-/* ══ LOAD USERS ══ */
+async function init(){await loadUsers();}
+
+/* ══ USERS ══ */
 async function loadUsers(){
-  document.getElementById('userTable').innerHTML=`<tr><td colspan="9" class="tbl-loading"><span class="spin"></span>Loading…</td></tr>`;
-
-  /* Get all license keys */
-  const{data:keys,error}=await sbc.from('license_keys').select('*').order('created_at',{ascending:true});
-  if(error||!keys){document.getElementById('userTable').innerHTML=`<tr><td colspan="9" class="tbl-loading">Error loading data</td></tr>`;return}
-
-  /* Get trade stats per license_key */
+  document.getElementById('userTable').innerHTML=`<tr><td colspan="8" class="tbl-load"><span class="spin"></span>Loading…</td></tr>`;
+  const{data:keys}=await sbc.from('license_keys').select('*').order('created_at',{ascending:true});
+  if(!keys){document.getElementById('userTable').innerHTML=`<tr><td colspan="8" class="tbl-load">Error</td></tr>`;return}
   const{data:trades}=await sbc.from('trade_history').select('license_key,profit,created_at').eq('trade_action','CLOSE');
-
-  /* Build stats map */
-  const statsMap={};
-  if(trades){
-    trades.forEach(t=>{
-      const k=t.license_key;
-      if(!statsMap[k])statsMap[k]={pnl:0,cnt:0,wins:0,lastTrade:null};
-      const p=+t.profit||0;
-      statsMap[k].pnl+=p;statsMap[k].cnt++;
-      if(p>0)statsMap[k].wins++;
-      if(!statsMap[k].lastTrade||new Date(t.created_at)>new Date(statsMap[k].lastTrade))
-        statsMap[k].lastTrade=t.created_at;
-    });
-  }
-
-  /* Get auth users emails via listing (only admin can do this via service role — we use display_name instead) */
-  allUsers=keys.map(k=>({...k,stats:statsMap[k.license_key]||{pnl:0,cnt:0,wins:0,lastTrade:null}}));
-
-  /* Summary counts */
-  const total=keys.length;
-  const active=keys.filter(k=>k.user_id&&!k.suspended).length;
-  const pending=keys.filter(k=>!k.user_id).length;
-  const suspended=keys.filter(k=>k.suspended).length;
-  document.getElementById('scTotal').textContent=total;
-  document.getElementById('scActive').textContent=active;
-  document.getElementById('scPending').textContent=pending;
-  document.getElementById('scSuspended').textContent=suspended;
+  const sm={};
+  if(trades)trades.forEach(t=>{const k=t.license_key;if(!sm[k])sm[k]={pnl:0,cnt:0,wins:0,last:null};const p=+t.profit||0;sm[k].pnl+=p;sm[k].cnt++;if(p>0)sm[k].wins++;if(!sm[k].last||new Date(t.created_at)>new Date(sm[k].last))sm[k].last=t.created_at;});
+  allUsers=keys.map(k=>({...k,stats:sm[k.license_key]||{pnl:0,cnt:0,wins:0,last:null}}));
+  const total=keys.length,active=keys.filter(k=>k.user_id&&!k.suspended).length,pending=keys.filter(k=>!k.user_id).length,suspended=keys.filter(k=>k.suspended).length;
+  st('scTotal',total);st('scActive',active);st('scPending',pending);st('scSuspended',suspended);
   document.getElementById('userCount').textContent=total+' records';
-
-  renderTable(allUsers);
+  renderUsers(allUsers);
 }
 
-/* ══ RENDER TABLE ══ */
-function renderTable(users){
-  if(!users.length){document.getElementById('userTable').innerHTML=`<tr><td colspan="9" class="tbl-loading">No users found</td></tr>`;return}
+function renderUsers(users){
+  if(!users.length){document.getElementById('userTable').innerHTML=`<tr><td colspan="8" class="tbl-load">No users found</td></tr>`;return}
   document.getElementById('userTable').innerHTML=users.map(u=>{
-    const s=u.stats;
-    const wr=s.cnt>0?Math.round(s.wins/s.cnt*100):0;
-    const pnlCls=s.pnl>0?'pnl-pos':s.pnl<0?'pnl-neg':'pnl-zero';
+    const s=u.stats,wr=s.cnt>0?Math.round(s.wins/s.cnt*100):0;
+    const pnlCls=s.pnl>0?'pnl-pos':s.pnl<0?'pnl-neg':'';
     const pnlTxt=s.pnl>0?'+$'+s.pnl.toFixed(2):s.pnl<0?'-$'+Math.abs(s.pnl).toFixed(2):'$0.00';
-    const lastT=s.lastTrade?new Date(s.lastTrade).toLocaleDateString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-
-    /* status */
-    let statusBadge='';
-    if(u.is_admin)statusBadge=`<span class="badge badge-admin">ADMIN</span>`;
-    else if(u.suspended)statusBadge=`<span class="badge badge-suspended">SUSPENDED</span>`;
-    else if(u.user_id)statusBadge=`<span class="badge badge-active">ACTIVE</span>`;
-    else statusBadge=`<span class="badge badge-pending">PENDING</span>`;
-
-    /* actions */
-    let actions='';
+    const last=s.last?new Date(s.last).toLocaleDateString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    let sb='';
+    if(u.is_admin)sb=`<span class="badge b-admin">ADMIN</span>`;
+    else if(u.suspended)sb=`<span class="badge b-suspended">SUSPENDED</span>`;
+    else if(u.user_id)sb=`<span class="badge b-active">ACTIVE</span>`;
+    else sb=`<span class="badge b-pending">PENDING</span>`;
+    let acts='';
     if(!u.is_admin){
-      if(u.suspended){
-        actions+=`<button class="act-btn btn-restore" onclick="restoreUser('${u.id}','${u.license_key}')">RESTORE</button>`;
-      } else if(u.user_id){
-        actions+=`<button class="act-btn btn-suspend" onclick="suspendUser('${u.id}','${u.license_key}')">SUSPEND</button>`;
-      }
-      actions+=`<button class="act-btn btn-delete" onclick="confirmDelete('${u.id}','${u.license_key}','${u.display_name||u.license_key}')">DELETE</button>`;
+      if(u.suspended)acts+=`<button class="act-btn btn-g" onclick="restoreUser('${u.id}')">RESTORE</button>`;
+      else if(u.user_id)acts+=`<button class="act-btn btn-a" onclick="suspendUser('${u.id}')">SUSPEND</button>`;
+      acts+=`<button class="act-btn btn-r" onclick="confirmDel('${u.id}','${u.license_key}','${u.display_name||u.license_key}')">DELETE</button>`;
     }
-
     return`<tr>
       <td style="color:var(--amber);font-weight:500">${u.license_key}</td>
       <td style="color:var(--txt)">${u.display_name||'—'}</td>
-      <td>${u.user_id?'<span style="color:rgba(99,102,241,.7)">Registered</span>':'<span style="color:var(--txt-dim)">—</span>'}</td>
-      <td>${statusBadge}</td>
+      <td>${sb}</td>
       <td class="${pnlCls}">${pnlTxt}</td>
-      <td style="color:${wr>=60?'var(--green)':wr>=40?'var(--amber)':'var(--red)'}">${s.cnt>0?wr+'%':'—'}</td>
+      <td style="color:${wr>=60?'var(--green)':wr>=40?'var(--amber)':'var(--red)'}">${s.cnt?wr+'%':'—'}</td>
       <td>${s.cnt||'—'}</td>
-      <td style="font-size:10.5px">${lastT}</td>
-      <td>${actions||'<span style="color:var(--txt-dim);font-size:10px">—</span>'}</td>
+      <td style="font-size:10.5px">${last}</td>
+      <td>${acts||'<span style="color:var(--txt-dim);font-size:10px">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+function filterUsers(){const q=document.getElementById('searchInp').value.toLowerCase();renderUsers(q?allUsers.filter(u=>(u.license_key||'').toLowerCase().includes(q)||(u.display_name||'').toLowerCase().includes(q)):allUsers);}
+
+async function createKey(){
+  const key=document.getElementById('newKey').value.trim().toUpperCase();
+  const name=document.getElementById('newName').value.trim();
+  const al=document.getElementById('cpAlert');al.className='cp-alert';
+  if(!key||!name){al.textContent='กรุณาใส่ License Key และ Display Name';al.className='cp-alert err';return}
+  if(!/^[A-Z0-9_]+$/.test(key)){al.textContent='ใช้ได้เฉพาะ A-Z, 0-9, _';al.className='cp-alert err';return}
+  const{error}=await sbc.from('license_keys').insert({license_key:key,display_name:name,is_admin:false});
+  if(error){al.textContent=error.message.includes('duplicate')?`Key "${key}" มีอยู่แล้ว`:error.message;al.className='cp-alert err';}
+  else{al.textContent=`✓ สร้าง Key "${key}" สำหรับ "${name}" สำเร็จ`;al.className='cp-alert ok';document.getElementById('newKey').value='';document.getElementById('newName').value='';setTimeout(()=>{al.className='cp-alert'},4000);loadUsers();}
+}
+async function suspendUser(id){await sbc.from('license_keys').update({suspended:true}).eq('id',id);loadUsers()}
+async function restoreUser(id){await sbc.from('license_keys').update({suspended:false}).eq('id',id);loadUsers()}
+let delId=null;
+function confirmDel(id,key,name){delId=id;document.getElementById('mMsg').innerHTML=`ลบ <b style="color:var(--amber)">${name}</b> (${key})?<br><span style="color:var(--red)">ไม่สามารถย้อนกลับได้</span>`;document.getElementById('mConfirm').onclick=()=>deleteUser(id);document.getElementById('delModal').classList.add('show')}
+function closeModal(){document.getElementById('delModal').classList.remove('show');delId=null}
+async function deleteUser(id){closeModal();await sbc.from('license_keys').delete().eq('id',id);loadUsers()}
+
+/* ══ REVENUE SHARE ══ */
+async function loadRevKeys(){
+  const{data:keys}=await sbc.from('license_keys').select('license_key,display_name').order('license_key');
+  if(!keys)return;
+  const sel=document.getElementById('revKey');
+  sel.innerHTML='<option value="">— เลือก License Key —</option>'+keys.map(k=>`<option value="${k.license_key}">${k.license_key}${k.display_name?' ('+k.display_name+')':''}</option>`).join('');
+}
+
+async function fetchUSDTHB(){
+  const btn=document.querySelector('.btn-p');btn.textContent='⟳ กำลังดึง…';
+  try{
+    const res=await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const data=await res.json();
+    const rate=data.rates?.THB||36.5;
+    document.getElementById('revRate').value=rate.toFixed(2);
+    btn.textContent='✓ '+rate.toFixed(2)+' THB/USD';
+    setTimeout(()=>{btn.textContent='⟳ ดึงราคาปัจจุบัน'},3000);
+  }catch(e){
+    btn.textContent='⟳ ดึงราคาปัจจุบัน';
+    alert('ไม่สามารถดึงอัตราแลกเปลี่ยนได้ กรุณาใส่เอง');
+  }
+}
+
+async function calcRevenue(){
+  const key=document.getElementById('revKey').value;
+  const from=document.getElementById('revFrom').value;
+  const to=document.getElementById('revTo').value;
+  const pct=parseFloat(document.getElementById('revPct').value)||30;
+  const rate=parseFloat(document.getElementById('revRate').value)||36.5;
+  if(!key||!from||!to){alert('กรุณาเลือก License Key และช่วงเวลา');return}
+
+  const{data:trades}=await sbc.from('trade_history').select('profit').eq('license_key',key).eq('trade_action','CLOSE').gte('created_at',from+'T00:00:00').lte('created_at',to+'T23:59:59');
+  if(!trades){alert('ไม่สามารถดึงข้อมูลได้');return}
+
+  const profits=trades.map(t=>+t.profit||0);
+  const grossP=profits.filter(p=>p>0).reduce((a,b)=>a+b,0);
+  const grossL=Math.abs(profits.filter(p=>p<0).reduce((a,b)=>a+b,0));
+  const netP=grossP-grossL;
+  const feeUSD=Math.max(0,netP*(pct/100));
+  const feeTHB=feeUSD*rate;
+
+  const keyName=document.getElementById('revKey').options[document.getElementById('revKey').selectedIndex].text;
+  st('rrUser',keyName);
+  st('rrPeriod',new Date(from).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'})+' – '+new Date(to).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'}));
+  st('rrGrossP','+$'+grossP.toFixed(2));
+  st('rrGrossL','-$'+grossL.toFixed(2));
+  const nEl=document.getElementById('rrNetP');nEl.textContent=(netP>=0?'+$':'-$')+Math.abs(netP).toFixed(2);nEl.style.color=netP>=0?'var(--green)':'var(--red)';
+  st('rrPctLabel',pct);
+  st('rrFeeUSD','$'+feeUSD.toFixed(2));
+  st('rrRate',rate.toFixed(2));
+  st('rrFeeTHB','฿'+feeTHB.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  st('rrFeeTHB2','฿'+feeTHB.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}));
+  st('rrSubtitle',`${key} · ${pct}% of Net Profit`);
+  document.getElementById('rrFeeTHB').style.color=feeTHB>0?'var(--green)':'var(--txt-dim)';
+  document.getElementById('saveRevBtn').disabled=false;
+  calcResult={key,from,to,pct,rate,grossP,grossL,netP,feeUSD,feeTHB};
+}
+
+async function saveRevenue(){
+  if(!calcResult)return;
+  const btn=document.getElementById('saveRevBtn');btn.disabled=true;btn.textContent='⟳ กำลังบันทึก…';
+  const{error}=await sbc.from('revenue_share').insert({
+    license_key:calcResult.key,
+    percent:calcResult.pct,
+    period_start:calcResult.from,
+    period_end:calcResult.to,
+    gross_profit:calcResult.grossP,
+    fee_usd:calcResult.feeUSD,
+    fee_thb:calcResult.feeTHB,
+    usd_thb_rate:calcResult.rate,
+    status:'pending'
+  });
+  if(error){btn.disabled=false;btn.textContent='💾 บันทึกและแจ้ง User';alert('Error: '+error.message);}
+  else{btn.textContent='✓ บันทึกแล้ว';setTimeout(()=>{btn.textContent='💾 บันทึกและแจ้ง User';btn.disabled=false;},3000);loadRevHistory();}
+}
+
+async function loadRevHistory(){
+  document.getElementById('revHistTable').innerHTML=`<tr><td colspan="9" class="tbl-load"><span class="spin"></span>Loading…</td></tr>`;
+  const{data,error}=await sbc.from('revenue_share').select('*').order('created_at',{ascending:false});
+  if(error||!data){document.getElementById('revHistTable').innerHTML=`<tr><td colspan="9" class="tbl-load">Error loading</td></tr>`;return}
+  if(!data.length){document.getElementById('revHistTable').innerHTML=`<tr><td colspan="9" class="tbl-load">ยังไม่มีประวัติ</td></tr>`;return}
+  document.getElementById('revHistTable').innerHTML=data.map(r=>{
+    const statusCls=r.status==='paid'?'b-active':r.status==='pending'?'b-pending':'b-suspended';
+    const statusTxt=r.status==='paid'?'PAID':r.status==='pending'?'PENDING':'CANCELLED';
+    const from=new Date(r.period_start).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'});
+    const to=new Date(r.period_end).toLocaleDateString('th-TH',{month:'short',day:'numeric',year:'2-digit'});
+    const netP=r.gross_profit-0;
+    return`<tr>
+      <td style="color:var(--amber);font-weight:500">${r.license_key}</td>
+      <td style="font-size:10.5px">${from} – ${to}</td>
+      <td class="${netP>=0?'pnl-pos':'pnl-neg'}">${netP>=0?'+$':'-$'}${Math.abs(netP).toFixed(2)}</td>
+      <td>${r.percent}%</td>
+      <td style="color:var(--amber)">$${(+r.fee_usd).toFixed(2)}</td>
+      <td style="color:var(--amber);font-weight:500">฿${(+r.fee_thb).toLocaleString('th-TH',{minimumFractionDigits:2})}</td>
+      <td style="font-size:10.5px">${r.usd_thb_rate}</td>
+      <td><span class="badge ${statusCls}">${statusTxt}</span></td>
+      <td>
+        ${r.status==='pending'?`<button class="act-btn btn-g" onclick="markPaid('${r.id}')">MARK PAID</button>`:''}
+        <button class="act-btn btn-r" onclick="deleteRev('${r.id}')">DEL</button>
+      </td>
     </tr>`;
   }).join('');
 }
 
-/* ══ FILTER ══ */
-function filterUsers(){
-  const q=document.getElementById('searchInp').value.toLowerCase();
-  if(!q){renderTable(allUsers);return}
-  const filtered=allUsers.filter(u=>
-    (u.license_key||'').toLowerCase().includes(q)||
-    (u.display_name||'').toLowerCase().includes(q)
-  );
-  renderTable(filtered);
-}
-
-/* ══ CREATE KEY ══ */
-async function createKey(){
-  const key=document.getElementById('newKey').value.trim().toUpperCase();
-  const name=document.getElementById('newName').value.trim();
-  const alert=document.getElementById('cpAlert');
-  alert.className='cp-alert';
-  if(!key||!name){alert.textContent='กรุณาใส่ License Key และ Display Name';alert.className='cp-alert err';return}
-  if(!/^[A-Z0-9_]+$/.test(key)){alert.textContent='License Key ใช้ได้เฉพาะตัวอักษร A-Z, 0-9 และ _ เท่านั้น';alert.className='cp-alert err';return}
-  const{error}=await sbc.from('license_keys').insert({license_key:key,display_name:name,is_admin:false});
-  if(error){
-    alert.textContent=error.message.includes('duplicate')?`License Key "${key}" มีอยู่แล้ว`:error.message;
-    alert.className='cp-alert err';
-  } else {
-    alert.textContent=`✓ สร้าง License Key "${key}" สำหรับ "${name}" สำเร็จแล้ว`;
-    alert.className='cp-alert ok';
-    document.getElementById('newKey').value='';
-    document.getElementById('newName').value='';
-    setTimeout(()=>{alert.className='cp-alert';},4000);
-    loadUsers();
-  }
-}
-
-/* ══ SUSPEND ══ */
-async function suspendUser(id,key){
-  const{error}=await sbc.from('license_keys').update({suspended:true}).eq('id',id);
-  if(!error)loadUsers();
-  else alert('Error: '+error.message);
-}
-
-/* ══ RESTORE ══ */
-async function restoreUser(id,key){
-  const{error}=await sbc.from('license_keys').update({suspended:false}).eq('id',id);
-  if(!error)loadUsers();
-  else alert('Error: '+error.message);
-}
-
-/* ══ DELETE MODAL ══ */
-let pendingDeleteId=null;
-function confirmDelete(id,key,name){
-  pendingDeleteId=id;
-  document.getElementById('modalMsg').innerHTML=`คุณต้องการลบ <b style="color:var(--amber)">${name}</b> (${key})?<br><span style="color:var(--red)">การกระทำนี้ไม่สามารถย้อนกลับได้</span>`;
-  document.getElementById('modalConfirm').onclick=()=>deleteUser(id);
-  document.getElementById('deleteModal').classList.add('show');
-}
-function closeModal(){document.getElementById('deleteModal').classList.remove('show');pendingDeleteId=null}
-async function deleteUser(id){
-  closeModal();
-  const{error}=await sbc.from('license_keys').delete().eq('id',id);
-  if(!error)loadUsers();
-  else alert('Error: '+error.message);
-}
+async function markPaid(id){await sbc.from('revenue_share').update({status:'paid'}).eq('id',id);loadRevHistory()}
+async function deleteRev(id){if(confirm('ลบรายการนี้?')){await sbc.from('revenue_share').delete().eq('id',id);loadRevHistory()}}
+function st(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
 </script>
 </body>
 </html>

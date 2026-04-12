@@ -175,6 +175,32 @@ thead th{padding:9px 14px;text-align:left;font-size:9px;letter-spacing:2px;text-
 tbody td{padding:11px 14px;font-size:11px;border-bottom:1px solid rgba(255,255,255,.025);font-family:'DM Mono',monospace;vertical-align:middle;white-space:nowrap;color:var(--txt-dim)}
 tbody tr{transition:background .12s}
 tbody tr:hover{background:rgba(255,255,255,.02)}
+tbody tr.admin-row{cursor:pointer}
+tbody tr.admin-row:hover{background:rgba(99,102,241,.06)!important}
+tbody tr.admin-row:hover td:first-child::before{content:'🔍 ';font-size:9px}
+
+/* Trade Detail Modal */
+.td-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.td-modal.show{display:flex}
+.td-box{background:var(--s1);border:1px solid rgba(99,102,241,.2);padding:0;max-width:620px;width:100%;position:relative;clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,0 100%);max-height:80vh;overflow-y:auto;animation:tdIn .2s ease}
+@keyframes tdIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.td-hd{padding:18px 24px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;background:rgba(99,102,241,.06);position:sticky;top:0;z-index:5}
+.td-hd-title{font-size:13px;font-weight:600;color:#fff}
+.td-hd-sub{font-size:10px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:2px}
+.td-close{background:var(--s2);border:1px solid var(--border2);color:var(--txt-dim);width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0}
+.td-body{padding:20px 24px}
+.td-sect{margin-bottom:18px}
+.td-sect-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--purple);font-family:'DM Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.td-sect-title::after{content:'';flex:1;height:1px;background:rgba(99,102,241,.15)}
+.td-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.td-item{background:var(--s2);padding:10px 12px;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)}
+.td-item-l{font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:3px}
+.td-item-v{font-size:13px;font-weight:500;font-family:'DM Mono',monospace;color:var(--txt)}
+.td-no-settings{padding:20px;text-align:center;font-size:11px;color:var(--txt-dim);font-family:'DM Mono',monospace;background:var(--s2);clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
+.td-snap-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--purple-d);border:1px solid rgba(99,102,241,.2);font-size:9.5px;font-family:'DM Mono',monospace;color:#a5b4fc;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);margin-bottom:12px}
+.td-loading{text-align:center;padding:32px;color:var(--txt-dim);font-family:'DM Mono',monospace;font-size:11px}
+.spin2{display:inline-block;width:14px;height:14px;border:1.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:rot .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes rot{to{transform:rotate(360deg)}}
 .pill{display:inline-flex;padding:2px 9px;font-size:9.5px;font-weight:500;font-family:'DM Mono',monospace;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
 .pill-buy{background:rgba(56,189,248,.1);color:var(--blue)}
 .pill-sell{background:var(--red-d);color:var(--red)}
@@ -568,12 +594,82 @@ function renderTable(fil){
   if(tFilter==='loss')rows=rows.filter(r=>isClose(r)&&(+r.profit||0)<=0);
   if(!rows.length){document.getElementById('tradeTable').innerHTML=`<tr><td colspan="14" style="text-align:center;padding:28px;color:var(--txt-dim)">NO DATA MATCH</td></tr>`;return}
   const f5=v=>v!=null&&v!==''?(+v).toFixed(5):'—',f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
+  const adm=window._isAdmin||false;
   document.getElementById('tradeTable').innerHTML=rows.slice(0,60).map(r=>{
     const ac=(r.trade_action||'').toUpperCase(),cl2=ac==='CLOSE';
     const pv=cl2?(+r.profit||0):null,pp=pv!==null&&pv>0;
     const pc=ac.includes('BUY')?'pill-buy':ac.includes('SELL')?'pill-sell':cl2?'pill-close':'pill-open';
-    return`<tr><td>${new Date(r.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td style="color:#a5b4fc;font-weight:500">${r.license_key||'—'}</td><td style="color:var(--txt);font-weight:500">${r.symbol||'—'}</td><td><span class="pill ${pc}">${ac}</span></td><td>${f5(r.open_price)}</td><td>${f5(r.close_price)}</td><td>${f2(r.lots)}</td><td style="color:#7f3f4a">${f5(r.sl)}</td><td style="color:rgba(56,189,248,.6)">${f5(r.tp)}</td><td class="${cl2?(pp?'p-pos':'p-neg'):''}">${cl2?((pp?'+':'')+f2(r.profit)):'—'}</td><td>${f2(r.swap)}</td><td>${f2(r.commission)}</td><td style="color:var(--txt)">$${(+r.account_balance||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td><td style="font-size:9.5px">${r.close_reason||'—'}</td></tr>`;
+    const esc=JSON.stringify(r).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const click=adm&&cl2?`onclick="showTradeDetail('${esc}')" title="🔍 คลิกดู Settings"`:'';
+    const cls=adm&&cl2?'admin-row':'';
+    return`<tr class="${cls}" ${click}><td>${new Date(r.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td style="color:#a5b4fc;font-weight:500">${r.license_key||'—'}</td><td style="color:var(--txt);font-weight:500">${r.symbol||'—'}</td><td><span class="pill ${pc}">${ac}</span></td><td>${f5(r.open_price)}</td><td>${f5(r.close_price)}</td><td>${f2(r.lots)}</td><td style="color:#7f3f4a">${f5(r.sl)}</td><td style="color:rgba(56,189,248,.6)">${f5(r.tp)}</td><td class="${cl2?(pp?'p-pos':'p-neg'):''}">  ${cl2?((pp?'+':'')+f2(r.profit)):'—'}</td><td>${f2(r.swap)}</td><td>${f2(r.commission)}</td><td style="color:var(--txt)">$${(+r.account_balance||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td><td style="font-size:9.5px">${r.close_reason||'—'}</td></tr>`;
   }).join('');
+}
+
+/* Trade Detail Modal — Admin Only */
+function closeTdModal(){document.getElementById('tdModal').classList.remove('show')}
+
+async function showTradeDetail(rJson){
+  let r;
+  try{r=JSON.parse(rJson.replace(/&quot;/g,'"'));}catch(e){console.error(e);return;}
+  const pv=+r.profit||0,pp=pv>=0;
+  document.getElementById('tdTitle').textContent=(r.symbol||'—')+' · '+(r.trade_action||'').toUpperCase();
+  document.getElementById('tdSub').textContent=r.license_key+' · '+new Date(r.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('tdBody').innerHTML='<div class="td-loading"><span class="spin2"></span>กำลังโหลด Settings…</div>';
+  document.getElementById('tdModal').classList.add('show');
+  const f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
+  const{data:snaps}=await sbc.from('ea_settings').select('*').eq('license_key',r.license_key).lte('created_at',r.created_at).order('created_at',{ascending:false}).limit(1);
+  const s=snaps&&snaps.length?snaps[0]:null;
+  let html='';
+  html+=`<div class="td-sect"><div class="td-sect-title">◈ Trade Info</div><div class="td-grid">
+    <div class="td-item"><div class="td-item-l">Symbol</div><div class="td-item-v" style="color:var(--amber)">${r.symbol||'—'}</div></div>
+    <div class="td-item"><div class="td-item-l">License Key</div><div class="td-item-v" style="color:#a5b4fc">${r.license_key||'—'}</div></div>
+    <div class="td-item"><div class="td-item-l">Lots Used</div><div class="td-item-v" style="color:var(--amber)">${f2(r.lots)}</div></div>
+    <div class="td-item"><div class="td-item-l">Open</div><div class="td-item-v">${r.open_price?(+r.open_price).toFixed(5):'—'}</div></div>
+    <div class="td-item"><div class="td-item-l">Close</div><div class="td-item-v">${r.close_price?(+r.close_price).toFixed(5):'—'}</div></div>
+    <div class="td-item"><div class="td-item-l">Profit</div><div class="td-item-v" style="color:${pp?'var(--green)':'var(--red)'}">${pp?'+':''}$${Math.abs(pv).toFixed(2)}</div></div>
+    <div class="td-item"><div class="td-item-l">SL</div><div class="td-item-v" style="color:var(--red)">${r.sl?(+r.sl).toFixed(5):'—'}</div></div>
+    <div class="td-item"><div class="td-item-l">TP</div><div class="td-item-v" style="color:var(--blue)">${r.tp?(+r.tp).toFixed(5):'—'}</div></div>
+    <div class="td-item"><div class="td-item-l">Close Reason</div><div class="td-item-v" style="font-size:11px">${r.close_reason||'—'}</div></div>
+    <div class="td-item"><div class="td-item-l">Balance After</div><div class="td-item-v">$${(+r.account_balance||0).toFixed(2)}</div></div>
+    <div class="td-item"><div class="td-item-l">Swap</div><div class="td-item-v">${f2(r.swap)}</div></div>
+    <div class="td-item"><div class="td-item-l">Commission</div><div class="td-item-v">${f2(r.commission)}</div></div>
+  </div></div>`;
+  if(!s){
+    html+=`<div class="td-no-settings">ℹ ไม่มีข้อมูล EA Settings ณ เวลานี้<br><span style="font-size:10px;opacity:.7">EA ต้องรันไฟล์ใหม่ที่มี SendSettings() ก่อน</span></div>`;
+  } else {
+    const snapT=new Date(s.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const lotMismatch=s.use_lot_boost&&Math.abs(+r.lots-(+s.boost_lot||0))<0.001;
+    html+=`<div class="td-sect"><div class="td-sect-title">⚙️ EA Settings ที่ใช้</div>
+      <div class="td-snap-badge">📸 Snapshot: ${snapT} · ${s.symbol||''} ${s.timeframe||''}</div>
+      <div class="td-grid">
+        <div class="td-item"><div class="td-item-l">Fixed Lot</div><div class="td-item-v" style="color:var(--amber)">${s.fixed_lot||'—'}</div></div>
+        <div class="td-item"><div class="td-item-l">SL Points</div><div class="td-item-v">${s.stoploss||'—'}</div></div>
+        <div class="td-item"><div class="td-item-l">TP Points</div><div class="td-item-v">${s.takeprofit||'—'}</div></div>
+        <div class="td-item" style="${s.use_lot_boost?'background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2)':''}"><div class="td-item-l">Lot Boost</div><div class="td-item-v" style="color:${s.use_lot_boost?'var(--amber)':'var(--txt-dim)'}">${s.use_lot_boost?'ON ⚠':'OFF'}</div></div>
+        <div class="td-item"><div class="td-item-l">Boost Lot</div><div class="td-item-v" style="color:${lotMismatch?'var(--red)':'var(--txt)'}">${s.boost_lot||'—'}${lotMismatch?' ← used this!':''}</div></div>
+        <div class="td-item" style="${s.use_reverse?'background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2)':''}"><div class="td-item-l">Reverse Mode</div><div class="td-item-v" style="color:${s.use_reverse?'var(--red)':'var(--txt-dim)'}">${s.use_reverse?'ON ⚠':'OFF'}</div></div>
+        <div class="td-item"><div class="td-item-l">Delay</div><div class="td-item-v" style="font-size:11px">${(s.delay_mode||'—').replace('DELAY_','')} ${s.delay_seconds?s.delay_seconds+'s':''}</div></div>
+        <div class="td-item"><div class="td-item-l">Cooldown</div><div class="td-item-v">${s.cooldown_minutes||'—'}m</div></div>
+        <div class="td-item"><div class="td-item-l">Daily Target</div><div class="td-item-v" style="color:var(--green)">$${s.daily_profit_target||'—'}</div></div>
+        <div class="td-item"><div class="td-item-l">Daily Limit</div><div class="td-item-v" style="color:var(--red)">$${s.daily_loss_limit||'—'}</div></div>
+        <div class="td-item"><div class="td-item-l">Max Spread</div><div class="td-item-v">${s.max_spread||'—'} pts</div></div>
+        <div class="td-item"><div class="td-item-l">Balance Then</div><div class="td-item-v" style="color:var(--blue)">$${(+s.balance||0).toFixed(2)}</div></div>
+      </div>
+    </div>`;
+    const slots=[s.slot_1,s.slot_2,s.slot_3,s.slot_4,s.slot_5].filter(Boolean);
+    if(s.use_time_filter&&slots.length){
+      html+=`<div class="td-sect"><div class="td-sect-title">🕐 Time Filter Slots</div><div class="td-grid">`;
+      slots.forEach((sl,i)=>{
+        const h2=new Date(r.created_at).getUTCHours(),m2=new Date(r.created_at).getUTCMinutes();
+        const pts=sl.split('-');let inSlot=false;
+        if(pts.length===2){const[sh,sm]=pts[0].split(':').map(Number),[eh,em]=pts[1].split(':').map(Number);const t=h2*60+m2,ss=sh*60+sm,ee=eh*60+em;inSlot=ee>ss?(t>=ss&&t<=ee):(t>=ss||t<=ee);}
+        html+=`<div class="td-item" style="${inSlot?'background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3)':''}"><div class="td-item-l">Slot ${i+1}${inSlot?' ✓ ACTIVE':''}</div><div class="td-item-v" style="color:${inSlot?'var(--green)':'var(--txt-dim)'}; font-size:12px">${sl}</div></div>`;
+      });
+      html+='</div></div>';
+    }
+  }
+  document.getElementById('tdBody').innerHTML=html;
 }
 
 /* main update */
@@ -594,5 +690,21 @@ function hideAlert(){document.getElementById('alertBar').classList.remove('show'
 
 setInterval(updateUI,10000);
 </script>
+<!-- TRADE DETAIL MODAL (Admin Only) -->
+<div class="td-modal" id="tdModal">
+  <div class="td-box">
+    <div class="td-hd">
+      <div>
+        <div class="td-hd-title" id="tdTitle">Trade Detail</div>
+        <div class="td-hd-sub" id="tdSub">—</div>
+      </div>
+      <div class="td-close" onclick="closeTdModal()">✕</div>
+    </div>
+    <div class="td-body" id="tdBody">
+      <div class="td-loading"><span class="spin2"></span>Loading…</div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

@@ -460,12 +460,12 @@ function renderSidebar(d){
   /* sync global vars from window (set by auth guard) */
   isAdmin=window._isAdmin||false;
   myLicenseKey=window._myLicenseKey||'';
-  /* admin sees all keys, user sees only their own */
+  /* admin sees all keys that have trade data (filter out empty test keys) */
   if(isAdmin){
-    const keys=[...new Set(d.map(r=>r.license_key||'N/A'))].sort();
+    const keys=[...new Set(d.map(r=>r.license_key||'N/A').filter(k=>k&&k!=='N/A'))].sort();
     let h=bAcc('All','G','Global Overview',lBal(d,'All'));
     keys.forEach(k=>h+=bAcc(k,k[0].toUpperCase(),k,lBal(d,k)));
-    document.getElementById('accList').innerHTML=h;
+    document.getElementById('accList').innerHTML=h||'<div style="font-size:11px;color:var(--txt-dim);padding:8px 10px;font-family:DM Mono,monospace">No trade data yet</div>';
   } else {
     /* user sees only their own key — set curKey automatically */
     if(myLicenseKey&&curKey==='All'){curKey=myLicenseKey;firstLoad=true;}

@@ -101,6 +101,8 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .btn-g{background:var(--green-d);border-color:rgba(16,185,129,.2);color:var(--green)}
 .btn-g:hover{background:rgba(16,185,129,.18)}
 .btn-r{background:var(--red-d);border-color:rgba(244,63,94,.2);color:var(--red)}
+.btn-b{background:var(--blue-d);border-color:rgba(56,189,248,.2);color:var(--blue)}
+.btn-b:hover{background:rgba(56,189,248,.15)}
 .btn-p{background:var(--purple-d);border-color:rgba(99,102,241,.2);color:#a5b4fc}
 .cp-alert{display:none;font-size:11px;font-family:'DM Mono',monospace;padding:7px 12px;margin-top:10px;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)}
 .cp-alert.ok{background:var(--green-d);border:1px solid rgba(16,185,129,.2);color:var(--green);display:block}
@@ -367,6 +369,21 @@ tbody tr:hover{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
+<!-- CLEAR DATA MODAL -->
+<div class="modal-ov" id="clearModal" style="display:none">
+  <div class="modal" style="border-color:rgba(56,189,248,.25)">
+    <div class="m-title" style="color:var(--blue)">🗑 ล้างประวัติ Trade</div>
+    <div class="m-sub" id="clearMsg">ต้องการล้างข้อมูลทั้งหมดของ key นี้?</div>
+    <div style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);padding:10px 14px;margin-bottom:16px;font-size:11px;font-family:'DM Mono',monospace;color:rgba(56,189,248,.8);clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)">
+      ℹ trade_history ทั้งหมดของ key นี้จะถูกลบ<br>license_key และ user account ยังคงอยู่ปกติ
+    </div>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeClearModal()">ยกเลิก</button>
+      <button id="clearConfirm" style="padding:7px 16px;font-size:11px;cursor:pointer;font-family:'DM Mono',monospace;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);color:var(--blue);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)">ล้างข้อมูล</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
@@ -434,6 +451,7 @@ function renderUsers(users){
     if(!u.is_admin){
       if(u.suspended)acts+=`<button class="act-btn btn-g" onclick="restoreUser('${u.id}')">RESTORE</button>`;
       else if(u.user_id)acts+=`<button class="act-btn btn-a" onclick="suspendUser('${u.id}')">SUSPEND</button>`;
+      acts+=`<button class="act-btn btn-b" onclick="confirmClear('${u.license_key}','${u.display_name||u.license_key}')">CLEAR</button>`;
       acts+=`<button class="act-btn btn-r" onclick="confirmDel('${u.id}','${u.license_key}','${u.display_name||u.license_key}')">DELETE</button>`;
     }
     return`<tr>
@@ -466,6 +484,42 @@ let delId=null;
 function confirmDel(id,key,name){delId=id;document.getElementById('mMsg').innerHTML=`ลบ <b style="color:var(--amber)">${name}</b> (${key})?<br><span style="color:var(--red)">ไม่สามารถย้อนกลับได้</span>`;document.getElementById('mConfirm').onclick=()=>deleteUser(id);document.getElementById('delModal').classList.add('show')}
 function closeModal(){document.getElementById('delModal').classList.remove('show');delId=null}
 async function deleteUser(id){closeModal();await sbc.from('license_keys').delete().eq('id',id);loadUsers()}
+
+/* ══ CLEAR TRADE DATA ══ */
+function confirmClear(key,name){
+  document.getElementById('clearMsg').innerHTML=`ล้างประวัติ trade ทั้งหมดของ <b style="color:var(--blue)">${name}</b> (${key})?`;
+  document.getElementById('clearConfirm').onclick=()=>clearData(key);
+  document.getElementById('clearModal').style.display='flex';
+  document.getElementById('clearModal').classList.add('show');
+}
+function closeClearModal(){
+  document.getElementById('clearModal').style.display='none';
+  document.getElementById('clearModal').classList.remove('show');
+}
+async function clearData(key){
+  closeClearModal();
+  const btn=document.querySelector(`button[onclick="confirmClear('${key.replace(/'/g,"\\'")}',`);
+  /* delete trade_history */
+  const{error:e1}=await sbc.from('trade_history').delete().eq('license_key',key);
+  /* delete ea_settings */
+  const{error:e2}=await sbc.from('ea_settings').delete().eq('license_key',key);
+  /* delete revenue_share */
+  const{error:e3}=await sbc.from('revenue_share').delete().eq('license_key',key);
+  if(e1||e2||e3){
+    alert('เกิดข้อผิดพลาด: '+(e1?.message||e2?.message||e3?.message));
+  } else {
+    /* show success flash */
+    showClearSuccess(key);
+    loadUsers();
+  }
+}
+function showClearSuccess(key){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;top:80px;right:24px;z-index:999;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);color:#38bdf8;padding:12px 20px;font-family:DM Mono,monospace;font-size:12px;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%);animation:fadeIn .3s ease';
+  el.textContent='✓ ล้างข้อมูล '+key+' เรียบร้อย';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
 
 /* ══ REVENUE SHARE ══ */
 async function loadRevKeys(){

@@ -30,6 +30,8 @@
   }
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
+  /* load data AFTER auth vars are confirmed */
+  updateUI();
 })();
 </script>
 <style>
@@ -590,7 +592,6 @@ function st(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
 function showAlert(m){document.getElementById('alertBar').classList.add('show');document.getElementById('alertMsg').textContent=m}
 function hideAlert(){document.getElementById('alertBar').classList.remove('show')}
 
-updateUI();
 setInterval(updateUI,10000);
 </script>
 </body>

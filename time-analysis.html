@@ -20,14 +20,16 @@
   window._userSession=session;
   window._userEmail=session.user.email;
   window._userId=session.user.id;
-  document.body.style.visibility='visible';
-  document.body.style.opacity='1';
   const{data:lk}=await _sbc.from('license_keys').select('license_key,is_admin').eq('user_id',session.user.id).single();
   if(lk){
     window._isAdmin=lk.is_admin;
     window._myLicenseKey=lk.license_key;
     if(lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
   }
+  document.body.style.visibility='visible';
+  document.body.style.opacity='1';
+  /* start loading AFTER auth is confirmed and vars are set */
+  fetchKeys().then(()=>load());
 })();
 </script>
 <style>
@@ -685,7 +687,6 @@ async function runAI(){
 function st(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
 
 loadKey();
-fetchKeys().then(()=>load());
 document.getElementById('dFrom').addEventListener('change',load);
 document.getElementById('dTo').addEventListener('change',load);
 document.getElementById('kSel').addEventListener('change',load);

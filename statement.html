@@ -7,8 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script>let sbc=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");</script>
-<style>body{visibility:hidden;opacity:0}</style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;max-width:100vw}
@@ -150,12 +148,11 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   </div>
   <div class="sb-nav">
     <div class="nav-sect">Navigation</div>
-    
-    <a class="nav-btn" href="index.html" id="nav-dashboard"><div class="nav-icon">▣</div>Dashboard</a>
-    <a class="nav-btn" href="time-analysis.html" id="nav-time-analysis"><div class="nav-icon">◈</div>Time Analysis</a>
-    <a class="nav-btn" href="calendar.html" id="nav-calendar"><div class="nav-icon">📅</div>Calendar</a>
-    <a class="nav-btn active" href="statement.html" id="nav-statement"><div class="nav-icon">💰</div>Statement</a>
-    <a class="nav-btn" href="ea-settings.html" id="nav-ea-settings" style="display:none"><div class="nav-icon">⚙️</div>EA Settings</a>
+    <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
+    <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
+    <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
+    <a class="nav-btn active" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
+    <a class="nav-btn" href="ea-settings.html"><div class="nav-icon">⚙️</div>EA Settings</a>
     <a class="nav-btn" href="admin.html" id="adminNav" style="display:none"><div class="nav-icon">👑</div>Admin Panel</a>
   </div>
   <div class="sb-foot">
@@ -189,6 +186,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 </div>
 
 <script>
+const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
+const sbc=supabase.createClient(SB_URL,SB_KEY);
 const MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 let myKey='',myName='',myEmail='';
 
@@ -208,40 +208,6 @@ let myKey='',myName='',myEmail='';
   loadStatement();
 })();
 
-
-/* ══ SHARED AUTH + MENU GUARD ══ */
-async function initApp(pageKey,onReady){
-  const _sb=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");
-  const{data:{session}}=await _sb.auth.getSession();
-  if(!session){window.location.replace('login.html');return;}
-  const{data:lk}=await _sb.from('license_keys').select('license_key,is_admin,display_name').eq('user_id',session.user.id).single();
-  if(!lk){window.location.replace('login.html');return;}
-  window._isAdmin=lk.is_admin||false;
-  window._myLicenseKey=lk.license_key||'';
-  window._displayName=lk.display_name||lk.license_key||'';
-  window._userId=session.user.id;
-  window._userEmail=session.user.email;
-  const{data:md}=await _sb.from('menu_settings').select('page_key,is_visible');
-  window._menuVis={};
-  if(md)md.forEach(m=>window._menuVis[m.page_key]=m.is_visible);
-  if(pageKey&&!lk.is_admin&&window._menuVis[pageKey]===false){window.location.replace('index.html');return;}
-  _applyNav(lk.is_admin);
-  document.body.style.visibility='visible';document.body.style.opacity='1';
-  if(onReady)onReady();
-}
-function _applyNav(isAdmin){
-  if(isAdmin){document.querySelectorAll('#adminNav,#adminTopBtn').forEach(el=>{if(el)el.style.display='flex';});}
-  const ea=document.getElementById('nav-ea-settings');if(ea)ea.style.display=isAdmin?'flex':'none';
-  if(!isAdmin){
-    const map={time_analysis:'nav-time-analysis',calendar:'nav-calendar',statement:'nav-statement'};
-    Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el&&window._menuVis[k]===false)el.style.display='none';});
-  }
-  const uc=document.getElementById('userChip');if(uc)uc.textContent=window._displayName||'';
-}
-
-initApp('statement', ()=>{
-  loadStatement();
-});
 setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
 function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbO').classList.toggle('show')}
 function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbO').classList.remove('show')}

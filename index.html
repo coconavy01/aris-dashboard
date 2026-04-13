@@ -8,9 +8,32 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script>let sbc=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");</script>
 <style>body{visibility:hidden;opacity:0}</style>
-
+<script>
+/* AUTH GUARD — hide body until session confirmed */
+(async()=>{
+  const _sbc=supabase.createClient(
+    "https://tfnikhovkbbrhvrkobpu.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo"
+  );
+  const{data:{session}}=await _sbc.auth.getSession();
+  if(!session){window.location.replace('login.html');return;}
+  window._userSession=session;
+  window._userEmail=session.user.email;
+  window._userId=session.user.id;
+  /* get license key + admin status */
+  const{data:lk}=await _sbc.from('license_keys').select('license_key,is_admin').eq('user_id',session.user.id).single();
+  if(lk){
+    window._isAdmin=lk.is_admin;
+    window._myLicenseKey=lk.license_key;
+    if(lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
+  }
+  document.body.style.visibility='visible';
+  document.body.style.opacity='1';
+  /* load data AFTER auth vars are confirmed */
+  updateUI();
+})();
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;max-width:100vw}
@@ -236,13 +259,12 @@ tbody tr.admin-row:hover td:first-child::before{content:'🔍 ';font-size:9px}
   </div>
   <div class="sb-nav">
     <div class="nav-sect">Navigation</div>
-    
-    <a class="nav-btn active" href="index.html" id="nav-dashboard"><div class="nav-icon">▣</div>Dashboard</a>
-    <a class="nav-btn" href="time-analysis.html" id="nav-time-analysis"><div class="nav-icon">◈</div>Time Analysis</a>
-    <a class="nav-btn" href="calendar.html" id="nav-calendar"><div class="nav-icon">📅</div>Calendar</a>
-    <a class="nav-btn" href="statement.html" id="nav-statement"><div class="nav-icon">💰</div>Statement</a>
-    <a class="nav-btn" href="ea-settings.html" id="nav-ea-settings" style="display:none"><div class="nav-icon">⚙️</div>EA Settings</a>
-    <a class="nav-btn" href="admin.html" id="adminNav" style="display:none"><div class="nav-icon">👑</div>Admin Panel</a>
+    <a class="nav-btn active" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
+    <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
+    <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
+    <a class="nav-btn" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
+    <a class="nav-btn" href="ea-settings.html"><div class="nav-icon">⚙️</div>EA Settings</a>
+
   </div>
   <div class="sb-accs">
     <div class="nav-sect" style="margin-bottom:8px">License Keys</div>
@@ -344,7 +366,7 @@ tbody tr.admin-row:hover td:first-child::before{content:'🔍 ';font-size:9px}
       </div>
       <div class="tbl-scroll">
         <table>
-          <thead><tr><th>Open Time</th><th>Close Time</th><th>License</th><th>Symbol</th><th>Direction</th><th>Lots</th><th>Open Price</th><th>Close Price</th><th>SL</th><th>TP</th><th>Profit</th><th>Balance</th></tr></thead>
+          <thead><tr><th>Time</th><th>License</th><th>Symbol</th><th>Action</th><th>Open</th><th>Close</th><th>Lots</th><th>SL</th><th>TP</th><th>Profit</th><th>Swap</th><th>Comm.</th><th>Balance</th><th>Reason</th></tr></thead>
           <tbody id="tradeTable"><tr><td colspan="14" style="text-align:center;padding:32px;color:var(--txt-dim)">CONNECTING TO DATABASE…</td></tr></tbody>
         </table>
       </div>
@@ -393,43 +415,12 @@ tbody tr.admin-row:hover td:first-child::before{content:'🔍 ';font-size:9px}
 </div>
 
 <script>
-
+const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
+const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
+let sbc,allData=[],curKey='All',tFilter='all',cRange='all',syncN=0,eqCh=null,donutCh=null,firstLoad=true,isAdmin=false,myLicenseKey='';
+try{sbc=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
 
 /* clock */
-
-/* ══ SHARED AUTH + MENU GUARD ══ */
-async function initApp(pageKey,onReady){
-  const _sb=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");
-  const{data:{session}}=await _sb.auth.getSession();
-  if(!session){window.location.replace('login.html');return;}
-  const{data:lk}=await _sb.from('license_keys').select('license_key,is_admin,display_name').eq('user_id',session.user.id).single();
-  if(!lk){window.location.replace('login.html');return;}
-  window._isAdmin=lk.is_admin||false;
-  window._myLicenseKey=lk.license_key||'';
-  window._displayName=lk.display_name||lk.license_key||'';
-  window._userId=session.user.id;
-  window._userEmail=session.user.email;
-  const{data:md}=await _sb.from('menu_settings').select('page_key,is_visible');
-  window._menuVis={};
-  if(md)md.forEach(m=>window._menuVis[m.page_key]=m.is_visible);
-  if(pageKey&&!lk.is_admin&&window._menuVis[pageKey]===false){window.location.replace('index.html');return;}
-  _applyNav(lk.is_admin);
-  document.body.style.visibility='visible';document.body.style.opacity='1';
-  if(onReady)onReady();
-}
-function _applyNav(isAdmin){
-  if(isAdmin){document.querySelectorAll('#adminNav,#adminTopBtn').forEach(el=>{if(el)el.style.display='flex';});}
-  const ea=document.getElementById('nav-ea-settings');if(ea)ea.style.display=isAdmin?'flex':'none';
-  if(!isAdmin){
-    const map={time_analysis:'nav-time-analysis',calendar:'nav-calendar',statement:'nav-statement'};
-    Object.entries(map).forEach(([k,id])=>{const el=document.getElementById(id);if(el&&window._menuVis[k]===false)el.style.display='none';});
-  }
-  const uc=document.getElementById('userChip');if(uc)uc.textContent=window._displayName||'';
-}
-
-initApp(null, ()=>{
-  updateUI();
-});
 setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
 
 /* show user email */
@@ -596,63 +587,22 @@ function renderDonut(fil){
 
 /* table */
 function renderTable(fil){
-  const f5=v=>v!=null&&v!==''?(+v).toFixed(5):'—';
-  const f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
+  let rows=[...fil].reverse();
+  if(tFilter==='open')rows=rows.filter(r=>!isClose(r));
+  if(tFilter==='close')rows=rows.filter(isClose);
+  if(tFilter==='win')rows=rows.filter(r=>isClose(r)&&(+r.profit||0)>0);
+  if(tFilter==='loss')rows=rows.filter(r=>isClose(r)&&(+r.profit||0)<=0);
+  if(!rows.length){document.getElementById('tradeTable').innerHTML=`<tr><td colspan="14" style="text-align:center;padding:28px;color:var(--txt-dim)">NO DATA MATCH</td></tr>`;return}
+  const f5=v=>v!=null&&v!==''?(+v).toFixed(5):'—',f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
   const adm=window._isAdmin||false;
-  /* build ticket map — merge OPEN+CLOSE */
-  const tkMap={};
-  fil.forEach(r=>{
-    const tk=r.ticket||('nk_'+r.id);
-    if(!tkMap[tk])tkMap[tk]={open:null,close:null};
-    const ac=(r.trade_action||'').toUpperCase();
-    if(ac==='CLOSE')tkMap[tk].close=r;
-    else tkMap[tk].open=r;
-  });
-  let trades=Object.values(tkMap).sort((a,b)=>{
-    const ta=new Date((a.close||a.open)?.created_at||0);
-    const tb=new Date((b.close||b.open)?.created_at||0);
-    return tb-ta;
-  });
-  if(tFilter==='open') trades=trades.filter(t=>!t.close&&t.open);
-  if(tFilter==='close') trades=trades.filter(t=>!!t.close);
-  if(tFilter==='win') trades=trades.filter(t=>t.close&&(+t.close.profit||0)>0);
-  if(tFilter==='loss') trades=trades.filter(t=>t.close&&(+t.close.profit||0)<=0);
-  if(!trades.length){document.getElementById('tradeTable').innerHTML=`<tr><td colspan="12" style="text-align:center;padding:28px;color:var(--txt-dim)">NO DATA MATCH</td></tr>`;return}
-  document.getElementById('tradeTable').innerHTML=trades.slice(0,60).map(t=>{
-    const o=t.open,c=t.close;
-    const isClosed=!!c;
-    const ac=o?(o.trade_action||'').toUpperCase().replace('OPEN_',''):'?';
-    const pv=isClosed?(+c.profit||0):null,pp=pv!==null&&pv>0;
-    const dirPill=`<span class="pill ${ac==='BUY'?'pill-buy':'pill-sell'}">${ac}</span>`;
-    const statusPill=isClosed?`<span class="pill ${pp?'pill-close':'pill-open'}" style="font-size:9px;margin-left:2px">${pp?'WIN':'LOSS'}</span>`:`<span class="pill pill-open" style="font-size:9px;margin-left:2px">OPEN</span>`;
-    const openTime=o?new Date(o.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-    const closeTime=c?new Date(c.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-    const licKey=(o||c)?.license_key||'—';
-    const symbol=(o||c)?.symbol||'—';
-    const lots=f2((o||c)?.lots);
-    const openPrice=f5(o?.open_price||(c?.open_price));
-    const closePrice=c?f5(c.close_price):'—';
-    const sl=f5(o?.sl||(c?.sl));
-    const tp=f5(o?.tp||(c?.tp));
-    const bal=isClosed?(+c.account_balance||0):(o?(+o.account_balance||0):0);
-    const reason=c?c.close_reason||'—':'—';
-    const esc=c?JSON.stringify(c).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;'):'';
-    const click=adm&&c?`onclick="showTradeDetail('${esc}')" title="🔍 คลิกดู Settings"`:'';
-    const cls=adm&&c?'admin-row':'';
-    return`<tr class="${cls}" ${click}>
-      <td style="font-size:10px">${openTime}</td>
-      <td style="font-size:10px;color:var(--txt-dim)">${closeTime}</td>
-      <td style="color:#a5b4fc;font-weight:500">${licKey}</td>
-      <td style="font-weight:500">${symbol}</td>
-      <td>${dirPill}${statusPill}</td>
-      <td>${lots}</td>
-      <td>${openPrice}</td>
-      <td>${closePrice}</td>
-      <td style="color:#7f3f4a;font-size:10px">${sl}</td>
-      <td style="color:rgba(56,189,248,.6);font-size:10px">${tp}</td>
-      <td class="${isClosed?(pp?'p-pos':'p-neg'):''}" style="font-weight:500">${isClosed?((pp?'+':'')+f2(c.profit)):'—'}</td>
-      <td style="color:var(--txt)">$${bal.toLocaleString(undefined,{minimumFractionDigits:2})}</td>
-    </tr>`;
+  document.getElementById('tradeTable').innerHTML=rows.slice(0,60).map(r=>{
+    const ac=(r.trade_action||'').toUpperCase(),cl2=ac==='CLOSE';
+    const pv=cl2?(+r.profit||0):null,pp=pv!==null&&pv>0;
+    const pc=ac.includes('BUY')?'pill-buy':ac.includes('SELL')?'pill-sell':cl2?'pill-close':'pill-open';
+    const esc=JSON.stringify(r).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const click=adm&&cl2?`onclick="showTradeDetail('${esc}')" title="🔍 คลิกดู Settings"`:'';
+    const cls=adm&&cl2?'admin-row':'';
+    return`<tr class="${cls}" ${click}><td>${new Date(r.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td style="color:#a5b4fc;font-weight:500">${r.license_key||'—'}</td><td style="color:var(--txt);font-weight:500">${r.symbol||'—'}</td><td><span class="pill ${pc}">${ac}</span></td><td>${f5(r.open_price)}</td><td>${f5(r.close_price)}</td><td>${f2(r.lots)}</td><td style="color:#7f3f4a">${f5(r.sl)}</td><td style="color:rgba(56,189,248,.6)">${f5(r.tp)}</td><td class="${cl2?(pp?'p-pos':'p-neg'):''}">  ${cl2?((pp?'+':'')+f2(r.profit)):'—'}</td><td>${f2(r.swap)}</td><td>${f2(r.commission)}</td><td style="color:var(--txt)">$${(+r.account_balance||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td><td style="font-size:9.5px">${r.close_reason||'—'}</td></tr>`;
   }).join('');
 }
 

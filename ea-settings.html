@@ -7,6 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script>let sbc=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");</script>
+<style>body{visibility:hidden;opacity:0}</style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html,body{overflow-x:hidden;max-width:100vw}
@@ -125,22 +127,11 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .param-val.val-on{color:var(--green)}.param-val.val-off{color:var(--txt-dim)}.param-val.val-amber{color:var(--amber)}.param-val.val-blue{color:var(--blue)}.param-val.val-purple{color:#a5b4fc}.param-val.val-red{color:var(--red)}
 
 /* TIMELINE */
-.timeline{margin-top:16px;margin-bottom:16px}
-.tl-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:12px}
-.tl-list{display:flex;flex-direction:column;gap:0}
-.tl-item{display:flex;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid var(--border2);cursor:pointer;transition:all .15s}
-.tl-item:last-child{border-bottom:none}
-.tl-item:hover{background:rgba(255,255,255,.02);padding-left:6px;padding-right:6px}
-.tl-item.selected{background:rgba(99,102,241,.06);padding-left:6px;padding-right:6px;border-left:2px solid var(--purple)}
-.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
-.tl-dot.latest{background:var(--green);box-shadow:0 0 8px rgba(16,185,129,.5)}
-.tl-dot.old{background:rgba(255,255,255,.15)}
-.tl-info{flex:1}
-.tl-time{font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--txt)}
-.tl-sym{font-size:10px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:1px}
-.tl-badge{margin-left:auto;font-size:9px;font-family:'DM Mono',monospace;padding:3px 10px;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
-.tl-badge.latest{background:var(--green-d);border:1px solid rgba(16,185,129,.2);color:var(--green)}
-.tl-badge.old{background:var(--s2);border:1px solid var(--border2);color:var(--txt-dim)}
+.snap-bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 18px;background:rgba(255,255,255,.022);border:1px solid var(--border2);clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);flex-wrap:wrap}
+.snap-lbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap}
+.snap-sel{flex:1;min-width:200px;background:var(--s2);border:1px solid rgba(99,102,241,.25);padding:8px 14px;color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;outline:none;cursor:pointer;clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
+.snap-sel:focus{border-color:rgba(99,102,241,.5)}
+.snap-count{font-size:10px;font-family:'DM Mono',monospace;color:var(--txt-dim);padding:5px 12px;background:var(--s2);border:1px solid var(--border2);clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%);white-space:nowrap}
 
 /* NO DATA */
 .no-data{text-align:center;padding:60px 20px;color:var(--txt-dim)}
@@ -181,11 +172,12 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   </div>
   <div class="sb-nav">
     <div class="nav-sect">Navigation</div>
-    <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
-    <a class="nav-btn" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
-    <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
-    <a class="nav-btn" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
-    <a class="nav-btn active" href="ea-settings.html"><div class="nav-icon">⚙️</div>EA Settings</a>
+    
+    <a class="nav-btn" href="index.html" id="nav-dashboard"><div class="nav-icon">▣</div>Dashboard</a>
+    <a class="nav-btn" href="time-analysis.html" id="nav-time-analysis"><div class="nav-icon">◈</div>Time Analysis</a>
+    <a class="nav-btn" href="calendar.html" id="nav-calendar"><div class="nav-icon">📅</div>Calendar</a>
+    <a class="nav-btn" href="statement.html" id="nav-statement"><div class="nav-icon">💰</div>Statement</a>
+    <a class="nav-btn active" href="ea-settings.html" id="nav-ea-settings" style="display:none"><div class="nav-icon">⚙️</div>EA Settings</a>
     <a class="nav-btn" href="admin.html" id="adminNav" style="display:none"><div class="nav-icon">👑</div>Admin Panel</a>
   </div>
   <div class="sb-accs">
@@ -223,25 +215,30 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 </div>
 
 <script>
-const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
-const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
-const sbc=supabase.createClient(SB_URL,SB_KEY);
 let isAdm=false,myKey='',allSnaps=[],curKey='',selSnap=null;
 
-/* AUTH GUARD */
+
+
+/* ══ AUTH GUARD ══ */
 (async()=>{
-  const{data:{session}}=await sbc.auth.getSession();
-  if(!session){window.location.replace('login.html');return;}
-  const{data:lk}=await sbc.from('license_keys').select('license_key,is_admin').eq('user_id',session.user.id).single();
-  if(lk){
-    isAdm=lk.is_admin;myKey=lk.license_key;
-    window._isAdmin=isAdm;window._myLicenseKey=myKey;
-    if(lk.is_admin){['adminNav','adminTopBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='flex'});}
-  }
-  /* ADMIN ONLY — redirect non-admin */
-  if(!isAdm){window.location.replace('index.html');return;}
-  document.body.style.visibility='visible';document.body.style.opacity='1';
-  loadAll();
+  try{
+    const _sb=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");
+    const{data:{session}}=await _sb.auth.getSession();
+    if(!session){window.location.replace('login.html');return;}
+    const{data:lk}=await _sb.from('license_keys').select('license_key,is_admin,display_name').eq('user_id',session.user.id).single();
+    if(!lk){window.location.replace('login.html');return;}
+    if(!lk.is_admin){window.location.replace('index.html');return;}
+    window._isAdmin=lk.is_admin||false;
+    window._myLicenseKey=lk.license_key||'';
+    window._displayName=lk.display_name||lk.license_key||'';
+    window._userId=session.user.id;
+    window._userEmail=session.user.email;
+    if(lk.is_admin)document.querySelectorAll('#adminNav,#adminTopBtn').forEach(el=>{if(el)el.style.display='flex';});
+    const ea=document.getElementById('nav-ea-settings');if(ea)ea.style.display=lk.is_admin?'flex':'none';
+    document.body.style.visibility='visible';document.body.style.opacity='1';
+    const uc=document.getElementById('userChip');if(uc)uc.textContent=window._displayName||'';
+    loadAll();
+  }catch(err){console.error('Auth:',err);window.location.replace('login.html');}
 })();
 
 setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
@@ -292,6 +289,10 @@ function selectKey(k){
 
 function selectSnap(id){
   selSnap=allSnaps.find(r=>r.id===id);
+  if(!selSnap)return;
+  /* sync dropdown if exists */
+  const dd=document.getElementById('snapDropdown');
+  if(dd)dd.value=id;
   renderMain();
 }
 
@@ -300,23 +301,18 @@ function renderAll(){
   const snaps=allSnaps.filter(r=>r.license_key===curKey);
   let html='';
 
-  /* Timeline */
-  html+=`<div class="timeline">
-    <div class="tl-title">◈ Snapshot History — ${snaps.length} บันทึก</div>
-    <div class="tl-list">`;
-  snaps.forEach((s,i)=>{
-    const dt=new Date(s.created_at);
-    const isLatest=i===0,isSel=selSnap?.id===s.id;
-    html+=`<div class="tl-item${isSel?' selected':''}" onclick="selectSnap('${s.id}')">
-      <div class="tl-dot ${isLatest?'latest':'old'}"></div>
-      <div class="tl-info">
-        <div class="tl-time">${dt.toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-        <div class="tl-sym">${s.symbol||'—'} · ${s.timeframe||'—'}</div>
-      </div>
-      <div class="tl-badge ${isLatest?'latest':'old'}">${isLatest?'LATEST':'SNAPSHOT'}</div>
-    </div>`;
-  });
-  html+='</div></div>';
+  /* Dropdown snapshot selector */
+  const opts=snaps.map((s,i)=>{
+    const dt=new Date(s.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const label=`${i===0?'[LATEST] ':''}${dt} · ${s.symbol||''} ${s.timeframe||''}`;
+    const sel=selSnap?.id===s.id?'selected':'';
+    return`<option value="${s.id}" ${sel}>${label}</option>`;
+  }).join('');
+  html+=`<div class="snap-bar">
+    <span class="snap-lbl">◈ Snapshot</span>
+    <select class="snap-sel" id="snapDropdown" onchange="selectSnap(this.value)">${opts}</select>
+    <span class="snap-count">${snaps.length} records</span>
+  </div>`;
   html+='<div id="snapDetail"></div>';
   document.getElementById('mainContent').innerHTML=html;
   renderMain();

@@ -80,6 +80,17 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .f-inp{background:var(--s2);border:1px solid var(--border2);padding:7px 12px;color:var(--txt);font-family:'DM Mono',monospace;font-size:10.5px;outline:none;transition:border .15s;clip-path:polygon(6px 0,100% 0,100% 100%,0 100%,0 6px)}
 .f-inp:focus{border-color:rgba(99,102,241,.3)}
 .f-inp::-webkit-calendar-picker-indicator{filter:invert(.3)}
+/* Date Range Bar */
+.dr-bar{display:flex;align-items:center;gap:8px;padding:8px 24px;background:rgba(255,255,255,.015);border-bottom:1px solid var(--border2);flex-wrap:wrap;flex-shrink:0}
+.dr-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap}
+.dr-inp{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--txt);font-family:'DM Mono',monospace;font-size:11px;padding:4px 10px;outline:none;border-radius:4px;transition:border-color .15s;cursor:pointer}
+.dr-inp:focus{border-color:rgba(99,102,241,.5)}
+.dr-inp::-webkit-calendar-picker-indicator{filter:invert(.5)}
+.dr-presets{display:flex;gap:3px}
+.dr-preset{background:rgba(255,255,255,.04);border:1px solid transparent;color:var(--txt-dim);padding:4px 10px;font-size:9.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
+.dr-preset:hover{background:rgba(255,255,255,.08);color:var(--txt)}
+.dr-preset.active{background:rgba(99,102,241,.18);color:#a5b4fc;border-color:rgba(99,102,241,.35)}
+.dr-info{margin-left:auto;font-size:9.5px;font-family:'DM Mono',monospace;color:var(--txt-dim);padding:4px 10px;background:rgba(255,255,255,.03);border-radius:4px}
 .qbs{display:flex;gap:2px}
 .qb{padding:6px 11px;font-size:10px;cursor:pointer;color:var(--txt-dim);background:var(--s2);border:1px solid var(--border2);font-family:'DM Mono',monospace;transition:all .15s;clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
 .qb.active{background:var(--purple-d);color:#a5b4fc;border-color:rgba(99,102,241,.2)}
@@ -301,42 +312,29 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </div>
   </div>
 
+  <!-- DATE RANGE BAR -->
+  <div class="dr-bar" id="drBar">
+    <span class="dr-lbl">From</span>
+    <input type="date" class="dr-inp" id="drFromVis" onchange="onDrChange()">
+    <span class="dr-lbl">To</span>
+    <input type="date" class="dr-inp" id="drToVis" onchange="onDrChange()">
+    <div class="dr-presets">
+      <button class="dr-preset" onclick="setDR(this,'today')">Today</button>
+      <button class="dr-preset" onclick="setDR(this,'7')">7D</button>
+      <button class="dr-preset active" onclick="setDR(this,'30')">30D</button>
+      <button class="dr-preset" onclick="setDR(this,'90')">90D</button>
+      <button class="dr-preset" onclick="setDR(this,'365')">1Y</button>
+      <button class="dr-preset" onclick="setDR(this,'all')">All</button>
+    </div>
+    <div class="dr-info" id="drInfo">—</div>
+  </div>
+
   <div class="content">
 
-    <!-- FILTER -->
-    <div class="panel"><div class="panel-corner"></div>
-      <div class="panel-hd"><div><div class="panel-title">Data Filter</div><div class="panel-sub">เลือกช่วงวันที่และ License Key</div></div></div>
-      <div class="filter-row">
-        <span class="f-lbl">FROM</span><input type="date" class="f-inp" id="dFrom">
-        <span class="f-lbl">TO</span><input type="date" class="f-inp" id="dTo">
-        <div class="qbs">
-          <button class="qb" onclick="qr(this,'today')">TODAY</button>
-          <button class="qb" onclick="qr(this,'7')">7D</button>
-          <button class="qb active" onclick="qr(this,'30')">30D</button>
-          <button class="qb" onclick="qr(this,'90')">90D</button>
-          <button class="qb" onclick="qr(this,'all')">ALL</button>
-        </div>
-        <span class="f-lbl">KEY</span>
-        <select class="k-sel" id="kSel"><option value="All">All Keys</option></select>
-      </div>
-    </div>
-
-    <!-- API KEY -->
-    <div class="api-panel"><div class="api-corner"></div>
-      <div class="api-hd">
-        <div style="flex:1">
-          <div class="api-title">◈ AI Analysis — Bring Your Own API Key</div>
-          <div class="api-sub">Key เก็บใน Browser ของคุณเท่านั้น · ไม่ผ่าน Server · คุณจ่าย Token เอง</div>
-        </div>
-        <div class="api-tag" id="apiTag">NO KEY</div>
-      </div>
-      <div class="api-row">
-        <input type="password" class="api-input" id="apiInput" placeholder="sk-ant-api03-… (Anthropic API Key)">
-        <button class="api-btn btn-save" onclick="saveKey()">▸ SAVE KEY</button>
-        <button class="api-btn btn-clear" onclick="clearKey()">✕ CLEAR</button>
-      </div>
-      <div class="api-notice">ℹ Key ถูกเก็บใน localStorage ของ browser คุณเท่านั้น เมื่อกด AI ANALYZE จะส่งตรงจาก browser ของคุณไปยัง Anthropic API โดยตรง</div>
-    </div>
+    <!-- HIDDEN date inputs for fetchTA compatibility -->
+    <input type="date" id="dFrom" style="display:none">
+    <input type="date" id="dTo" style="display:none">
+    <select id="kSel" style="display:none"><option value="All">All Keys</option></select>
 
     <!-- STAT CARDS -->
     <div class="stat-row">
@@ -456,7 +454,42 @@ document.getElementById('dFrom').value=_f.toISOString().split('T')[0];
     const ea=document.getElementById('nav-ea-settings');if(ea)ea.style.display=lk.is_admin?'flex':'none';
     document.body.style.visibility='visible';document.body.style.opacity='1';
     const uc=document.getElementById('userChip');if(uc)uc.textContent=window._displayName||'';
-    fetchKeys().then(()=>load());
+    
+function initDR(){
+  const to=new Date(),from=new Date();
+  from.setDate(from.getDate()-30);
+  const fStr=from.toISOString().split('T')[0];
+  const tStr=to.toISOString().split('T')[0];
+  const dF=document.getElementById('dFrom'),dT=document.getElementById('dTo');
+  const vF=document.getElementById('drFromVis'),vT=document.getElementById('drToVis');
+  if(dF)dF.value=fStr; if(dT)dT.value=tStr;
+  if(vF)vF.value=fStr; if(vT)vT.value=tStr;
+}
+function setDR(btn,preset){
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const to=new Date(),from=new Date();
+  if(preset==='today'){from.setHours(0,0,0,0);}
+  else if(preset==='all'){from=new Date('2020-01-01');}
+  else{from.setDate(from.getDate()-parseInt(preset));}
+  const fStr=from.toISOString().split('T')[0];
+  const tStr=to.toISOString().split('T')[0];
+  const dF=document.getElementById('dFrom'),dT=document.getElementById('dTo');
+  const vF=document.getElementById('drFromVis'),vT=document.getElementById('drToVis');
+  if(dF)dF.value=fStr; if(dT)dT.value=tStr;
+  if(vF)vF.value=fStr; if(vT)vT.value=tStr;
+  load();
+}
+function onDrChange(){
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+  const vF=document.getElementById('drFromVis'),vT=document.getElementById('drToVis');
+  const dF=document.getElementById('dFrom'),dT=document.getElementById('dTo');
+  if(dF&&vF)dF.value=vF.value; if(dT&&vT)dT.value=vT.value;
+  load();
+}
+
+initDR();
+fetchKeys().then(()=>load());
   }catch(err){console.error('Auth:',err);window.location.replace('login.html');}
 })();
 

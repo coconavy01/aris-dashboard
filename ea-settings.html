@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>let sbc=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");</script>
-<script>let isAdm=false,myKey='',allSnaps=[],curKey='',selSnap=null;</script>
+<script>let isAdm=false,myKey='',allSnaps=[],curKey='',selSnap=null,cmpKey='',cmpSnap=null;</script>
 <style>body{visibility:hidden;opacity:0}</style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -148,6 +148,23 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .mob-icon{font-size:18px}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:19;backdrop-filter:blur(4px)}
 .sb-overlay.show{display:block}
+
+.cmp-bar{display:flex;align-items:center;gap:10px;padding:10px 20px;background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.18);margin-bottom:16px;flex-wrap:wrap;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
+.cmp-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:#a5b4fc;font-family:'DM Mono',monospace;white-space:nowrap}
+.cmp-sel{flex:1;min-width:160px;background:var(--s2);border:1px solid rgba(99,102,241,.25);padding:6px 12px;color:var(--txt);font-family:'DM Mono',monospace;font-size:11px;outline:none;cursor:pointer;border-radius:3px}
+.cmp-sel option{background:var(--s1)}
+.cmp-btn{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:6px 16px;font-size:10.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s;font-weight:500}
+.cmp-btn:hover{background:rgba(99,102,241,.25)}
+.cmp-btn.active{background:rgba(99,102,241,.3);border-color:rgba(99,102,241,.6)}
+.cmp-clear{background:transparent;border:1px solid rgba(255,255,255,.1);color:var(--txt-dim);padding:5px 12px;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
+.cmp-clear:hover{color:var(--txt)}
+/* diff highlights */
+.param.diff-changed{background:rgba(245,158,11,.08)!important;border-left:2px solid var(--amber)}
+.param.diff-changed .param-lbl::after{content:' ◆';color:var(--amber)}
+.param-cmp{font-size:10px;font-family:'DM Mono',monospace;color:var(--txt-dim);margin-top:2px;display:flex;align-items:center;gap:4px}
+.param-cmp-arrow{color:var(--amber)}
+.param-cmp-val{color:var(--amber);font-weight:500}
+.diff-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:var(--amber-d);border:1px solid rgba(245,158,11,.25);font-size:9.5px;font-family:'DM Mono',monospace;color:var(--amber);border-radius:3px;margin-left:auto}
 
 @media(max-width:768px){
   .sidebar{position:fixed;left:-260px;top:0;bottom:0;transition:left .3s;z-index:20}
@@ -298,6 +315,63 @@ function selectSnap(id){
   renderMain();
 }
 
+
+/* ══ COMPARE MODE ══ */
+function toggleCompare(){
+  const sel=document.getElementById('cmpKeySel');
+  if(!sel)return;
+  const k=sel.value;
+  if(k){cmpKey=k;updateCmpSnap();}
+  else{clearCompare();}
+}
+
+function clearCompare(){
+  cmpKey='';cmpSnap=null;
+  renderAll();
+}
+
+function updateCmpSnap(){
+  const sel=document.getElementById('cmpKeySel');
+  if(!sel)return;
+  cmpKey=sel.value||'';
+  if(!cmpKey){cmpSnap=null;renderMain();return;}
+  /* populate snapshot dropdown for compare key */
+  const snaps=allSnaps.filter(r=>r.license_key===cmpKey).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  const ss=document.getElementById('cmpSnapSel');
+  if(ss){
+    ss.innerHTML='<option value="">— Latest snapshot —</option>'+snaps.map((s,i)=>{
+      const dt=new Date(s.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return`<option value="${s.id}">${i===0?'[LATEST] ':''}${dt}</option>`;
+    }).join('');
+  }
+  /* select latest snap for compare key */
+  cmpSnap=snaps[0]||null;
+  renderMain();
+}
+
+function getCmpSnap(){
+  const ss=document.getElementById('cmpSnapSel');
+  const id=ss?.value;
+  if(id) return allSnaps.find(r=>r.id===id)||cmpSnap;
+  return cmpSnap;
+}
+
+/* Compare two setting objects and return diff map */
+function buildDiff(base, cmp){
+  if(!base||!cmp) return {};
+  const diff={};
+  const keys=Object.keys(base);
+  keys.forEach(k=>{
+    if(['id','created_at','license_key'].includes(k)) return;
+    const bv=base[k], cv=cmp[k];
+    if(bv!==null && cv!==null && bv!==undefined && cv!==undefined){
+      const bStr=String(bv), cStr=String(cv);
+      if(bStr!==cStr) diff[k]={base:bv, cmp:cv};
+    }
+  });
+  return diff;
+}
+
 function renderAll(){
   document.getElementById('pageSub').textContent=curKey+' · INPUT PARAMETERS';
   const snaps=allSnaps.filter(r=>r.license_key===curKey);
@@ -310,11 +384,32 @@ function renderAll(){
     const sel=selSnap?.id===s.id?'selected':'';
     return`<option value="${s.id}" ${sel}>${label}</option>`;
   }).join('');
+  /* build compare key options for admin */
+  let cmpKeyOpts='<option value="">— Select key to compare —</option>';
+  if(isAdm){
+    const allKeys=[...new Set(allSnaps.map(r=>r.license_key))].sort();
+    cmpKeyOpts+=allKeys.filter(k=>k!==curKey).map(k=>`<option value="${k}">${k}</option>`).join('');
+  }
+
   html+=`<div class="snap-bar">
     <span class="snap-lbl">◈ Snapshot</span>
     <select class="snap-sel" id="snapDropdown" onchange="selectSnap(this.value)">${opts}</select>
     <span class="snap-count">${snaps.length} records</span>
   </div>`;
+
+  /* Compare bar — admin only */
+  if(isAdm){
+    html+=`<div class="cmp-bar" id="cmpBar">
+      <span class="cmp-lbl">⇄ Compare with</span>
+      <select class="cmp-sel" id="cmpKeySel" onchange="updateCmpSnap()">${cmpKeyOpts}</select>
+      <select class="cmp-sel" id="cmpSnapSel" style="min-width:200px" onchange="renderMain()"><option value="">— Latest snapshot —</option></select>
+      <button class="cmp-btn${cmpKey?' active':''}" onclick="toggleCompare()">
+        ${cmpKey?'🔵 Comparing: '+cmpKey:'Compare'}
+      </button>
+      ${cmpKey?'<button class="cmp-clear" onclick="clearCompare()">✕ Clear</button>':''}
+      ${cmpKey?`<div class="diff-badge" id="diffCount">Calculating…</div>`:''}
+    </div>`;
+  }
   html+='<div id="snapDetail"></div>';
   document.getElementById('mainContent').innerHTML=html;
   renderMain();
@@ -324,6 +419,12 @@ function renderMain(){
   if(!selSnap){return;}
   const s=selSnap;
   const dt=new Date(s.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  /* compute diff with compare snapshot */
+  const cmpS=cmpKey?getCmpSnap():null;
+  const diff=cmpS?buildDiff(s,cmpS):{};
+  const diffCount=Object.keys(diff).length;
+  const dcEl=document.getElementById('diffCount');
+  if(dcEl)dcEl.textContent=diffCount?diffCount+' differences':'No differences';
 
   /* Hero */
   let heroTags='';
@@ -360,25 +461,25 @@ function renderMain(){
     param('MACD Fast',s.macd_fast,'val-blue'),
     param('MACD Slow',s.macd_slow,'val-blue'),
     param('MACD Signal',s.macd_signal,'val-blue'),
-    param('ADX Period',s.adx_period,'val-blue'),
-    param('ADX Threshold',s.adx_threshold,'val-amber'),
-    param('RSI Period',s.rsi_period,'val-blue'),
+    param('ADX Period',s.adx_period,'val-blue','adx_period','val-blue'),
+    param('ADX Threshold',s.adx_threshold,'val-amber','adx_threshold','val-amber'),
+    param('RSI Period',s.rsi_period,'val-blue','rsi_period','val-blue'),
     param('RSI Overbought',s.rsi_overbought,'val-red'),
     param('RSI Oversold',s.rsi_oversold,'val-green'),
   ],'sec-indicator',true);
 
   html+=section('⏱️','Signal Delay',[
-    param('Delay Mode',s.delay_mode?.replace('DELAY_',''),'val-amber'),
-    param('Delay Seconds',s.delay_seconds?s.delay_seconds+'s':'—','val-amber'),
+    param('Delay Mode',(s.delay_mode||'').replace('DELAY_',''),'val-amber','delay_mode','val-amber'),
+    param('Delay Seconds',s.delay_seconds?s.delay_seconds+'s':'—','val-amber','delay_seconds','val-amber'),
   ],'sec-delay',true);
 
   html+=section('💰','Money Management',[
-    param('Fixed Lot',s.fixed_lot,'val-amber'),
+    param('Fixed Lot',s.fixed_lot,'val-amber','fixed_lot','val-amber'),
     param('Compounding',boolVal(s.use_compounding)),
     param('Risk %',s.risk_percent?s.risk_percent+'%':'—','val-purple'),
-    param('Lot Boost',boolVal(s.use_lot_boost)),
-    param('Boost Lot',s.boost_lot,'val-amber'),
-    param('Boost Streak',s.boost_streak,'val-blue'),
+    param('Lot Boost',boolVal(s.use_lot_boost),'','use_lot_boost'),
+    param('Boost Lot',s.boost_lot,'val-amber','boost_lot','val-amber'),
+    param('Boost Streak',s.boost_streak,'val-blue','boost_streak','val-blue'),
     param('Boost Max Trades',s.boost_max_trades,'val-blue'),
   ],'sec-mm',true);
 
@@ -394,11 +495,11 @@ function renderMain(){
   ],'sec-trade',true);
 
   html+=section('🛡️','Risk Controls',[
-    param('Max Spread',s.max_spread?s.max_spread+' pts':'—','val-red'),
-    param('Daily Profit Target','$'+(s.daily_profit_target||0),'val-green'),
-    param('Daily Loss Limit','$'+(s.daily_loss_limit||0),'val-red'),
-    param('Cooldown Mode',s.cooldown_mode?.replace('COOLDOWN_',''),'val-amber'),
-    param('Cooldown Minutes',s.cooldown_minutes?s.cooldown_minutes+'m':'—','val-amber'),
+    param('Max Spread',s.max_spread?s.max_spread+' pts':'—','val-red','max_spread','val-red'),
+    param('Daily Profit Target','$'+(s.daily_profit_target||0),'val-green','daily_profit_target','val-green'),
+    param('Daily Loss Limit','$'+(s.daily_loss_limit||0),'val-red','daily_loss_limit','val-red'),
+    param('Cooldown Mode',(s.cooldown_mode||'').replace('COOLDOWN_',''),'val-amber','cooldown_mode','val-amber'),
+    param('Cooldown Minutes',s.cooldown_minutes?s.cooldown_minutes+'m':'—','val-amber','cooldown_minutes','val-amber'),
     param('Reverse Mode',boolVal(s.use_reverse)),
     param('Close On Opposite',boolVal(s.close_on_opposite)),
   ],'sec-risk',true);
@@ -431,9 +532,17 @@ function section(icon,title,params,id,open){
   </div>`;
 }
 
-function param(lbl,val,cls=''){
+function param(lbl,val,cls='',fieldKey=''){
   const display=val===null||val===undefined||val===''?'—':val;
-  return`<div class="param"><div class="param-lbl">${lbl}</div><div class="param-val ${cls}">${display}</div></div>`;
+  /* check diff */
+  let diffHtml='';let diffClass='';
+  if(fieldKey&&diff&&diff[fieldKey]){
+    const d=diff[fieldKey];
+    const cmpDisplay=d.cmp===null||d.cmp===undefined||d.cmp===''?'—':d.cmp;
+    diffHtml=`<div class="param-cmp"><span style="color:var(--txt-dim);font-size:9px">${cmpDisplay}</span><span class="param-cmp-arrow">←</span><span style="font-size:9px;color:var(--txt-dim)">cmp</span></div>`;
+    diffClass=' diff-changed';
+  }
+  return`<div class="param${diffClass}"><div class="param-lbl">${lbl}</div><div class="param-val ${cls}">${display}</div>${diffHtml}</div>`;
 }
 
 function boolVal(v){

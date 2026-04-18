@@ -233,6 +233,10 @@ tbody tr.admin-row:hover{background:rgba(99,102,241,.05)!important}
 .spin2{display:inline-block;width:12px;height:12px;border:1.5px solid var(--border);border-top-color:var(--purple);border-radius:50%;animation:rot .7s linear infinite;margin-right:6px;vertical-align:middle}
 @keyframes rot{to{transform:rotate(360deg)}}
 
+/* SPARKLINE */
+.spark-wrap{width:72px;height:32px;flex-shrink:0}
+.spark-svg{width:100%;height:100%;overflow:visible}
+
 /* countTo animation */
 @keyframes countIn{from{opacity:0}to{opacity:1}}
 
@@ -456,7 +460,7 @@ tbody tr.admin-row:hover{background:rgba(99,102,241,.05)!important}
       </div>
       <div class="tbl-scroll">
         <table>
-          <thead><tr><th>Open Time</th><th>Close Time</th><th>License</th><th>Symbol</th><th>Side</th><th>Lots</th><th>Open</th><th>Close</th><th>SL</th><th>TP</th><th>Profit</th><th>Balance</th></tr></thead>
+          <thead><tr><th>Open Time</th><th>Close Time</th><th>License</th><th>Symbol</th><th>Side</th><th>Lots</th><th>Open</th><th>Close</th><th>SL</th><th>TP</th><th>Profit</th><th>Balance</th><th>Chart</th></tr></thead>
           <tbody id="tradeTable"><tr><td colspan="12" style="text-align:center;padding:32px;color:var(--txt-dim)">CONNECTING TO DATABASE…</td></tr></tbody>
         </table>
       </div>
@@ -837,6 +841,75 @@ function renderDonut(fil){
 }
 
 /* ══ TRADE TABLE WITH PAGINATION ══ */
+
+/* ══ SPARKLINE ══ */
+function drawSpark(o, c){
+  /* o = open row, c = close row (may be null if still open) */
+  const W=72, H=32, PAD=4;
+  const openP  = o ? +o.open_price  : null;
+  const closeP = c ? +c.close_price : null;
+  const sl     = o ? +o.sl          : null;
+  const tp     = o ? +o.tp          : null;
+  const side   = o ? (o.trade_action||'').toUpperCase().replace('OPEN_','') : '';
+  const profit = c ? +c.profit||0   : null;
+
+  /* Collect all price levels to build y-scale */
+  const prices=[openP,closeP,sl,tp].filter(v=>v&&v>0);
+  if(prices.length<2) return '<svg class="spark-svg" viewBox="0 0 72 32"><line x1="4" y1="16" x2="68" y2="16" stroke="rgba(255,255,255,.1)" stroke-width="1" stroke-dasharray="3 3"/></svg>';
+
+  const mn=Math.min(...prices), mx=Math.max(...prices);
+  const range=mx-mn||0.0001;
+  const py=v=>PAD + (H-PAD*2)*(1-(v-mn)/range);
+
+  /* open/close x positions */
+  const x1=PAD, x2=W-PAD;
+  const y1=openP?py(openP):H/2;
+  const y2=closeP?py(closeP):y1;
+
+  /* colour based on profit */
+  const win=profit!==null&&profit>0;
+  const lineCol=profit===null?'rgba(245,158,11,.8)':win?'rgba(16,185,129,.9)':'rgba(244,63,94,.9)';
+  const fillCol=profit===null?'rgba(245,158,11,.08)':win?'rgba(16,185,129,.07)':'rgba(244,63,94,.07)';
+
+  let svg=`<svg class="spark-svg" viewBox="0 0 72 32" xmlns="http://www.w3.org/2000/svg">`;
+
+  /* SL line */
+  if(sl&&sl>0){
+    const ys=py(sl);
+    svg+=`<line x1="${x1}" y1="${ys.toFixed(1)}" x2="${x2}" y2="${ys.toFixed(1)}" stroke="rgba(244,63,94,.45)" stroke-width="0.8" stroke-dasharray="2 2"/>`;
+  }
+  /* TP line */
+  if(tp&&tp>0){
+    const yt=py(tp);
+    svg+=`<line x1="${x1}" y1="${yt.toFixed(1)}" x2="${x2}" y2="${yt.toFixed(1)}" stroke="rgba(56,189,248,.45)" stroke-width="0.8" stroke-dasharray="2 2"/>`;
+  }
+
+  /* fill area under trade line */
+  svg+=`<polygon points="${x1},${y1.toFixed(1)} ${x2},${y2.toFixed(1)} ${x2},${H} ${x1},${H}" fill="${fillCol}"/>`;
+
+  /* main trade line */
+  svg+=`<line x1="${x1}" y1="${y1.toFixed(1)}" x2="${x2}" y2="${y2.toFixed(1)}" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round"/>`;
+
+  /* open dot */
+  svg+=`<circle cx="${x1}" cy="${y1.toFixed(1)}" r="2.5" fill="${lineCol}" opacity=".9"/>`;
+
+  /* close dot or open marker */
+  if(closeP){
+    svg+=`<circle cx="${x2}" cy="${y2.toFixed(1)}" r="2.5" fill="${lineCol}" opacity=".9"/>`;
+    /* profit label */
+    const profStr=(profit>=0?'+':'')+profit.toFixed(1);
+    const labelX=profit>=0?x2-2:x2-2, labelY=profit>=0?y2-5:y2+10;
+    svg+=`<text x="${labelX.toFixed(0)}" y="${Math.max(8,Math.min(H-2,labelY)).toFixed(0)}" text-anchor="end" font-size="7" font-family="DM Mono,monospace" fill="${lineCol}" opacity=".85">${profStr}</text>`;
+  } else {
+    /* still open — pulsing marker */
+    svg+=`<circle cx="${x2}" cy="${y1.toFixed(1)}" r="3" fill="none" stroke="rgba(245,158,11,.7)" stroke-width="1.2"/>`;
+    svg+=`<circle cx="${x2}" cy="${y1.toFixed(1)}" r="1.5" fill="rgba(245,158,11,.9)"/>`;
+  }
+
+  svg+='</svg>';
+  return svg;
+}
+
 function renderTable(fil,page){
   tradePage=page||0;
   const f5=v=>v!=null&&v!==''?(+v).toFixed(5):'—';
@@ -899,7 +972,7 @@ function renderTable(fil,page){
       const esc=JSON.stringify(c).replace(/\\/g,'\\\\').replace(/"/g,'&quot;');
       click=`onclick="showTradeDetail('${esc}')" title="🔍 View Settings"`;cls='admin-row';
     }
-    return`<tr class="${cls}" ${click}><td style="font-size:10px">${openTime}</td><td style="font-size:10px;color:var(--txt-dim)">${closeTime}</td><td style="color:#a5b4fc;font-weight:500">${lic}</td><td style="font-weight:500">${sym}</td><td>${dirPill}${statusPill}</td><td>${lots}</td><td>${opx}</td><td>${clx}</td><td style="color:#7f3f4a;font-size:10px">${sl}</td><td style="color:rgba(56,189,248,.5);font-size:10px">${tp}</td><td class="${isClosed?(pp?'p-pos':'p-neg'):''}">${isClosed?((pp?'+':'')+f2(c.profit)):'—'}</td><td>$${bal.toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`;
+    return`<tr class="${cls}" ${click}><td style="font-size:10px">${openTime}</td><td style="font-size:10px;color:var(--txt-dim)">${closeTime}</td><td style="color:#a5b4fc;font-weight:500">${lic}</td><td style="font-weight:500">${sym}</td><td>${dirPill}${statusPill}</td><td>${lots}</td><td>${opx}</td><td>${clx}</td><td style="color:#7f3f4a;font-size:10px">${sl}</td><td style="color:rgba(56,189,248,.5);font-size:10px">${tp}</td><td class="${isClosed?(pp?'p-pos':'p-neg'):''}">  ${isClosed?((pp?'+':'')+f2(c.profit)):'—'}</td><td>$${bal.toLocaleString(undefined,{minimumFractionDigits:2})}</td><td style="padding:4px 8px">${drawSpark(o,c)}</td></tr>`;
   }).join('');
 }
 function changePage(dir){renderTable(getFiltered(allData),tradePage+dir);}

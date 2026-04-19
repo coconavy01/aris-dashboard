@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>let sbc=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");</script>
-<script>let isAdm=false,myKey='',allSnaps=[],curKey='',selSnap=null,cmpKey='',cmpSnap=null;</script>
+<script>let isAdm=false,myKey='',allSnaps=[],curKey='',selSnap=null,cmpKey='',cmpSnap=null,diff={};</script>
 <style>body{visibility:hidden;opacity:0}</style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -318,23 +318,29 @@ function selectSnap(id){
 
 /* ══ COMPARE MODE ══ */
 function toggleCompare(){
+  if(cmpKey){clearCompare();return;}
   const sel=document.getElementById('cmpKeySel');
   if(!sel)return;
   const k=sel.value;
   if(k){cmpKey=k;updateCmpSnap();}
-  else{clearCompare();}
+  else{alert('กรุณาเลือก key ที่ต้องการเทียบก่อน');}
 }
 
 function clearCompare(){
   cmpKey='';cmpSnap=null;
-  renderAll();
+  diff={};
+  updateCmpUI();
+  const dc=document.getElementById('diffCount');
+  if(dc)dc.textContent='0 differences';
+  renderMain();
 }
 
 function updateCmpSnap(){
   const sel=document.getElementById('cmpKeySel');
   if(!sel)return;
-  cmpKey=sel.value||'';
-  if(!cmpKey){cmpSnap=null;renderMain();return;}
+  const k=sel.value||'';
+  if(k)cmpKey=k;
+  if(!cmpKey){cmpSnap=null;updateCmpUI();renderMain();return;}
   /* populate snapshot dropdown for compare key */
   const snaps=allSnaps.filter(r=>r.license_key===cmpKey).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   const ss=document.getElementById('cmpSnapSel');
@@ -344,15 +350,12 @@ function updateCmpSnap(){
       return`<option value="${s.id}">${i===0?'[LATEST] ':''}${dt}</option>`;
     }).join('');
   }
-  /* select latest snap for compare key */
   cmpSnap=snaps[0]||null;
+  updateCmpUI();
   renderMain();
 }
 
 function getCmpSnap(){
-  const ss=document.getElementById('cmpSnapSel');
-  const id=ss?.value;
-  if(id) return allSnaps.find(r=>r.id===id)||cmpSnap;
   return cmpSnap;
 }
 
@@ -375,43 +378,76 @@ function buildDiff(base, cmp){
 function renderAll(){
   document.getElementById('pageSub').textContent=curKey+' · INPUT PARAMETERS';
   const snaps=allSnaps.filter(r=>r.license_key===curKey);
-  let html='';
 
-  /* Dropdown snapshot selector */
-  const opts=snaps.map((s,i)=>{
-    const dt=new Date(s.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    const label=`${i===0?'[LATEST] ':''}${dt} · ${s.symbol||''} ${s.timeframe||''}`;
-    const sel=selSnap?.id===s.id?'selected':'';
-    return`<option value="${s.id}" ${sel}>${label}</option>`;
-  }).join('');
-  /* build compare key options for admin */
-  let cmpKeyOpts='<option value="">— Select key to compare —</option>';
-  if(isAdm){
-    const allKeys=[...new Set(allSnaps.map(r=>r.license_key))].sort();
-    cmpKeyOpts+=allKeys.filter(k=>k!==curKey).map(k=>`<option value="${k}">${k}</option>`).join('');
-  }
-
-  html+=`<div class="snap-bar">
-    <span class="snap-lbl">◈ Snapshot</span>
-    <select class="snap-sel" id="snapDropdown" onchange="selectSnap(this.value)">${opts}</select>
-    <span class="snap-count">${snaps.length} records</span>
-  </div>`;
-
-  /* Compare bar — admin only */
-  if(isAdm){
-    html+=`<div class="cmp-bar" id="cmpBar">
-      <span class="cmp-lbl">⇄ Compare with</span>
-      <select class="cmp-sel" id="cmpKeySel" onchange="updateCmpSnap()">${cmpKeyOpts}</select>
-      <select class="cmp-sel" id="cmpSnapSel" style="min-width:200px" onchange="renderMain()"><option value="">— Latest snapshot —</option></select>
-      <button class="cmp-btn${cmpKey?' active':''}" onclick="toggleCompare()">
-        ${cmpKey?'🔵 Comparing: '+cmpKey:'Compare'}
-      </button>
-      ${cmpKey?'<button class="cmp-clear" onclick="clearCompare()">✕ Clear</button>':''}
-      ${cmpKey?`<div class="diff-badge" id="diffCount">Calculating…</div>`:''}
+  /* ── Snapshot dropdown ── */
+  const snapBar=document.getElementById('snapBar');
+  if(!snapBar){
+    /* First render — build full structure */
+    const allKeys=isAdm?[...new Set(allSnaps.map(r=>r.license_key))].sort():[];
+    let initHtml=`<div class="snap-bar" id="snapBar">
+      <span class="snap-lbl">◈ Snapshot</span>
+      <select class="snap-sel" id="snapDropdown" onchange="selectSnap(this.value)"></select>
+      <span class="snap-count" id="snapCount"></span>
     </div>`;
+    if(isAdm){
+      const cmpKeyOpts=allKeys.filter(k=>k!==curKey).map(k=>`<option value="${k}">${k}</option>`).join('');
+      initHtml+=`<div class="cmp-bar">
+        <span class="cmp-lbl">⇄ Compare with</span>
+        <select class="cmp-sel" id="cmpKeySel" onchange="updateCmpSnap()">
+          <option value="">— Select key to compare —</option>${cmpKeyOpts}
+        </select>
+        <select class="cmp-sel" id="cmpSnapSel" style="min-width:180px" onchange="applyCmpSnap()">
+          <option value="">— Latest snapshot —</option>
+        </select>
+        <button class="cmp-btn" id="cmpToggleBtn" onclick="toggleCompare()">Compare</button>
+        <button class="cmp-clear" id="cmpClearBtn" onclick="clearCompare()" style="display:none">✕ Clear</button>
+        <div class="diff-badge" id="diffCount" style="display:none">0 differences</div>
+      </div>`;
+    }
+    initHtml+='<div id="snapDetail"></div>';
+    document.getElementById('mainContent').innerHTML=initHtml;
   }
-  html+='<div id="snapDetail"></div>';
-  document.getElementById('mainContent').innerHTML=html;
+
+  /* ── Update snapshot dropdown ── */
+  const dd=document.getElementById('snapDropdown');
+  const sc=document.getElementById('snapCount');
+  if(dd){
+    dd.innerHTML=snaps.map((s,i)=>{
+      const dt=new Date(s.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      const sel=selSnap?.id===s.id?'selected':'';
+      return`<option value="${s.id}" ${sel}>${i===0?'[LATEST] ':''}${dt} · ${s.symbol||''} ${s.timeframe||''}</option>`;
+    }).join('');
+  }
+  if(sc)sc.textContent=snaps.length+' records';
+
+  /* ── Update cmpKeySel to exclude current key ── */
+  const cmpKSel=document.getElementById('cmpKeySel');
+  if(cmpKSel&&isAdm){
+    const allKeys=[...new Set(allSnaps.map(r=>r.license_key))].sort();
+    const prevVal=cmpKSel.value;
+    cmpKSel.innerHTML='<option value="">— Select key to compare —</option>'+
+      allKeys.filter(k=>k!==curKey).map(k=>`<option value="${k}">${k}</option>`).join('');
+    if(prevVal&&prevVal!==curKey)cmpKSel.value=prevVal;
+  }
+
+  /* ── Restore compare state in UI ── */
+  updateCmpUI();
+  renderMain();
+}
+
+function updateCmpUI(){
+  const btn=document.getElementById('cmpToggleBtn');
+  const clr=document.getElementById('cmpClearBtn');
+  const dc=document.getElementById('diffCount');
+  if(btn){btn.textContent=cmpKey?'🔵 Comparing: '+cmpKey:'Compare';btn.classList.toggle('active',!!cmpKey);}
+  if(clr)clr.style.display=cmpKey?'inline-flex':'none';
+  if(dc)dc.style.display=cmpKey?'inline-flex':'none';
+}
+
+function applyCmpSnap(){
+  const ss=document.getElementById('cmpSnapSel');
+  const id=ss?.value;
+  cmpSnap=id?allSnaps.find(r=>r.id===id):null;
   renderMain();
 }
 
@@ -421,10 +457,10 @@ function renderMain(){
   const dt=new Date(s.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
   /* compute diff with compare snapshot */
   const cmpS=cmpKey?getCmpSnap():null;
-  const diff=cmpS?buildDiff(s,cmpS):{};
+  diff=cmpS?buildDiff(s,cmpS):{};
   const diffCount=Object.keys(diff).length;
   const dcEl=document.getElementById('diffCount');
-  if(dcEl)dcEl.textContent=diffCount?diffCount+' differences':'No differences';
+  if(dcEl){dcEl.textContent=diffCount?diffCount+' differences':'✓ Identical';dcEl.style.background=diffCount?'rgba(245,158,11,.15)':'rgba(16,185,129,.15)';dcEl.style.borderColor=diffCount?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)';dcEl.style.color=diffCount?'var(--amber)':'var(--green)';}
 
   /* Hero */
   let heroTags='';

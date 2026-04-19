@@ -126,6 +126,15 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .param-lbl{font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace}
 .param-val{font-size:14px;font-weight:500;font-family:'DM Mono',monospace;color:var(--txt)}
 .param-val.val-on{color:var(--green)}.param-val.val-off{color:var(--txt-dim)}.param-val.val-amber{color:var(--amber)}.param-val.val-blue{color:var(--blue)}.param-val.val-purple{color:#a5b4fc}.param-val.val-red{color:var(--red)}
+/* val-red note */
+.param-val.val-red[title]::after{content:' ⚠';font-size:9px}
+/* diff improvements */
+.param.diff-changed{background:rgba(245,158,11,.06)!important;border-left:3px solid rgba(245,158,11,.7);padding-left:17px}
+.param.diff-changed .param-lbl{color:var(--amber)}
+.param-cmp-row{display:flex;align-items:center;gap:6px;margin-top:4px;padding:4px 8px;background:rgba(245,158,11,.06);border-radius:3px;border:1px solid rgba(245,158,11,.15)}
+.param-cmp-label{font-size:8px;letter-spacing:1px;text-transform:uppercase;color:rgba(245,158,11,.6);font-family:'DM Mono',monospace;white-space:nowrap}
+.param-cmp-val{font-size:12px;font-weight:500;font-family:'DM Mono',monospace;color:rgba(245,158,11,.9)}
+.param-cmp-arrow{font-size:10px;color:rgba(245,158,11,.5)}
 
 /* TIMELINE */
 .snap-bar{display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:14px 18px;background:rgba(255,255,255,.022);border:1px solid var(--border2);clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,0 100%);flex-wrap:wrap}
@@ -136,6 +145,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 
 /* NO DATA */
 .no-data{text-align:center;padding:60px 20px;color:var(--txt-dim)}
+.color-guide{display:flex;flex-wrap:wrap;gap:10px;padding:12px 18px;background:rgba(255,255,255,.02);border:1px solid var(--border2);margin-top:14px;border-radius:4px}
+.cg-item{display:flex;align-items:center;gap:6px;font-size:9.5px;font-family:'DM Mono',monospace;color:var(--txt-dim)}
+.cg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .no-data-icon{font-size:40px;margin-bottom:12px}
 .no-data-title{font-size:14px;font-weight:500;color:var(--txt-mid);margin-bottom:6px}
 .no-data-sub{font-size:12px;font-family:'DM Mono',monospace}
@@ -460,7 +472,7 @@ function renderMain(){
   diff=cmpS?buildDiff(s,cmpS):{};
   const diffCount=Object.keys(diff).length;
   const dcEl=document.getElementById('diffCount');
-  if(dcEl){dcEl.textContent=diffCount?diffCount+' differences':'✓ Identical';dcEl.style.background=diffCount?'rgba(245,158,11,.15)':'rgba(16,185,129,.15)';dcEl.style.borderColor=diffCount?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)';dcEl.style.color=diffCount?'var(--amber)':'var(--green)';}
+  if(dcEl){dcEl.textContent=diffCount?diffCount+' ค่าต่างกัน':'✓ เหมือนกันทั้งหมด';dcEl.style.background=diffCount?'rgba(245,158,11,.15)':'rgba(16,185,129,.15)';dcEl.style.borderColor=diffCount?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)';dcEl.style.color=diffCount?'var(--amber)':'var(--green)';}
 
   /* Hero */
   let heroTags='';
@@ -493,60 +505,70 @@ function renderMain(){
   /* Sections */
   html+='<div class="sections">';
   html+=section('📊','Indicator & Signal',[
-    param('MA Period',s.trend_ma_period,'val-blue'),
-    param('MACD Fast',s.macd_fast,'val-blue'),
-    param('MACD Slow',s.macd_slow,'val-blue'),
-    param('MACD Signal',s.macd_signal,'val-blue'),
-    param('ADX Period',s.adx_period,'val-blue','adx_period','val-blue'),
-    param('ADX Threshold',s.adx_threshold,'val-amber','adx_threshold','val-amber'),
-    param('RSI Period',s.rsi_period,'val-blue','rsi_period','val-blue'),
-    param('RSI Overbought',s.rsi_overbought,'val-red'),
-    param('RSI Oversold',s.rsi_oversold,'val-green'),
+    param('MA Period',s.trend_ma_period,'val-blue','trend_ma_period'),
+    param('MACD Fast',s.macd_fast,'val-blue','macd_fast'),
+    param('MACD Slow',s.macd_slow,'val-blue','macd_slow'),
+    param('MACD Signal',s.macd_signal,'val-blue','macd_signal'),
+    param('ADX Period',s.adx_period,'val-blue','adx_period'),
+    param('ADX Threshold',s.adx_threshold,'val-amber','adx_threshold'),
+    param('RSI Period',s.rsi_period,'val-blue','rsi_period'),
+    param('RSI Overbought',s.rsi_overbought,'val-amber','rsi_overbought'),
+    param('RSI Oversold',s.rsi_oversold,'val-blue','rsi_oversold'),
   ],'sec-indicator',true);
 
   html+=section('⏱️','Signal Delay',[
-    param('Delay Mode',(s.delay_mode||'').replace('DELAY_',''),'val-amber','delay_mode','val-amber'),
-    param('Delay Seconds',s.delay_seconds?s.delay_seconds+'s':'—','val-amber','delay_seconds','val-amber'),
+    param('Delay Mode',(s.delay_mode||'').replace('DELAY_',''),'val-amber','delay_mode'),
+    param('Delay Seconds',s.delay_seconds?s.delay_seconds+'s':'—','val-amber','delay_seconds'),
   ],'sec-delay',true);
 
   html+=section('💰','Money Management',[
-    param('Fixed Lot',s.fixed_lot,'val-amber','fixed_lot','val-amber'),
-    param('Compounding',boolVal(s.use_compounding)),
-    param('Risk %',s.risk_percent?s.risk_percent+'%':'—','val-purple'),
+    param('Fixed Lot',s.fixed_lot,'val-amber','fixed_lot'),
+    param('Compounding',boolVal(s.use_compounding),'','use_compounding'),
+    param('Risk %',s.risk_percent?s.risk_percent+'%':'—','val-purple','risk_percent'),
     param('Lot Boost',boolVal(s.use_lot_boost),'','use_lot_boost'),
-    param('Boost Lot',s.boost_lot,'val-amber','boost_lot','val-amber'),
-    param('Boost Streak',s.boost_streak,'val-blue','boost_streak','val-blue'),
-    param('Boost Max Trades',s.boost_max_trades,'val-blue'),
+    param('Boost Lot',s.boost_lot,'val-amber','boost_lot'),
+    param('Boost Streak',s.boost_streak,'val-blue','boost_streak'),
+    param('Boost Max Trades',s.boost_max_trades,'val-blue','boost_max_trades'),
   ],'sec-mm',true);
 
   html+=section('🎯','Trade Settings',[
-    param('Take Profit',s.takeprofit?s.takeprofit+' pts':'—','val-green'),
-    param('Stop Loss',s.stoploss?s.stoploss+' pts':'—','val-red'),
-    param('Trailing Stop',boolVal(s.use_trailing)),
-    param('Trailing Start',s.trailing_start?s.trailing_start+' pts':'—','val-amber'),
-    param('Trailing Step',s.trailing_step?s.trailing_step+' pts':'—','val-amber'),
-    param('Breakeven',boolVal(s.use_breakeven)),
-    param('BE Start',s.breakeven_start?s.breakeven_start+' pts':'—','val-amber'),
-    param('BE Offset',s.breakeven_offset?s.breakeven_offset+' pts':'—','val-amber'),
+    param('Take Profit',s.takeprofit?s.takeprofit+' pts':'—','val-green','takeprofit'),
+    param('Stop Loss',s.stoploss?s.stoploss+' pts':'—','val-red','stoploss'),
+    param('Trailing Stop',boolVal(s.use_trailing),'','use_trailing'),
+    param('Trailing Start',s.trailing_start?s.trailing_start+' pts':'—','val-amber','trailing_start'),
+    param('Trailing Step',s.trailing_step?s.trailing_step+' pts':'—','val-amber','trailing_step'),
+    param('Breakeven',boolVal(s.use_breakeven),'','use_breakeven'),
+    param('BE Start',s.breakeven_start?s.breakeven_start+' pts':'—','val-amber','breakeven_start'),
+    param('BE Offset',s.breakeven_offset?s.breakeven_offset+' pts':'—','val-amber','breakeven_offset'),
   ],'sec-trade',true);
 
   html+=section('🛡️','Risk Controls',[
-    param('Max Spread',s.max_spread?s.max_spread+' pts':'—','val-red','max_spread','val-red'),
-    param('Daily Profit Target','$'+(s.daily_profit_target||0),'val-green','daily_profit_target','val-green'),
-    param('Daily Loss Limit','$'+(s.daily_loss_limit||0),'val-red','daily_loss_limit','val-red'),
-    param('Cooldown Mode',(s.cooldown_mode||'').replace('COOLDOWN_',''),'val-amber','cooldown_mode','val-amber'),
-    param('Cooldown Minutes',s.cooldown_minutes?s.cooldown_minutes+'m':'—','val-amber','cooldown_minutes','val-amber'),
-    param('Reverse Mode',boolVal(s.use_reverse)),
-    param('Close On Opposite',boolVal(s.close_on_opposite)),
+    param('Max Spread',s.max_spread?s.max_spread+' pts':'—','val-red','max_spread'),
+    param('Daily Profit Target','$'+(s.daily_profit_target||0),'val-green','daily_profit_target'),
+    param('Daily Loss Limit','$'+(s.daily_loss_limit||0),'val-red','daily_loss_limit'),
+    param('Cooldown Mode',(s.cooldown_mode||'').replace('COOLDOWN_',''),'val-amber','cooldown_mode'),
+    param('Cooldown Minutes',s.cooldown_minutes?s.cooldown_minutes+'m':'—','val-amber','cooldown_minutes'),
+    param('Reverse Mode',boolVal(s.use_reverse),'','use_reverse'),
+    param('Close On Opposite',boolVal(s.close_on_opposite),'','close_on_opposite'),
   ],'sec-risk',true);
 
   /* Time slots */
   const slots=[s.slot_1,s.slot_2,s.slot_3,s.slot_4,s.slot_5].filter(Boolean);
   if(s.use_time_filter&&slots.length){
-    const slotParams=slots.map((sl,i)=>param('Slot '+(i+1),sl,'val-blue'));
-    slotParams.unshift(param('Time Filter',boolVal(s.use_time_filter)));
+    const slotParams=slots.map((sl,i)=>param('Slot '+(i+1),sl,'val-blue','slot_'+(i+1)));
+    slotParams.unshift(param('Time Filter',boolVal(s.use_time_filter),'','use_time_filter'));
     html+=section('🕐','Time Filter',slotParams,'sec-time',true);
   }
+
+  /* Color guide */
+  html+=`<div class="color-guide">
+    <span style="font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-right:4px">Color guide:</span>
+    <div class="cg-item"><div class="cg-dot" style="background:var(--blue)"></div>Indicator period / count</div>
+    <div class="cg-item"><div class="cg-dot" style="background:var(--amber)"></div>Lot size / risk / time value</div>
+    <div class="cg-item"><div class="cg-dot" style="background:var(--green)"></div>Enabled / profit target</div>
+    <div class="cg-item"><div class="cg-dot" style="background:var(--red)"></div>Risk limit (SL, Max Spread, Loss Limit)</div>
+    <div class="cg-item"><div class="cg-dot" style="background:rgba(245,158,11,.6);border:1px solid rgba(245,158,11,.8)"></div>ค่าที่ต่างจาก key ที่เทียบ</div>
+  </div>`;
 
   html+='</div>';
   document.getElementById('snapDetail').innerHTML=html;
@@ -569,13 +591,18 @@ function section(icon,title,params,id,open){
 }
 
 function param(lbl,val,cls='',fieldKey=''){
-  const display=val===null||val===undefined||val===''?'—':val;
+  const display=val===null||val===undefined||val===''?'—':String(val);
   /* check diff */
   let diffHtml='';let diffClass='';
   if(fieldKey&&diff&&diff[fieldKey]){
     const d=diff[fieldKey];
-    const cmpDisplay=d.cmp===null||d.cmp===undefined||d.cmp===''?'—':d.cmp;
-    diffHtml=`<div class="param-cmp"><span style="color:var(--txt-dim);font-size:9px">${cmpDisplay}</span><span class="param-cmp-arrow">←</span><span style="font-size:9px;color:var(--txt-dim)">cmp</span></div>`;
+    const cmpRaw=d.cmp;
+    const cmpDisplay=cmpRaw===null||cmpRaw===undefined||cmpRaw===''?'—':String(cmpRaw);
+    diffHtml=`<div class="param-cmp-row">
+      <span class="param-cmp-label">${cmpKey||'CMP'}</span>
+      <span class="param-cmp-arrow">→</span>
+      <span class="param-cmp-val">${cmpDisplay}</span>
+    </div>`;
     diffClass=' diff-changed';
   }
   return`<div class="param${diffClass}"><div class="param-lbl">${lbl}</div><div class="param-val ${cls}">${display}</div>${diffHtml}</div>`;

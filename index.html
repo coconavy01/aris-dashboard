@@ -1302,12 +1302,27 @@ function renderTable(fil,page){
   const f5=v=>v!=null&&v!==''?(+v).toFixed(5):'—';
   const f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
   const adm=window._isAdmin||false;
+  /* Build trade map — key = license_key + ticket to avoid cross-account collision.
+     If EA sends multiple CLOSE for same ticket (partial close), keep the one with
+     highest abs(profit) to represent the primary close. */
   const tkMap={};
   fil.forEach(r=>{
-    const tk=r.ticket||('nk_'+r.id);
-    if(!tkMap[tk])tkMap[tk]={open:null,close:null,_t:new Date(r.created_at)};
+    const lic=r.license_key||'';
+    const rawTk=r.ticket||('nk_'+r.id);
+    const tk=lic+'__'+rawTk;
+    if(!tkMap[tk])tkMap[tk]={open:null,close:null,_t:new Date(r.created_at),_key:tk};
     const ac=(r.trade_action||'').toUpperCase();
-    if(ac==='CLOSE')tkMap[tk].close=r;else tkMap[tk].open=r;
+    if(ac==='CLOSE'){
+      /* keep close with highest abs profit (handles partial close duplicates) */
+      if(!tkMap[tk].close||Math.abs(+r.profit||0)>=Math.abs(+(tkMap[tk].close.profit)||0)){
+        tkMap[tk].close=r;
+      }
+    } else {
+      /* keep latest open (most up-to-date price info) */
+      if(!tkMap[tk].open||new Date(r.created_at)>=new Date(tkMap[tk].open.created_at)){
+        tkMap[tk].open=r;
+      }
+    }
     const dt=new Date(r.created_at);if(dt>tkMap[tk]._t)tkMap[tk]._t=dt;
   });
   let trades=Object.values(tkMap).sort((a,b)=>b._t-a._t);

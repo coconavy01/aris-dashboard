@@ -300,7 +300,6 @@ canvas{width:100%!important}
   <div class="sb-nav">
     <div class="nav-sect">Navigation</div>
     <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
-    <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
     <a class="nav-btn active" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
     <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
     <a class="nav-btn" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
@@ -330,25 +329,29 @@ canvas{width:100%!important}
     <div style="margin-left:auto;font-size:9.5px;font-family:'DM Mono',monospace;color:var(--txt-dim)" id="keySelInfo">All license keys</div>
   </div>
 
+  <!-- DATE RANGE BAR -->
+  <div class="dr-bar">
+    <span class="dr-lbl">From</span>
+    <input type="date" class="dr-inp" id="drFromVis" onchange="onDrChange()">
+    <span class="dr-lbl">To</span>
+    <input type="date" class="dr-inp" id="drToVis" onchange="onDrChange()">
+    <div class="dr-presets">
+      <button class="dr-preset" onclick="setDR(this,'today')">Today</button>
+      <button class="dr-preset" onclick="setDR(this,'7')">7D</button>
+      <button class="dr-preset active" onclick="setDR(this,'30')">30D</button>
+      <button class="dr-preset" onclick="setDR(this,'90')">90D</button>
+      <button class="dr-preset" onclick="setDR(this,'365')">1Y</button>
+      <button class="dr-preset" onclick="setDR(this,'all')">All</button>
+    </div>
+    <div class="dr-info" id="drInfo">—</div>
+  </div>
+
   <div class="content">
 
-    <!-- FILTER -->
-    <div class="panel"><div class="panel-corner"></div>
-      <div class="panel-hd"><div><div class="panel-title">Data Filter</div><div class="panel-sub">เลือกช่วงวันที่และ License Key</div></div></div>
-      <div class="filter-row">
-        <span class="f-lbl">FROM</span><input type="date" class="f-inp" id="dFrom">
-        <span class="f-lbl">TO</span><input type="date" class="f-inp" id="dTo">
-        <div class="qbs">
-          <button class="qb" onclick="qr(this,'today')">TODAY</button>
-          <button class="qb" onclick="qr(this,'7')">7D</button>
-          <button class="qb active" onclick="qr(this,'30')">30D</button>
-          <button class="qb" onclick="qr(this,'90')">90D</button>
-          <button class="qb" onclick="qr(this,'all')">ALL</button>
-        </div>
-        <span class="f-lbl">KEY</span>
-        <select class="k-sel" id="kSel"><option value="All">All Keys</option></select>
-      </div>
-    </div>
+    <!-- hidden date inputs for JS compatibility -->
+    <input type="date" id="dFrom" style="display:none">
+    <input type="date" id="dTo" style="display:none">
+    <select id="kSel" style="display:none"><option value="All">All Keys</option></select>
 
     <!-- API KEY -->
     <div class="api-panel"><div class="api-corner"></div>
@@ -669,6 +672,36 @@ function setTAKey(k){
   });
   const info=document.getElementById('keySelInfo');
   if(info)info.textContent=k==='All'?'All license keys':k;
+  load();
+}
+
+
+function initDR(){
+  const to=new Date(),from=new Date();
+  from.setDate(from.getDate()-30);
+  const fStr=from.toISOString().split('T')[0];
+  const tStr=to.toISOString().split('T')[0];
+  ['dFrom','drFromVis'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=fStr;});
+  ['dTo','drToVis'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=tStr;});
+}
+function setDR(btn,preset){
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const to=new Date(),from=new Date();
+  if(preset==='today'){from.setHours(0,0,0,0);}
+  else if(preset==='all'){from=new Date('2020-01-01');}
+  else{from.setDate(from.getDate()-parseInt(preset));}
+  const fStr=from.toISOString().split('T')[0];
+  const tStr=to.toISOString().split('T')[0];
+  ['dFrom','drFromVis'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=fStr;});
+  ['dTo','drToVis'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=tStr;});
+  load();
+}
+function onDrChange(){
+  document.querySelectorAll('.dr-preset').forEach(b=>b.classList.remove('active'));
+  const vF=document.getElementById('drFromVis'),vT=document.getElementById('drToVis');
+  const dF=document.getElementById('dFrom'),dT=document.getElementById('dTo');
+  if(dF&&vF)dF.value=vF.value; if(dT&&vT)dT.value=vT.value;
   load();
 }
 

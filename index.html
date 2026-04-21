@@ -105,12 +105,30 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 @keyframes mcIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .mc{animation:mcIn .35s ease both;animation-delay:var(--d,0s)}
 
+/* ── TODAY CARD EXTRA ── */
+.today-progress{margin-top:10px}
+.tp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.tp-lbl{font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace}
+.tp-val{font-size:10px;font-family:'DM Mono',monospace;font-weight:500}
+.tp-track{height:5px;background:rgba(255,255,255,.07);border-radius:3px;overflow:hidden;margin-bottom:8px}
+.tp-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.today-orders{margin-top:10px;border-top:1px solid rgba(255,255,255,.06);padding-top:8px;max-height:96px;overflow-y:auto}
+.today-orders::-webkit-scrollbar{width:2px}
+.today-orders::-webkit-scrollbar-thumb{background:rgba(99,102,241,.2);border-radius:2px}
+.to-row{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:10px;font-family:'DM Mono',monospace}
+.to-row:last-child{border-bottom:none}
+.to-sym{color:var(--amber);font-weight:500;min-width:60px}
+.to-time{color:var(--txt-dim);font-size:9px;flex:1;padding:0 6px}
+.to-pnl-pos{color:var(--green);font-weight:600}
+.to-pnl-neg{color:var(--red);font-weight:600}
+.to-empty{font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;text-align:center;padding:10px 0}
+
 /* ── TOP INFO CARDS ── */
 .top-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
 .info-card{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:16px 18px;border-radius:var(--radius);overflow:hidden;position:relative;transition:border-color .2s}
 .info-card:hover{border-color:rgba(255,255,255,.1)}
 .info-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.02) 0%,transparent 50%);pointer-events:none}
-.ic-title{font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.ic-title{font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:#64748b;font-family:'DM Mono',monospace;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .ic-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
 .ic-big{font-size:26px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;letter-spacing:-1px}
 .ic-sub{font-size:10px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:4px}
@@ -137,12 +155,12 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .panel:hover{border-color:rgba(255,255,255,.09)}
 .panel-corner{display:none}
 .panel-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border2)}
-.panel-title{font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--txt);text-transform:uppercase;font-family:'DM Mono',monospace}
-.panel-sub{font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.panel-title{font-size:11px;font-weight:600;letter-spacing:.5px;color:#e2e8f0;text-transform:uppercase;font-family:'DM Mono',monospace}
+.panel-sub{font-size:9px;color:#64748b;font-family:'DM Mono',monospace;margin-top:1px}
 .eq-wrap{padding:6px 10px 10px;height:164px;position:relative}
 canvas{width:100%!important}
 .c-tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:5px;padding:2px}
-.c-tab{background:transparent;border:none;color:var(--txt-dim);padding:3px 10px;font-size:9.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
+.c-tab{background:transparent;border:none;color:#94a3b8;padding:3px 10px;font-size:9.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
 .c-tab.active{background:rgba(99,102,241,.25);color:#a5b4fc}
 .donut-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px}
 .donut-inner{position:relative;width:120px;height:120px}
@@ -419,14 +437,27 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
     <div class="top-row">
       <!-- Today's P&L -->
       <div class="info-card">
-        <div class="ic-corner" style="background:rgba(16,185,129,.3)"></div>
-        <div class="ic-title"><div class="ic-dot" style="background:var(--green)"></div>TODAY'S P/L</div>
+        <div class="ic-title"><div class="ic-dot" style="background:var(--green)"></div>TODAY'S P/L <span id="todayDateLbl" style="margin-left:auto;font-size:8.5px;color:var(--txt-dim);font-weight:400">—</span></div>
         <div class="ic-big" id="todayPNL" style="color:var(--green)">$0.00</div>
         <div class="ic-sub" id="todaySub">0 trades today</div>
-        <div class="ic-row">
-          <div><div class="ic-stat-l">Best Trade</div><div class="ic-stat" style="color:var(--green)" id="todayBest">—</div></div>
-          <div><div class="ic-stat-l">Worst Trade</div><div class="ic-stat" style="color:var(--red)" id="todayWorst">—</div></div>
-          <div><div class="ic-stat-l">Win Rate</div><div class="ic-stat" id="todayWR">—</div></div>
+
+        <!-- Daily Target / Limit progress -->
+        <div class="today-progress" id="todayProgress" style="display:none">
+          <div class="tp-row">
+            <span class="tp-lbl">🎯 Daily Target</span>
+            <span class="tp-val" id="tpTargetVal" style="color:var(--green)">—</span>
+          </div>
+          <div class="tp-track"><div class="tp-fill" id="tpTargetBar" style="background:var(--green);width:0%"></div></div>
+          <div class="tp-row">
+            <span class="tp-lbl">🛑 Loss Limit</span>
+            <span class="tp-val" id="tpLimitVal" style="color:var(--red)">—</span>
+          </div>
+          <div class="tp-track"><div class="tp-fill" id="tpLimitBar" style="background:var(--red);width:0%"></div></div>
+        </div>
+
+        <!-- Today's orders mini list -->
+        <div class="today-orders" id="todayOrders">
+          <div class="to-empty">No trades today</div>
         </div>
       </div>
       <!-- Open Positions -->
@@ -467,7 +498,7 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       <div class="panel">
         <div class="panel-corner"></div>
         <div class="panel-hd">
-          <div><div class="panel-title">Equity Curve</div><div class="panel-sub" id="eqSub">—</div></div>
+          <div><div class="panel-title" style="color:#e2e8f0;font-weight:600;letter-spacing:1px">Equity Curve</div><div class="panel-sub" id="eqSub">—</div></div>
           <div class="c-tabs">
             <button class="c-tab active" onclick="setRange(this,'all')">ALL</button>
             <button class="c-tab" onclick="setRange(this,'30')">30D</button>
@@ -912,20 +943,87 @@ function renderMetrics(fil){
 }
 
 /* ══ TODAY CARD ══ */
-function renderTodayCard(fil){
+async function renderTodayCard(fil){
   const now=new Date();
-  const today=fil.filter(r=>{const d=new Date(r.created_at);return d.getDate()===now.getDate()&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear()&&isClose(r);});
+  const todayStr=now.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'});
+  st('todayDateLbl',todayStr);
+
+  /* filter today's closed trades */
+  const today=fil.filter(r=>{
+    const d=new Date(r.created_at);
+    return d.getDate()===now.getDate()&&d.getMonth()===now.getMonth()&&
+           d.getFullYear()===now.getFullYear()&&isClose(r);
+  });
   const pnl=today.reduce((a,r)=>a+(+r.profit||0),0);
   const wins=today.filter(r=>(+r.profit||0)>0).length;
   const wr=today.length?Math.round(wins/today.length*100):0;
-  const best=today.length?Math.max(...today.map(r=>+r.profit||0)):0;
-  const worst=today.length?Math.min(...today.map(r=>+r.profit||0)):0;
+
+  /* update big P/L */
   const el=document.getElementById('todayPNL');
   if(el){el.textContent=(pnl>=0?'+$':'-$')+Math.abs(pnl).toFixed(2);el.style.color=pnl>0?'var(--green)':pnl<0?'var(--red)':'var(--txt)';}
-  st('todaySub',today.length+' trades today');
-  st('todayBest',today.length?'+$'+best.toFixed(2):'—');
-  st('todayWorst',today.length?'$'+worst.toFixed(2):'—');
-  st('todayWR',today.length?wr+'%':'—');
+  st('todaySub',today.length+' trade'+(today.length!==1?'s':'')+' today · '+wr+'% WR');
+
+  /* Fetch EA settings for daily target/limit */
+  try{
+    const licKey=isAdmin?curKey:myLicenseKey;
+    if(licKey&&licKey!=='All'){
+      const{data:eaArr}=await sbc.from('ea_settings').select('daily_profit_target,daily_loss_limit')
+        .eq('license_key',licKey).order('created_at',{ascending:false}).limit(1);
+      const ea=eaArr&&eaArr[0];
+      const prog=document.getElementById('todayProgress');
+      if(ea&&prog){
+        prog.style.display='block';
+        const target=+(ea.daily_profit_target||0);
+        const limit=+(ea.daily_loss_limit||0);
+        /* Target progress */
+        if(target>0){
+          const pct=Math.min(Math.max(pnl/target*100,0),100);
+          const tv=document.getElementById('tpTargetVal');
+          const tb=document.getElementById('tpTargetBar');
+          if(tv)tv.textContent='+$'+pnl.toFixed(2)+' / $'+target.toFixed(0);
+          if(tb){tb.style.width=pct+'%';tb.style.background=pct>=100?'var(--green)':'rgba(16,185,129,.6)';}
+        } else {
+          document.getElementById('tpTargetVal').textContent='Not set';
+          document.getElementById('tpTargetBar').style.width='0%';
+        }
+        /* Loss limit progress */
+        const loss=Math.max(-pnl,0);
+        if(limit>0){
+          const lpct=Math.min(loss/limit*100,100);
+          const lv=document.getElementById('tpLimitVal');
+          const lb=document.getElementById('tpLimitBar');
+          if(lv)lv.textContent='-$'+loss.toFixed(2)+' / $'+limit.toFixed(0);
+          if(lb){lb.style.width=lpct+'%';lb.style.background=lpct>=80?'var(--red)':'rgba(244,63,94,.5)';}
+        } else {
+          document.getElementById('tpLimitVal').textContent='Not set';
+          document.getElementById('tpLimitBar').style.width='0%';
+        }
+      }
+    }
+  }catch(e){}
+
+  /* Today's orders mini list — most recent first */
+  const ordersEl=document.getElementById('todayOrders');
+  if(ordersEl){
+    if(!today.length){
+      ordersEl.innerHTML='<div class="to-empty">No trades today</div>';
+    } else {
+      const sorted=[...today].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+      ordersEl.innerHTML=sorted.map(r=>{
+        const p=+r.profit||0,pos=p>=0;
+        const t=new Date(r.created_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+        const side=(r.trade_action||'').toUpperCase().includes('BUY')?
+          '<span style="color:var(--green);font-size:8.5px">BUY</span>':
+          '<span style="color:var(--red);font-size:8.5px">SELL</span>';
+        return`<div class="to-row">
+          <span class="to-sym">${r.symbol||'—'}</span>
+          ${side}
+          <span class="to-time">${t}</span>
+          <span class="${pos?'to-pnl-pos':'to-pnl-neg'}">${pos?'+':''}$${Math.abs(p).toFixed(2)}</span>
+        </div>`;
+      }).join('');
+    }
+  }
 }
 
 /* ══ OPEN POSITIONS ══ */

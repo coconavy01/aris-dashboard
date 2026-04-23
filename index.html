@@ -871,9 +871,29 @@ function renderAll(fil){
 }
 
 /* ══ METRICS ══ */
+/* ══ SHARED DEDUP HELPER (for stats — same logic as renderTable) ══ */
+function dedupeForStats(fil){
+  const byId={};
+  fil.forEach(r=>{ if(r.id) byId[r.id]=r; });
+  const rows=Object.values(byId);
+  /* For stats, keep one CLOSE per ticket. If no ticket, keep all (can't dedup safely) */
+  const seenTickets=new Set();
+  return rows.filter(r=>{
+    const ac=(r.trade_action||'').toUpperCase();
+    if(ac!=='CLOSE') return true; // keep all non-close rows
+    const tic=(r.ticket||'').toString().trim();
+    if(!tic||tic==='0'||tic==='null') return true; // no ticket → can't dedup, keep
+    const key=(r.license_key||'')+'__'+tic;
+    if(seenTickets.has(key)) return false; // duplicate ticket → skip
+    seenTickets.add(key);
+    return true;
+  });
+}
+
 function renderMetrics(fil){
   if(!fil.length)return;
-  const cl=fil.filter(isClose);
+  const filD=dedupeForStats(fil);
+  const cl=filD.filter(isClose);
   const lat=fil[fil.length-1],fst=fil[0];
   const pr=cl.map(r=>+r.profit||0);
   const ws=pr.filter(p=>p>0),ls=pr.filter(p=>p<=0);
@@ -949,7 +969,7 @@ async function renderTodayCard(fil){
   st('todayDateLbl',todayStr);
 
   /* filter today's closed trades */
-  const today=fil.filter(r=>{
+  const today=dedupeForStats(fil).filter(r=>{
     const d=new Date(r.created_at);
     return d.getDate()===now.getDate()&&d.getMonth()===now.getMonth()&&
            d.getFullYear()===now.getFullYear()&&isClose(r);
@@ -1043,7 +1063,7 @@ function renderOpenPositions(fil){
 
 /* ══ STREAK & RISK ══ */
 function renderStreakRisk(fil){
-  const cl=fil.filter(isClose).slice(-30);
+  const cl=dedupeForStats(fil).filter(isClose).slice(-30);
   let streak=0,type='';
   for(let i=cl.length-1;i>=0;i--){
     const win=(+cl[i].profit||0)>0;
@@ -1074,7 +1094,7 @@ function renderStreakRisk(fil){
 
 /* ══ HOUR GRID ══ */
 function renderHourGrid(fil){
-  const cl=fil.filter(isClose);
+  const cl=dedupeForStats(fil).filter(isClose);
   const hd=Array(24).fill(0).map(()=>({pnl:0,cnt:0}));
   cl.forEach(r=>{const h=new Date(r.created_at).getUTCHours();hd[h].pnl+=(+r.profit||0);hd[h].cnt++;});
   const max=Math.max(...hd.map(h=>Math.abs(h.pnl)),0.01);
@@ -1089,7 +1109,7 @@ function renderHourGrid(fil){
 
 /* ══ SYMBOL PERF ══ */
 function renderSymbols(fil){
-  const cl=fil.filter(isClose);
+  const cl=dedupeForStats(fil).filter(isClose);
   const map={};cl.forEach(r=>{const s=r.symbol||'?';if(!map[s])map[s]={pnl:0,cnt:0,w:0};const p=+r.profit||0;map[s].pnl+=p;map[s].cnt++;if(p>0)map[s].w++;});
   const syms=Object.keys(map).sort((a,b)=>map[b].pnl-map[a].pnl);
   document.getElementById('pairGrid').innerHTML=syms.length?syms.map(s=>{const d=map[s],pos=d.pnl>=0,wr=d.cnt?Math.round(d.w/d.cnt*100):0;return`<div class="pair-chip" style="border-color:${pos?'rgba(16,185,129,.18)':'rgba(244,63,94,.18)'}"><div class="pair-sym">${s}</div><div class="pair-pnl" style="color:${pos?'var(--green)':'var(--red)'}">${pos?'+':''}$${d.pnl.toFixed(2)}</div><div class="pair-cnt">${d.cnt}T · ${wr}%WR</div></div>`;}).join(''):'<span style="color:var(--txt-dim);font-size:11px;font-family:DM Mono,monospace">No closed trades yet</span>';
@@ -1112,7 +1132,7 @@ function renderEqChart(fil){
 
 /* ══ DONUT CHART ══ */
 function renderDonut(fil){
-  const cl=fil.filter(isClose);
+  const cl=dedupeForStats(fil).filter(isClose);
   const ws=cl.filter(r=>(+r.profit||0)>0).length,ls=cl.length-ws;
   const cfg={data:{datasets:[{data:[ws||0.001,ls||0.001],backgroundColor:['rgba(16,185,129,.7)','rgba(244,63,94,.6)'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return(c.dataIndex===0?'WIN':'LOSS')+': '+Math.round(c.parsed/t*100)+'%'}},backgroundColor:'rgba(12,14,20,.95)',bodyFont:{family:'DM Mono',size:11},padding:8,borderColor:'rgba(255,255,255,.08)',borderWidth:1}}}};
   if(donutCh){donutCh.data=cfg.data;donutCh.update('none');}else{donutCh=new Chart(document.getElementById('donutChart').getContext('2d'),{type:'doughnut',...cfg});}
@@ -1400,64 +1420,64 @@ function renderTable(fil,page){
   const f5=v=>v!=null&&v!==''?(+v).toFixed(5):'—';
   const f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
   const adm=window._isAdmin||false;
-  /* ── Trade deduplication ──
-     Key strategy:
-     1. If ticket exists → use license_key+ticket (handles cross-account same ticket#)
-     2. If no ticket → use license_key+symbol+profit+balance fingerprint
-        (EA sometimes sends CLOSE without ticket, but same profit+balance = same trade)
-     Multiple CLOSE for same ticket: keep highest abs(profit) */
-  const tkMap={};
-  const seenFp=new Set(); // fingerprint set for no-ticket rows
 
-  fil.forEach(r=>{
-    const lic=r.license_key||'';
-    const ac=(r.trade_action||'').toUpperCase();
-    const rawTk=(r.ticket||'').toString().trim();
+  /* ══ DEDUP: Step 1 — uniqueness by Supabase id (UUID) ══
+     Each row in DB has a unique id. This eliminates any exact-duplicate rows
+     that may have been inserted twice by the EA. */
+  const byId={};
+  fil.forEach(r=>{ if(r.id) byId[r.id]=r; else byId['noid_'+Math.random()]=r; });
+  const rows=Object.values(byId);
 
-    let tk;
-    if(rawTk&&rawTk!=='0'&&rawTk!=='null'){
-      tk=lic+'__'+rawTk;
-    } else if(ac==='CLOSE'){
-      // fingerprint: lic+sym+profit+balance (rounded to 2dp to handle float noise)
-      const fp=lic+'|'+( r.symbol||'')+
-               '|'+(+( r.profit||0)).toFixed(2)+
-               '|'+((+r.account_balance||0)).toFixed(2)+
-               '|'+ac;
-      if(seenFp.has(fp))return; // skip true duplicate
-      seenFp.add(fp);
-      tk=lic+'__noTk_'+fp;
-    } else {
-      // OPEN without ticket: use time+sym+side as key
-      const side=ac.replace('OPEN_','');
-      tk=lic+'__open__'+(r.symbol||'')+'__'+side+'__'+(r.open_price||'');
-    }
+  /* ══ DEDUP: Step 2 — split CLOSE vs OPEN ══ */
+  const closes=rows.filter(r=>(r.trade_action||'').toUpperCase()==='CLOSE');
+  const opens=rows.filter(r=>(r.trade_action||'').toUpperCase()!=='CLOSE');
 
-    if(!tkMap[tk])tkMap[tk]={open:null,close:null,_t:new Date(r.created_at)};
-    if(ac==='CLOSE'){
-      if(!tkMap[tk].close||Math.abs(+r.profit||0)>=Math.abs(+(tkMap[tk].close.profit)||0)){
-        tkMap[tk].close=r;
-      }
-    } else {
-      if(!tkMap[tk].open||new Date(r.created_at)>=new Date(tkMap[tk].open.created_at)){
-        tkMap[tk].open=r;
+  /* ══ DEDUP: Step 3 — match each CLOSE to its OPEN by ticket ══
+     Only merge when ticket is a real non-zero value.
+     No fingerprinting — if we can't match cleanly, show CLOSE as standalone. */
+  const usedOpenIds=new Set();
+  const trades=[];
+
+  closes.forEach(c=>{
+    const tic=(c.ticket||'').toString().trim();
+    let matched=null;
+    if(tic && tic!=='0' && tic!=='null' && tic!==''){
+      /* find the OPEN row with same ticket+license_key, prefer closest in time before close */
+      const candidates=opens.filter(o=>
+        (o.ticket||'').toString().trim()===tic &&
+        o.license_key===c.license_key &&
+        !usedOpenIds.has(o.id||'_')
+      );
+      if(candidates.length){
+        /* pick the one closest in time (but before or at close time) */
+        const ct=new Date(c.created_at).getTime();
+        candidates.sort((a,b)=>Math.abs(new Date(a.created_at)-ct)-Math.abs(new Date(b.created_at)-ct));
+        matched=candidates[0];
       }
     }
-    const dt=new Date(r.created_at);
-    if(dt>tkMap[tk]._t)tkMap[tk]._t=dt;
+    if(matched) usedOpenIds.add(matched.id||'_');
+    trades.push({open:matched||null,close:c,_t:new Date(c.created_at)});
   });
-  let trades=Object.values(tkMap).sort((a,b)=>b._t-a._t);
-  if(tFilter==='open')trades=trades.filter(t=>!t.close&&t.open);
-  if(tFilter==='close')trades=trades.filter(t=>!!t.close);
-  if(tFilter==='win')trades=trades.filter(t=>t.close&&(+t.close.profit||0)>0);
-  if(tFilter==='loss')trades=trades.filter(t=>t.close&&(+t.close.profit||0)<=0);
-  if(!trades.length){
+
+  /* ══ DEDUP: Step 4 — remaining OPEN rows with no close ══ */
+  opens.filter(o=>!usedOpenIds.has(o.id||'_')).forEach(o=>{
+    trades.push({open:o,close:null,_t:new Date(o.created_at)});
+  });
+
+  trades.sort((a,b)=>b._t-a._t);
+  let filteredTrades=trades;
+  if(tFilter==='open')filteredTrades=filteredTrades.filter(t=>!t.close&&t.open);
+  else if(tFilter==='close')filteredTrades=filteredTrades.filter(t=>!!t.close);
+  else if(tFilter==='win')filteredTrades=filteredTrades.filter(t=>t.close&&(+t.close.profit||0)>0);
+  else if(tFilter==='loss')filteredTrades=filteredTrades.filter(t=>t.close&&(+t.close.profit||0)<=0);
+  if(!filteredTrades.length){
     document.getElementById('tradeTable').innerHTML='<tr><td colspan="12" style="text-align:center;padding:24px;color:var(--txt-dim);font-family:DM Mono,monospace">NO DATA MATCH</td></tr>';
     document.getElementById('tblFoot').classList.remove('show');
     return;
   }
-  const total=trades.length,totalPages=Math.ceil(total/tradePageSize);
+  const total=filteredTrades.length,totalPages=Math.ceil(total/tradePageSize);
   tradePage=Math.max(0,Math.min(tradePage,totalPages-1));
-  const ps=tradePage*tradePageSize,pageTrades=trades.slice(ps,ps+tradePageSize);
+  const ps=tradePage*tradePageSize,pageTrades=filteredTrades.slice(ps,ps+tradePageSize);
   st('tblSub',total+' trades total');
   document.getElementById('tblFoot').classList.add('show');
   st('tblPageInfo','Showing '+(ps+1)+'–'+Math.min(ps+tradePageSize,total)+' of '+total);
@@ -1479,15 +1499,27 @@ function renderTable(fil,page){
   if(bn){bn.disabled=tradePage>=totalPages-1;bn.style.opacity=tradePage>=totalPages-1?'0.35':'1';}
   document.getElementById('tradeTable').innerHTML=pageTrades.map(t=>{
     const o=t.open,c=t.close,isClosed=!!c;
-    const ac=o?(o.trade_action||'').toUpperCase().replace('OPEN_',''):'?';
+    /* Determine trade side: prefer OPEN row, fallback to CLOSE row's trade_type or comment */
+    let ac='?';
+    if(o){ac=(o.trade_action||'').toUpperCase().replace('OPEN_','');}
+    else if(c){
+      /* CLOSE-only row: try to infer side from comment or trade_type if EA sends it */
+      const ct=(c.trade_type||c.comment||'').toUpperCase();
+      if(ct.includes('BUY'))ac='BUY';
+      else if(ct.includes('SELL'))ac='SELL';
+    }
     const pv=isClosed?(+c.profit||0):null,pp=pv!==null&&pv>0;
     const dirPill='<span class="pill '+(ac==='BUY'?'pill-buy':'pill-sell')+'">'+ac+'</span>';
     const statusPill=isClosed?'<span class="pill '+(pp?'pill-close':'pill-open')+'" style="font-size:9px;margin-left:2px">'+(pp?'WIN':'LOSS')+'</span>':'<span class="pill pill-open" style="font-size:9px;margin-left:2px">OPEN</span>';
     const openTime=o?new Date(o.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
     const closeTime=c?new Date(c.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
     const lic=(o||c)?.license_key||'—',sym=(o||c)?.symbol||'—';
-    const lots=f2((o||c)?.lots),opx=f5(o?.open_price||(c?.open_price));
-    const clx=c?f5(c.close_price):'—',sl=f5(o?.sl||(c?.sl)),tp=f5(o?.tp||(c?.tp));
+    const lots=f2((o||c)?.lots);
+    /* open price: from OPEN row if available, else from CLOSE row's open_price field */
+    const opx=f5(o?.open_price || c?.open_price);
+    /* close price: from CLOSE row's close_price, never show open_price as close */
+    const clx=c?.close_price!=null&&c?.close_price!==''?f5(c.close_price):'—';
+    const sl=f5(o?.sl||(c?.sl)),tp=f5(o?.tp||(c?.tp));
     const bal=isClosed?(+c.account_balance||0):(o?(+o.account_balance||0):0);
     let click='',cls='';
     if(adm&&c){

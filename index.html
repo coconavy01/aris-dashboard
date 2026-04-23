@@ -872,23 +872,26 @@ function renderAll(fil){
 
 /* ══ METRICS ══ */
 /* ══ SHARED DEDUP HELPER (for stats — same logic as renderTable) ══ */
-function dedupeForStats(fil){
-  const byId={};
-  fil.forEach(r=>{ if(r.id) byId[r.id]=r; });
-  const rows=Object.values(byId);
-  /* For stats, keep one CLOSE per ticket. If no ticket, keep all (can't dedup safely) */
-  const seenTickets=new Set();
-  return rows.filter(r=>{
-    const ac=(r.trade_action||'').toUpperCase();
-    if(ac!=='CLOSE') return true; // keep all non-close rows
-    const tic=(r.ticket||'').toString().trim();
-    if(!tic||tic==='0'||tic==='null') return true; // no ticket → can't dedup, keep
-    const key=(r.license_key||'')+'__'+tic;
-    if(seenTickets.has(key)) return false; // duplicate ticket → skip
-    seenTickets.add(key);
+/* ── CONTENT FINGERPRINT: dedup rows that EA sent twice ──
+   EA sometimes POSTs the same trade result 2x at nearly same time.
+   UUIDs differ but content is identical: same license+symbol+profit+balance+timestamp(minute).
+   Keep only the first occurrence per fingerprint. */
+function contentFp(r){
+  const ac=(r.trade_action||'').toUpperCase();
+  const min=r.created_at?r.created_at.slice(0,16):''; // "2026-04-23T14:13"
+  return ac+'|'+(r.license_key||'')+'|'+(r.symbol||'')+'|'+
+         (+( r.profit||0)).toFixed(2)+'|'+((+r.account_balance||0)).toFixed(2)+'|'+min;
+}
+function dedupeRows(fil){
+  const seen=new Set();
+  return fil.filter(r=>{
+    const fp=contentFp(r);
+    if(seen.has(fp)) return false;
+    seen.add(fp);
     return true;
   });
 }
+function dedupeForStats(fil){ return dedupeRows(fil); }
 
 function renderMetrics(fil){
   if(!fil.length)return;
@@ -1421,12 +1424,8 @@ function renderTable(fil,page){
   const f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
   const adm=window._isAdmin||false;
 
-  /* ══ DEDUP: Step 1 — uniqueness by Supabase id (UUID) ══
-     Each row in DB has a unique id. This eliminates any exact-duplicate rows
-     that may have been inserted twice by the EA. */
-  const byId={};
-  fil.forEach(r=>{ if(r.id) byId[r.id]=r; else byId['noid_'+Math.random()]=r; });
-  const rows=Object.values(byId);
+  /* ══ DEDUP Step 1: content fingerprint — removes EA double-sends ══ */
+  const rows=dedupeRows(fil);
 
   /* ══ DEDUP: Step 2 — split CLOSE vs OPEN ══ */
   const closes=rows.filter(r=>(r.trade_action||'').toUpperCase()==='CLOSE');

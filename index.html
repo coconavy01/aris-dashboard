@@ -23,6 +23,26 @@ let drFrom='',drTo='';
    เก็บใน localStorage ไม่ต้องตั้งใหม่ทุกครั้ง */
 let brokerOffset=parseInt(localStorage.getItem('aris_broker_offset')||'2',10);
 
+function autoDetectTZ(){
+  const inp=document.getElementById('tzDetectInput');
+  const hint=document.getElementById('tzHint');
+  if(!inp||!inp.value){
+    if(hint){hint.textContent='⚠ ใส่เวลา MT5 ก่อน';hint.style.color='var(--amber)';}
+    return;
+  }
+  const [bH,bM]=inp.value.split(':').map(Number);
+  const now=new Date();
+  let diff=(bH*60+bM)-(now.getUTCHours()*60+now.getUTCMinutes());
+  if(diff>720)diff-=1440; if(diff<-720)diff+=1440;
+  const offset=Math.round(diff/60);
+  setBrokerOffset(offset);
+  if(hint){
+    const sign=offset>=0?'+':'';
+    hint.textContent='✅ Broker = UTC'+sign+offset+' (บันทึกแล้ว)';
+    hint.style.color='var(--green)';
+  }
+}
+
 function setBrokerOffset(v){
   brokerOffset=parseInt(v,10);
   localStorage.setItem('aris_broker_offset',v);
@@ -43,6 +63,7 @@ function updateTZLabels(){
   const sign=brokerOffset>=0?'+':'';
   const lbl=document.getElementById('tzBrokerLabel');
   if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
+  const tzSel2=document.getElementById('tzSel');if(tzSel2)tzSel2.value=String(brokerOffset);
 }
 
 /* Convert a created_at string to broker-local hour (0-23) */
@@ -439,42 +460,35 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
 
   <!-- BROKER TIMEZONE BAR -->
   <div class="tz-bar" id="tzBar">
-    <span class="tz-lbl">🕐 Broker</span>
-    <select class="tz-sel" id="tzSel" onchange="setBrokerOffset(this.value)">
-      <option value="-12">UTC−12</option><option value="-11">UTC−11</option>
-      <option value="-10">UTC−10</option><option value="-9">UTC−9</option>
-      <option value="-8">UTC−8</option><option value="-7">UTC−7</option>
-      <option value="-6">UTC−6</option><option value="-5">UTC−5</option>
-      <option value="-4">UTC−4</option><option value="-3">UTC−3</option>
-      <option value="-2">UTC−2</option><option value="-1">UTC−1</option>
-      <option value="0">UTC+0</option><option value="1">UTC+1</option>
-      <option value="2">UTC+2 (ICMarkets/XM winter ⭐)</option>
-      <option value="3">UTC+3 (ICMarkets/XM summer ⭐)</option>
-      <option value="4">UTC+4</option><option value="5">UTC+5</option>
-      <option value="6">UTC+6</option><option value="7">UTC+7 (ไทย)</option>
-      <option value="8">UTC+8</option><option value="9">UTC+9</option>
-      <option value="10">UTC+10</option><option value="11">UTC+11</option>
-      <option value="12">UTC+12</option>
-    </select>
-    <!-- Live clocks -->
-    <div style="display:flex;align-items:center;gap:10px;margin-left:4px;flex-wrap:wrap">
-      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.2">
-        <span style="font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace">UTC</span>
-        <span id="tzClockUTC" style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:#94a3b8">00:00:00</span>
+
+    <!-- LEFT: 3 clocks side by side -->
+    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+        <span style="font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace">ไทย (UTC+7)</span>
+        <span id="tzClockThai" style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:#94a3b8;letter-spacing:.5px">00:00:00</span>
       </div>
-      <span style="color:var(--txt-dim);font-size:11px">→</span>
-      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.2">
-        <span id="tzBrokerLabel" style="font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:#a5b4fc;font-family:'DM Mono',monospace">Broker UTC+2</span>
-        <span id="tzClockBroker" style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:#a5b4fc">00:00:00</span>
+      <span style="color:var(--border);font-size:14px">|</span>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+        <span style="font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace">UTC+0</span>
+        <span id="tzClockUTC" style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:#64748b;letter-spacing:.5px">00:00:00</span>
+      </div>
+      <span style="color:var(--border);font-size:14px">|</span>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+        <span id="tzBrokerLabel" style="font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:#a5b4fc;font-family:'DM Mono',monospace">Broker UTC+2</span>
+        <span id="tzClockBroker" style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:#a5b4fc;letter-spacing:.5px">00:00:00</span>
       </div>
     </div>
-    <!-- Auto detect -->
-    <div style="display:flex;align-items:center;gap:5px;margin-left:auto">
-      <span style="font-size:8.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">MT5 ตอนนี้:</span>
-      <input type="time" id="tzDetectInput" class="tz-sel" style="width:88px;padding:3px 7px;cursor:pointer" title="ใส่เวลาที่เห็นใน MT5 ตอนนี้">
-      <button onclick="autoDetectTZ()" style="cursor:pointer;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:4px 10px;font-size:9.5px;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s" onmouseover="this.style.background='rgba(99,102,241,.28)'" onmouseout="this.style.background='rgba(99,102,241,.15)'">⚡ Auto</button>
+
+    <span style="color:var(--border);font-size:14px;flex-shrink:0">|</span>
+
+    <!-- RIGHT: simple offset setter -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+      <span style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">เวลา MT5 ตอนนี้</span>
+      <input type="time" id="tzDetectInput" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;padding:4px 9px;outline:none;border-radius:5px;cursor:pointer;width:96px" title="ดูเวลาใน MT5 แล้วใส่ตรงนี้">
+      <button onclick="autoDetectTZ()" style="background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;padding:5px 14px;font-size:10px;font-family:'DM Mono',monospace;border-radius:5px;cursor:pointer;font-weight:600;transition:all .15s" onmouseover="this.style.background='rgba(99,102,241,.35)'" onmouseout="this.style.background='rgba(99,102,241,.2)'">✓ ตั้งค่า</button>
+      <span id="tzHint" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--green)"></span>
     </div>
-    <span id="tzHint" style="font-size:8.5px;color:rgba(165,180,252,.5);font-family:'DM Mono',monospace;white-space:nowrap"></span>
+
   </div>
 
   <div class="content">
@@ -827,6 +841,10 @@ setInterval(()=>{
   /* Topbar clock (Thai time) */
   const el=document.getElementById('clockEl');
   if(el)el.textContent=now.toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  /* Thai clock in tz-bar */
+  const thD=new Date(now.getTime()+7*3600000);
+  const thH=String(thD.getUTCHours()).padStart(2,'0'),thM=String(thD.getUTCMinutes()).padStart(2,'0'),thS=String(thD.getUTCSeconds()).padStart(2,'0');
+  const ct=document.getElementById('tzClockThai');if(ct)ct.textContent=thH+':'+thM+':'+thS;
   /* TZ bar — UTC clock */
   const utcH=String(now.getUTCHours()).padStart(2,'0');
   const utcM=String(now.getUTCMinutes()).padStart(2,'0');

@@ -26,12 +26,23 @@ let brokerOffset=parseInt(localStorage.getItem('aris_broker_offset')||'2',10);
 function setBrokerOffset(v){
   brokerOffset=parseInt(v,10);
   localStorage.setItem('aris_broker_offset',v);
+  /* sync selectors on both pages */
   const sel=document.getElementById('tzSel');
-  if(sel)sel.value=v;
-  const cur=document.getElementById('tzCurrent');
-  if(cur)cur.textContent='Broker UTC'+(brokerOffset>=0?'+':'')+brokerOffset;
-  firstLoad=false;
-  updateUI();
+  if(sel)sel.value=String(brokerOffset);
+  updateTZLabels();
+  /* re-render everything with new offset — data doesn't refetch, just recalculates */
+  if(allData.length){
+    firstLoad=false;
+    const fil=getFiltered(allData);
+    renderAll(fil);
+    if(lastPriceData) renderPriceChart(lastPriceData,fil);
+  }
+}
+
+function updateTZLabels(){
+  const sign=brokerOffset>=0?'+':'';
+  const lbl=document.getElementById('tzBrokerLabel');
+  if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
 }
 
 /* Convert a created_at string to broker-local hour (0-23) */
@@ -427,8 +438,8 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
   </div>
 
   <!-- BROKER TIMEZONE BAR -->
-  <div class="tz-bar">
-    <span class="tz-lbl">🕐 Broker Time</span>
+  <div class="tz-bar" id="tzBar">
+    <span class="tz-lbl">🕐 Broker</span>
     <select class="tz-sel" id="tzSel" onchange="setBrokerOffset(this.value)">
       <option value="-12">UTC−12</option><option value="-11">UTC−11</option>
       <option value="-10">UTC−10</option><option value="-9">UTC−9</option>
@@ -436,8 +447,7 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       <option value="-6">UTC−6</option><option value="-5">UTC−5</option>
       <option value="-4">UTC−4</option><option value="-3">UTC−3</option>
       <option value="-2">UTC−2</option><option value="-1">UTC−1</option>
-      <option value="0">UTC+0 (London winter)</option>
-      <option value="1">UTC+1 (London summer)</option>
+      <option value="0">UTC+0</option><option value="1">UTC+1</option>
       <option value="2">UTC+2 (ICMarkets/XM winter ⭐)</option>
       <option value="3">UTC+3 (ICMarkets/XM summer ⭐)</option>
       <option value="4">UTC+4</option><option value="5">UTC+5</option>
@@ -446,13 +456,25 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       <option value="10">UTC+10</option><option value="11">UTC+11</option>
       <option value="12">UTC+12</option>
     </select>
-    <span class="tz-current" id="tzCurrent">Broker UTC+2</span>
-    <div style="display:flex;align-items:center;gap:5px;margin-left:6px">
-      <span class="tz-note" style="color:var(--txt-dim)">MT5 time:</span>
-      <input type="time" id="tzDetectInput" class="tz-sel" style="width:88px;padding:3px 7px;cursor:pointer" title="ใส่เวลาที่เห็นใน MT5 ตอนนี้">
-      <button onclick="autoDetectTZ()" class="tz-sel" style="cursor:pointer;background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.3);color:#a5b4fc;padding:3px 9px;font-size:9px">⚡ Auto</button>
+    <!-- Live clocks -->
+    <div style="display:flex;align-items:center;gap:10px;margin-left:4px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.2">
+        <span style="font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace">UTC</span>
+        <span id="tzClockUTC" style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:#94a3b8">00:00:00</span>
+      </div>
+      <span style="color:var(--txt-dim);font-size:11px">→</span>
+      <div style="display:flex;flex-direction:column;align-items:center;line-height:1.2">
+        <span id="tzBrokerLabel" style="font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:#a5b4fc;font-family:'DM Mono',monospace">Broker UTC+2</span>
+        <span id="tzClockBroker" style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:#a5b4fc">00:00:00</span>
+      </div>
     </div>
-    <span class="tz-note" id="tzHint" style="color:rgba(165,180,252,.5)">ใส่เวลา MT5 ตอนนี้แล้วกด Auto</span>
+    <!-- Auto detect -->
+    <div style="display:flex;align-items:center;gap:5px;margin-left:auto">
+      <span style="font-size:8.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">MT5 ตอนนี้:</span>
+      <input type="time" id="tzDetectInput" class="tz-sel" style="width:88px;padding:3px 7px;cursor:pointer" title="ใส่เวลาที่เห็นใน MT5 ตอนนี้">
+      <button onclick="autoDetectTZ()" style="cursor:pointer;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:4px 10px;font-size:9.5px;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s" onmouseover="this.style.background='rgba(99,102,241,.28)'" onmouseout="this.style.background='rgba(99,102,241,.15)'">⚡ Auto</button>
+    </div>
+    <span id="tzHint" style="font-size:8.5px;color:rgba(165,180,252,.5);font-family:'DM Mono',monospace;white-space:nowrap"></span>
   </div>
 
   <div class="content">
@@ -785,8 +807,7 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
     /* restore saved broker offset */
     const tzSel=document.getElementById('tzSel');
     if(tzSel)tzSel.value=String(brokerOffset);
-    const tzCur=document.getElementById('tzCurrent');
-    if(tzCur)tzCur.textContent='Broker UTC'+(brokerOffset>=0?'+':'')+brokerOffset;
+    updateTZLabels();
     updateUI();
     /* menu visibility */
     try{
@@ -801,7 +822,26 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 })();
 
 /* ══ CLOCK ══ */
-setInterval(()=>{const el=document.getElementById('clockEl');if(el)el.textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
+setInterval(()=>{
+  const now=new Date();
+  /* Topbar clock (Thai time) */
+  const el=document.getElementById('clockEl');
+  if(el)el.textContent=now.toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  /* TZ bar — UTC clock */
+  const utcH=String(now.getUTCHours()).padStart(2,'0');
+  const utcM=String(now.getUTCMinutes()).padStart(2,'0');
+  const utcS=String(now.getUTCSeconds()).padStart(2,'0');
+  const cu=document.getElementById('tzClockUTC');
+  if(cu)cu.textContent=utcH+':'+utcM+':'+utcS;
+  /* TZ bar — Broker clock */
+  const brokerMs=now.getTime()+brokerOffset*3600000;
+  const bd=new Date(brokerMs);
+  const bH=String(bd.getUTCHours()).padStart(2,'0');
+  const bM=String(bd.getUTCMinutes()).padStart(2,'0');
+  const bS=String(bd.getUTCSeconds()).padStart(2,'0');
+  const cb=document.getElementById('tzClockBroker');
+  if(cb)cb.textContent=bH+':'+bM+':'+bS;
+},1000);
 setInterval(updateUI,15000);
 
 /* ══ UTILS ══ */

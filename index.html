@@ -836,6 +836,9 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 })();
 
 /* ══ CLOCK ══ */
+/* call initDR synchronously so dates are ready before async load() */
+if(typeof initDR==="function")initDR();
+
 setInterval(()=>{
   const now=new Date();
   /* Topbar clock (Thai time) */

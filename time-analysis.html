@@ -30,11 +30,19 @@
   document.body.style.opacity='1';
   /* start loading AFTER auth is confirmed and vars are set */
   /* restore broker offset */
-const _tzSel=document.getElementById('tzSel');
-if(_tzSel)_tzSel.value=String(brokerOffset);
-const _lbl=document.getElementById('tzBrokerLabel');
-if(_lbl)_lbl.textContent='Broker UTC'+(brokerOffset>=0?'+':'')+brokerOffset;
-fetchKeys().then(()=>load());
+  const _tzSel=document.getElementById('tzSel');
+  if(_tzSel)_tzSel.value=String(brokerOffset);
+  const _lbl=document.getElementById('tzBrokerLabel');
+  if(_lbl)_lbl.textContent='Broker UTC'+(brokerOffset>=0?'+':'')+brokerOffset;
+  /* init date range FIRST so dFrom/dTo have values before load() */
+  initDR();
+  /* init key selector for admin */
+  if(lk&&lk.is_admin) setTimeout(initKeySelBar, 300);
+  fetchKeys().then(()=>{
+    /* ensure dates initialized */
+    if(!document.getElementById('dFrom')?.value) initDR();
+    load();
+  });
 })();
 </script>
 <style>
@@ -510,6 +518,9 @@ const _t=new Date(),_f=new Date(_t);_f.setDate(_f.getDate()-30);
 document.getElementById('dTo').value=_t.toISOString().split('T')[0];
 document.getElementById('dFrom').value=_f.toISOString().split('T')[0];
 
+/* call initDR synchronously so dates are ready before async load() */
+if(typeof initDR==="function")initDR();
+
 setInterval(()=>{
   const now=new Date();
   const ce=document.getElementById('clockEl');
@@ -543,7 +554,10 @@ function setKeyUI(has){
 /* Fetch */
 async function fetchTA(){
   if(!sbc)return[];
-  const from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
+  const _dfrom=document.getElementById('dFrom')?.value;
+  const _dto=document.getElementById('dTo')?.value;
+  const from=_dfrom||new Date(Date.now()-30*86400000).toISOString().split('T')[0];
+  const to=_dto||new Date().toISOString().split('T')[0];
   const isAdm=window._isAdmin||false,myKey=window._myLicenseKey||'';
   let q=sbc.from('trade_history').select('*').gte('created_at',from+'T00:00:00').lte('created_at',to+'T23:59:59').eq('trade_action','CLOSE').order('created_at',{ascending:true});
   if(!isAdm&&myKey){

@@ -16,6 +16,34 @@
 let eqCh=null,donutCh=null,firstLoad=true,isAdmin=false,myLicenseKey='';
 let tradePage=0,tradePageSize=20;
 let drFrom='',drTo='';
+/* ── BROKER TIMEZONE ── */
+let brokerOffset=parseInt(localStorage.getItem('aris_broker_offset')||'2',10);
+function tradeHour(r){const d=new Date(r.created_at);return((d.getUTCHours()+brokerOffset)%24+24)%24;}
+function fmtBrokerTime(ts,fmt){
+  const d=new Date(ts),s=new Date(d.getTime()+brokerOffset*3600000);
+  if(fmt==='time')return s.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  return s.toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function setBrokerOffset(v){
+  brokerOffset=parseInt(v,10);
+  localStorage.setItem('aris_broker_offset',v);
+  const sign=brokerOffset>=0?'+':'';
+  const lbl=document.getElementById('tzBrokerLabel');
+  if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
+}
+function autoDetectTZ(){
+  const inp=document.getElementById('tzMT5Input');
+  if(!inp||!inp.value){alert('ใส่เวลา MT5 ก่อน');return;}
+  const [bH,bM]=inp.value.split(':').map(Number);
+  const now=new Date();
+  let diff=(bH*60+bM)-(now.getUTCHours()*60+now.getUTCMinutes());
+  if(diff>720)diff-=1440;if(diff<-720)diff+=1440;
+  const offset=Math.round(diff/60);
+  setBrokerOffset(offset);
+  const sign=offset>=0?'+':'';
+  inp.value='';inp.placeholder='UTC'+sign+offset+' ✅';
+}
+
 let priceCh=null,lastPriceSym='',lastPriceTF='15min',lastPriceData=null,priceLoading=false;</script>
 <style>body{visibility:hidden;opacity:0}</style>
 <style>
@@ -308,6 +336,14 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:19;backdrop-filter:blur(6px)}
 .sb-overlay.show{display:block}
 
+.tz-bar{display:flex;align-items:center;gap:14px;padding:7px 24px;background:rgba(99,102,241,.04);border-bottom:1px solid rgba(99,102,241,.1);flex-shrink:0;flex-wrap:wrap}
+.tz-clock-block{display:flex;flex-direction:column;align-items:center;gap:1px}
+.tz-clock-lbl{font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace}
+.tz-clock-val{font-size:15px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.tz-sep{color:rgba(255,255,255,.15);font-size:16px}
+.tz-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;padding:4px 9px;outline:none;border-radius:5px;cursor:pointer;width:96px}
+.tz-btn{background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);color:#a5b4fc;padding:5px 13px;font-size:10px;font-family:'DM Mono',monospace;border-radius:5px;cursor:pointer;font-weight:600}
+.tz-btn:hover{background:rgba(99,102,241,.3)}
 @media(max-width:1200px){.metrics-row{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.top-row{grid-template-columns:1fr 1fr}.charts-row{grid-template-columns:1fr}.charts-row2{grid-template-columns:1fr}.sum-row{grid-template-columns:1fr 1fr}}
 @media(max-width:768px){
@@ -365,6 +401,28 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       <a class="chip admin-chip" href="admin.html" id="adminTopBtn" style="display:none">👑 ADMIN</a>
       <button class="chip logout-chip" onclick="doLogout()">⏻</button>
     </div>
+  </div>
+
+  <!-- TIMEZONE BAR -->
+  <div class="tz-bar">
+    <div class="tz-clock-block">
+      <span class="tz-clock-lbl">ไทย (UTC+7)</span>
+      <span class="tz-clock-val" id="tzThaiClock" style="color:#64748b">--:--:--</span>
+    </div>
+    <span class="tz-sep">|</span>
+    <div class="tz-clock-block">
+      <span class="tz-clock-lbl">UTC+0</span>
+      <span class="tz-clock-val" id="tzUTCClock" style="color:#475569">--:--:--</span>
+    </div>
+    <span class="tz-sep">|</span>
+    <div class="tz-clock-block">
+      <span class="tz-clock-lbl" id="tzBrokerLabel">Broker UTC+2</span>
+      <span class="tz-clock-val" id="tzBrokerClock" style="color:#a5b4fc">--:--:--</span>
+    </div>
+    <span class="tz-sep" style="margin-left:8px">·</span>
+    <span style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">MT5 ตอนนี้:</span>
+    <input type="time" id="tzMT5Input" class="tz-input" placeholder="HH:MM">
+    <button onclick="autoDetectTZ()" class="tz-btn">⚡ ตั้งค่า</button>
   </div>
 
   <!-- DATE RANGE BAR -->
@@ -711,6 +769,7 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
     const uc=document.getElementById('userChip');
     if(uc)uc.textContent=window._displayName||window._userEmail||'';
     initDR();
+    const _tzSign=brokerOffset>=0?'+':'';const _tzLbl=document.getElementById('tzBrokerLabel');if(_tzLbl)_tzLbl.textContent='Broker UTC'+_tzSign+brokerOffset;
     updateUI();
     /* menu visibility */
     try{
@@ -725,7 +784,14 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 })();
 
 /* ══ CLOCK ══ */
-setInterval(()=>{const el=document.getElementById('clockEl');if(el)el.textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
+setInterval(()=>{const el=document.getElementById('clockEl');if(el)el.textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const _now=new Date();
+  const _th=new Date(_now.getTime()+7*3600000);
+  const _br=new Date(_now.getTime()+brokerOffset*3600000);
+  const _tc=document.getElementById('tzThaiClock');if(_tc)_tc.textContent=_th.toUTCString().slice(17,25);
+  const _uc=document.getElementById('tzUTCClock');if(_uc)_uc.textContent=_now.toISOString().slice(11,19);
+  const _bc=document.getElementById('tzBrokerClock');if(_bc)_bc.textContent=_br.toUTCString().slice(17,25);
+},1000);
 setInterval(updateUI,15000);
 
 /* ══ UTILS ══ */
@@ -1080,7 +1146,7 @@ function renderStreakRisk(fil){
   if(lbl)lbl.textContent=streak?type.charAt(0).toUpperCase()+type.slice(1)+' streak':'No streak';
   if(det)det.textContent=streak?streak+' consecutive '+type+(streak!==1?'s':''):cl.length+' recent trades';
   /* best/worst hour */
-  const hm={};cl.forEach(r=>{const h=new Date(r.created_at).getUTCHours();if(!hm[h])hm[h]={p:0,c:0};hm[h].p+=(+r.profit||0);hm[h].c++;});
+  const hm={};cl.forEach(r=>{const h=tradeHour(r);if(!hm[h])hm[h]={p:0,c:0};hm[h].p+=(+r.profit||0);hm[h].c++;});
   const hs=Object.entries(hm).map(([h,v])=>({h:+h,p:v.p,c:v.c}));
   if(hs.length){
     const best=hs.reduce((a,b)=>b.p>a.p?b:a);const worst=hs.reduce((a,b)=>b.p<a.p?b:a);
@@ -1099,7 +1165,7 @@ function renderStreakRisk(fil){
 function renderHourGrid(fil){
   const cl=dedupeForStats(fil).filter(isClose);
   const hd=Array(24).fill(0).map(()=>({pnl:0,cnt:0}));
-  cl.forEach(r=>{const h=new Date(r.created_at).getUTCHours();hd[h].pnl+=(+r.profit||0);hd[h].cnt++;});
+  cl.forEach(r=>{const h=tradeHour(r);hd[h].pnl+=(+r.profit||0);hd[h].cnt++;});
   const max=Math.max(...hd.map(h=>Math.abs(h.pnl)),0.01);
   const grid=document.getElementById('hourGrid');if(!grid)return;
   grid.innerHTML=hd.map((h,i)=>{
@@ -1510,8 +1576,8 @@ function renderTable(fil,page){
     const pv=isClosed?(+c.profit||0):null,pp=pv!==null&&pv>0;
     const dirPill='<span class="pill '+(ac==='BUY'?'pill-buy':'pill-sell')+'">'+ac+'</span>';
     const statusPill=isClosed?'<span class="pill '+(pp?'pill-close':'pill-open')+'" style="font-size:9px;margin-left:2px">'+(pp?'WIN':'LOSS')+'</span>':'<span class="pill pill-open" style="font-size:9px;margin-left:2px">OPEN</span>';
-    const openTime=o?new Date(o.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-    const closeTime=c?new Date(c.created_at).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const openTime=o?fmtBrokerTime(o.created_at,'short'):'—';
+    const closeTime=c?fmtBrokerTime(c.created_at,'short'):'—';
     const lic=(o||c)?.license_key||'—',sym=(o||c)?.symbol||'—';
     const lots=f2((o||c)?.lots);
     /* open price: from OPEN row if available, else from CLOSE row's open_price field */

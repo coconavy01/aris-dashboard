@@ -670,7 +670,7 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       </div>
       <div class="tbl-scroll">
         <table>
-          <thead><tr><th id="thOpenTime">Open Time (Broker)</th><th id="thCloseTime">Close Time (Broker)</th><th>License</th><th>Symbol</th><th>Side</th><th>Lots</th><th>Open</th><th>Close</th><th>SL</th><th>TP</th><th>Profit</th><th>Balance</th><th>Chart</th></tr></thead>
+          <thead><tr><th>Open Time</th><th>Close Time</th><th>License</th><th>Symbol</th><th>Side</th><th>Lots</th><th>Open</th><th>Close</th><th>SL</th><th>TP</th><th>Profit</th><th>Balance</th><th>Chart</th></tr></thead>
           <tbody id="tradeTable"><tr><td colspan="12" style="text-align:center;padding:32px;color:var(--txt-dim)">CONNECTING TO DATABASE…</td></tr></tbody>
         </table>
       </div>
@@ -786,13 +786,11 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
 /* ══ CLOCK ══ */
 setInterval(()=>{const el=document.getElementById('clockEl');if(el)el.textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const _now=new Date();
-  const _tc=document.getElementById('tzThaiClock');
-  if(_tc)_tc.textContent=_now.toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-  const _uc=document.getElementById('tzUTCClock');
-  if(_uc)_uc.textContent=_now.toISOString().slice(11,19);
+  const _th=new Date(_now.getTime()+7*3600000);
   const _br=new Date(_now.getTime()+brokerOffset*3600000);
-  const _bc=document.getElementById('tzBrokerClock');
-  if(_bc)_bc.textContent=_br.toISOString().slice(11,19);
+  const _tc=document.getElementById('tzThaiClock');if(_tc)_tc.textContent=_th.toUTCString().slice(17,25);
+  const _uc=document.getElementById('tzUTCClock');if(_uc)_uc.textContent=_now.toISOString().slice(11,19);
+  const _bc=document.getElementById('tzBrokerClock');if(_bc)_bc.textContent=_br.toUTCString().slice(17,25);
 },1000);
 setInterval(updateUI,15000);
 
@@ -1040,12 +1038,10 @@ async function renderTodayCard(fil){
   st('todayDateLbl',todayStr);
 
   /* filter today's closed trades */
-  /* Compare in Bangkok timezone */
-  const nowBkk=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Bangkok'}));
   const today=dedupeForStats(fil).filter(r=>{
-    const dBkk=new Date(new Date(r.created_at).toLocaleString('en-US',{timeZone:'Asia/Bangkok'}));
-    return dBkk.getDate()===nowBkk.getDate()&&dBkk.getMonth()===nowBkk.getMonth()&&
-           dBkk.getFullYear()===nowBkk.getFullYear()&&isClose(r);
+    const d=new Date(r.created_at);
+    return d.getDate()===now.getDate()&&d.getMonth()===now.getMonth()&&
+           d.getFullYear()===now.getFullYear()&&isClose(r);
   });
   const pnl=today.reduce((a,r)=>a+(+r.profit||0),0);
   const wins=today.filter(r=>(+r.profit||0)>0).length;
@@ -1104,7 +1100,7 @@ async function renderTodayCard(fil){
       const sorted=[...today].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
       ordersEl.innerHTML=sorted.map(r=>{
         const p=+r.profit||0,pos=p>=0;
-        const t=new Date(r.created_at).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',hour12:false});
+        const t=new Date(r.created_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
         const side=(r.trade_action||'').toUpperCase().includes('BUY')?
           '<span style="color:var(--green);font-size:8.5px">BUY</span>':
           '<span style="color:var(--red);font-size:8.5px">SELL</span>';
@@ -1489,11 +1485,6 @@ function drawSpark(o, c){
 }
 
 function renderTable(fil,page){
-  /* update column headers with current broker offset */
-  const sign=brokerOffset>=0?'+':'';
-  const th1=document.getElementById('thOpenTime'),th2=document.getElementById('thCloseTime');
-  if(th1)th1.textContent='Open (UTC'+sign+brokerOffset+')';
-  if(th2)th2.textContent='Close (UTC'+sign+brokerOffset+')';
   tradePage=page||0;
   const f5=v=>v!=null&&v!==''?(+v).toFixed(5):'—';
   const f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';
@@ -1585,9 +1576,8 @@ function renderTable(fil,page){
     const pv=isClosed?(+c.profit||0):null,pp=pv!==null&&pv>0;
     const dirPill='<span class="pill '+(ac==='BUY'?'pill-buy':'pill-sell')+'">'+ac+'</span>';
     const statusPill=isClosed?'<span class="pill '+(pp?'pill-close':'pill-open')+'" style="font-size:9px;margin-left:2px">'+(pp?'WIN':'LOSS')+'</span>':'<span class="pill pill-open" style="font-size:9px;margin-left:2px">OPEN</span>';
-    /* Show in Broker time so it matches MT5 exactly */
-    const openTime=o?new Date(o.created_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-    const closeTime=c?new Date(c.created_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const openTime=o?fmtBrokerTime(o.created_at,'short'):'—';
+    const closeTime=c?fmtBrokerTime(c.created_at,'short'):'—';
     const lic=(o||c)?.license_key||'—',sym=(o||c)?.symbol||'—';
     const lots=f2((o||c)?.lots);
     /* open price: from OPEN row if available, else from CLOSE row's open_price field */
@@ -1612,7 +1602,7 @@ async function showTradeDetail(rJson){
   let r;try{r=JSON.parse(rJson.replace(/&quot;/g,'"'));}catch(e){return;}
   const pv=+r.profit||0,pp=pv>=0;
   document.getElementById('tdTitle').textContent=(r.symbol||'—')+' · '+(r.trade_action||'').toUpperCase();
-  document.getElementById('tdSub').textContent=r.license_key+' · '+new Date(r.created_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('tdSub').textContent=r.license_key+' · '+new Date(r.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
   document.getElementById('tdBody').innerHTML='<div class="td-loading"><span class="spin2"></span>Loading Settings…</div>';
   document.getElementById('tdModal').classList.add('show');
   const f2=v=>v!=null&&v!==''?(+v).toFixed(2):'—';

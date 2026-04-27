@@ -670,7 +670,7 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       </div>
       <div class="tbl-scroll">
         <table>
-          <thead><tr><th>Open Time</th><th>Close Time</th><th>License</th><th>Symbol</th><th>Side</th><th>Lots</th><th>Open</th><th>Close</th><th>SL</th><th>TP</th><th>Profit</th><th>Balance</th><th>Chart</th></tr></thead>
+          <thead><tr><th>Open Time (UTC+7)</th><th>Close Time (UTC+7)</th><th>License</th><th>Symbol</th><th>Side</th><th>Lots</th><th>Open</th><th>Close</th><th>SL</th><th>TP</th><th>Profit</th><th>Balance</th><th>Chart</th></tr></thead>
           <tbody id="tradeTable"><tr><td colspan="12" style="text-align:center;padding:32px;color:var(--txt-dim)">CONNECTING TO DATABASE…</td></tr></tbody>
         </table>
       </div>
@@ -1576,8 +1576,8 @@ function renderTable(fil,page){
     const pv=isClosed?(+c.profit||0):null,pp=pv!==null&&pv>0;
     const dirPill='<span class="pill '+(ac==='BUY'?'pill-buy':'pill-sell')+'">'+ac+'</span>';
     const statusPill=isClosed?'<span class="pill '+(pp?'pill-close':'pill-open')+'" style="font-size:9px;margin-left:2px">'+(pp?'WIN':'LOSS')+'</span>':'<span class="pill pill-open" style="font-size:9px;margin-left:2px">OPEN</span>';
-    const openTime=o?fmtBrokerTime(o.created_at,'short'):'—';
-    const closeTime=c?fmtBrokerTime(c.created_at,'short'):'—';
+    const openTime=o?new Date(new Date(o.created_at).getTime()+7*3600000).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const closeTime=c?new Date(new Date(c.created_at).getTime()+7*3600000).toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
     const lic=(o||c)?.license_key||'—',sym=(o||c)?.symbol||'—';
     const lots=f2((o||c)?.lots);
     /* open price: from OPEN row if available, else from CLOSE row's open_price field */

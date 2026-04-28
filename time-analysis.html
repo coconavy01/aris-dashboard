@@ -29,6 +29,7 @@
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
   /* start loading AFTER auth is confirmed and vars are set */
+  const _tzSign2=brokerOffset>=0?'+':'';const _tzLbl2=document.getElementById('tzBrokerLabel');if(_tzLbl2)_tzLbl2.textContent='Broker UTC'+_tzSign2+brokerOffset;
   fetchKeys().then(()=>load());
 })();
 </script>
@@ -264,6 +265,14 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .sb-overlay.show{display:block}
 
 /* responsive */
+.tz-bar{display:flex;align-items:center;gap:14px;padding:7px 24px;background:rgba(99,102,241,.04);border-bottom:1px solid rgba(99,102,241,.1);flex-shrink:0;flex-wrap:wrap}
+.tz-clock-block{display:flex;flex-direction:column;align-items:center;gap:1px}
+.tz-clock-lbl{font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace}
+.tz-clock-val{font-size:15px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:.5px}
+.tz-sep{color:rgba(255,255,255,.15);font-size:16px}
+.tz-input{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:var(--txt);font-family:'DM Mono',monospace;font-size:12px;padding:4px 9px;outline:none;border-radius:5px;cursor:pointer;width:96px}
+.tz-btn{background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.35);color:#a5b4fc;padding:5px 13px;font-size:10px;font-family:'DM Mono',monospace;border-radius:5px;cursor:pointer;font-weight:600}
+.tz-btn:hover{background:rgba(99,102,241,.3)}
 @media(max-width:768px){
   .sidebar{position:fixed;left:-260px;top:0;bottom:0;transition:left .3s ease;z-index:20}
   .sidebar.open{left:0}
@@ -448,13 +457,59 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 const SB_URL="https://tfnikhovkbbrhvrkobpu.supabase.co";
 const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo";
 let sbc,hd=[],allZ=[],syncN=0,bCh=null,wCh=null,zm='good';
+/* ── BROKER TIMEZONE ── */
+let brokerOffset=parseInt(localStorage.getItem('aris_broker_offset')||'2',10);
+function tradeHour(r){const d=new Date(r.created_at);return((d.getUTCHours()+brokerOffset)%24+24)%24;}
+function setBrokerOffset(v){
+  brokerOffset=parseInt(v,10);
+  localStorage.setItem('aris_broker_offset',v);
+  const sign=brokerOffset>=0?'+':'';
+  const lbl=document.getElementById('tzBrokerLabel');
+  if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
+  load();
+}
+function autoDetectTZ(){
+  const inp=document.getElementById('tzMT5Input');
+  const msg=document.getElementById('tzAutoMsg');
+  const val=(inp?.value||'').trim();
+  if(!val||!val.includes(':')){
+    if(msg){msg.textContent='⚠ ใส่เวลา HH:MM ก่อน';msg.style.color='var(--amber)';}
+    else alert('ใส่เวลา HH:MM ก่อน เช่น 14:30');
+    return;
+  }
+  const parts=val.split(':');
+  const bH=parseInt(parts[0],10), bM=parseInt(parts[1]||'0',10);
+  if(isNaN(bH)){
+    if(msg){msg.textContent='⚠ รูปแบบผิด';msg.style.color='var(--amber)';}
+    return;
+  }
+  const dummy=0; // placeholder
+  const [_bH,_bM]=[bH,bM];
+  const now=new Date();
+  let diff=(bH*60+bM)-(now.getUTCHours()*60+now.getUTCMinutes());
+  if(diff>720)diff-=1440;if(diff<-720)diff+=1440;
+  const offset=Math.round(diff/60);
+  setBrokerOffset(offset);
+  const sign=offset>=0?'+':'';
+  inp.value='';inp.placeholder='UTC'+sign+offset+' ✅';
+}
+
 try{sbc=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
 
 const _t=new Date(),_f=new Date(_t);_f.setDate(_f.getDate()-30);
 document.getElementById('dTo').value=_t.toISOString().split('T')[0];
 document.getElementById('dFrom').value=_f.toISOString().split('T')[0];
 
-setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})},1000);
+setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const _now=new Date();
+  const _tc=document.getElementById('tzThaiClock');
+  if(_tc)_tc.textContent=_now.toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const _uc=document.getElementById('tzUTCClock');
+  if(_uc)_uc.textContent=_now.toISOString().slice(11,19);
+  const _br=new Date(_now.getTime()+brokerOffset*3600000);
+  const _bc=document.getElementById('tzBrokerClock');
+  if(_bc)_bc.textContent=_br.toISOString().slice(11,19);
+},1000);
 
 function toggleSb(){document.getElementById('sidebar').classList.toggle('open');document.getElementById('sbOverlay').classList.toggle('show')}
 function closeSb(){document.getElementById('sidebar').classList.remove('open');document.getElementById('sbOverlay').classList.remove('show')}
@@ -509,7 +564,7 @@ async function fetchKeys(){
 /* Compute */
 function computeH(data){
   const h=Array(24).fill(null).map(()=>({pnl:0,cnt:0,wins:0,losses:0,profits:[],bestT:0,worstT:0}));
-  data.forEach(r=>{const i=new Date(r.created_at).getUTCHours(),p=+r.profit||0;h[i].pnl+=p;h[i].cnt++;h[i].profits.push(p);if(p>0){h[i].wins++;if(p>h[i].bestT)h[i].bestT=p}else{h[i].losses++;if(p<h[i].worstT)h[i].worstT=p}});
+  data.forEach(r=>{const i=tradeHour(r),p=+r.profit||0;h[i].pnl+=p;h[i].cnt++;h[i].profits.push(p);if(p>0){h[i].wins++;if(p>h[i].bestT)h[i].bestT=p}else{h[i].losses++;if(p<h[i].worstT)h[i].worstT=p}});
   return h;
 }
 

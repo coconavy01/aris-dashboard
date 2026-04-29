@@ -20,9 +20,11 @@ let drFrom='',drTo='';
 let brokerOffset=parseInt(localStorage.getItem('aris_broker_offset')||'2',10);
 function tradeHour(r){const d=new Date(r.created_at);return((d.getUTCHours()+brokerOffset)%24+24)%24;}
 function fmtBrokerTime(ts,fmt){
-  const d=new Date(ts),s=new Date(d.getTime()+brokerOffset*3600000);
-  if(fmt==='time')return s.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  return s.toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const s=new Date(new Date(ts).getTime()+brokerOffset*3600000);
+  const hh=String(s.getUTCHours()).padStart(2,'0'),mm=String(s.getUTCMinutes()).padStart(2,'0');
+  if(fmt==='time') return hh+':'+mm;
+  const M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return s.getUTCDate()+' '+M[s.getUTCMonth()]+' '+hh+':'+mm;
 }
 function setBrokerOffset(v){
   brokerOffset=parseInt(v,10);
@@ -30,6 +32,12 @@ function setBrokerOffset(v){
   const sign=brokerOffset>=0?'+':'';
   const lbl=document.getElementById('tzBrokerLabel');
   if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
+  /* update trade log column headers */
+  const th1=document.getElementById('thOpen'),th2=document.getElementById('thClose');
+  if(th1)th1.textContent='Open (UTC'+sign+brokerOffset+')';
+  if(th2)th2.textContent='Close (UTC'+sign+brokerOffset+')';
+  /* re-render table with new times */
+  if(allData.length){const fil=getFiltered(allData);renderTable(fil);}
 }
 function autoDetectTZ(){
   const inp=document.getElementById('tzMT5Input');
@@ -419,17 +427,12 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
   <div class="tz-bar">
     <div class="tz-clock-block">
       <span class="tz-clock-lbl">ไทย (UTC+7)</span>
-      <span class="tz-clock-val" id="tzThaiClock" style="color:#64748b">--:--:--</span>
+      <span class="tz-clock-val" id="tzThaiClock" style="color:#94a3b8">--:--:--</span>
     </div>
     <span class="tz-sep">|</span>
     <div class="tz-clock-block">
-      <span class="tz-clock-lbl">UTC+0</span>
-      <span class="tz-clock-val" id="tzUTCClock" style="color:#475569">--:--:--</span>
-    </div>
-    <span class="tz-sep">|</span>
-    <div class="tz-clock-block">
-      <span class="tz-clock-lbl" id="tzBrokerLabel">Broker UTC+2</span>
-      <span class="tz-clock-val" id="tzBrokerClock" style="color:#a5b4fc">--:--:--</span>
+      <span class="tz-clock-lbl" id="tzBrokerLabel">Broker UTC+3</span>
+      <span class="tz-clock-val" id="tzBrokerClock" style="color:#a5b4fc;font-size:17px">--:--:--</span>
     </div>
     <span class="tz-sep" style="margin-left:8px">·</span>
     <span style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">MT5 ตอนนี้:</span>
@@ -782,7 +785,11 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
     const uc=document.getElementById('userChip');
     if(uc)uc.textContent=window._displayName||window._userEmail||'';
     initDR();
-    const _tzSign=brokerOffset>=0?'+':'';const _tzLbl=document.getElementById('tzBrokerLabel');if(_tzLbl)_tzLbl.textContent='Broker UTC'+_tzSign+brokerOffset;
+    const _tzSign=brokerOffset>=0?'+':'';
+    const _tzLbl=document.getElementById('tzBrokerLabel');if(_tzLbl)_tzLbl.textContent='Broker UTC'+_tzSign+brokerOffset;
+    const _th1=document.getElementById('thOpen'),_th2=document.getElementById('thClose');
+    if(_th1)_th1.textContent='Open (UTC'+_tzSign+brokerOffset+')';
+    if(_th2)_th2.textContent='Close (UTC'+_tzSign+brokerOffset+')';
     updateUI();
     /* menu visibility */
     try{
@@ -801,8 +808,7 @@ setInterval(()=>{const el=document.getElementById('clockEl');if(el)el.textConten
   const _now=new Date();
   const _tc=document.getElementById('tzThaiClock');
   if(_tc)_tc.textContent=_now.toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-  const _uc=document.getElementById('tzUTCClock');
-  if(_uc)_uc.textContent=_now.toISOString().slice(11,19);
+
   const _br=new Date(_now.getTime()+brokerOffset*3600000);
   const _bc=document.getElementById('tzBrokerClock');
   if(_bc)_bc.textContent=_br.toISOString().slice(11,19);
@@ -1134,7 +1140,7 @@ async function renderTodayCard(fil){
       const sorted=[...today].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
       ordersEl.innerHTML=sorted.map(r=>{
         const p=+r.profit||0,pos=p>=0;
-        const t=new Date(r.created_at).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',hour12:false});
+        const t=fmtBrokerTime(r.created_at,'time');
         const side=(r.trade_action||'').toUpperCase().includes('BUY')?
           '<span style="color:var(--green);font-size:8.5px">BUY</span>':
           '<span style="color:var(--red);font-size:8.5px">SELL</span>';
@@ -1616,8 +1622,8 @@ function renderTable(fil,page){
     const dirPill='<span class="pill '+(ac==='BUY'?'pill-buy':'pill-sell')+'">'+ac+'</span>';
     const statusPill=isClosed?'<span class="pill '+(pp?'pill-close':'pill-open')+'" style="font-size:9px;margin-left:2px">'+(pp?'WIN':'LOSS')+'</span>':'<span class="pill pill-open" style="font-size:9px;margin-left:2px">OPEN</span>';
     /* Show in Broker time so it matches MT5 exactly */
-    const openTime=o?new Date(o.created_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
-    const closeTime=c?new Date(c.created_at).toLocaleString('th-TH',{timeZone:'Asia/Bangkok',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    const openTime=o?fmtBrokerTime(o.created_at,'short'):'—';
+    const closeTime=c?fmtBrokerTime(c.created_at,'short'):'—';
     const lic=(o||c)?.license_key||'—',sym=(o||c)?.symbol||'—';
     const lots=f2((o||c)?.lots);
     /* open price: from OPEN row if available, else from CLOSE row's open_price field */

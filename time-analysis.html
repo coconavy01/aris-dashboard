@@ -1,4 +1,20 @@
-<!DOCTYPE html>
+<!-- TIMEZONE BAR -->
+  <div class="tz-bar">
+    <div class="tz-clock-block">
+      <span class="tz-clock-lbl">ไทย (UTC+7)</span>
+      <span class="tz-clock-val" id="tzThaiClock" style="color:#94a3b8">--:--:--</span>
+    </div>
+    <span class="tz-sep">|</span>
+    <div class="tz-clock-block">
+      <span class="tz-clock-lbl" id="tzBrokerLabel">Broker UTC+3</span>
+      <span class="tz-clock-val" id="tzBrokerClock" style="color:#a5b4fc;font-size:17px">--:--:--</span>
+    </div>
+    <span class="tz-sep" style="margin-left:8px">·</span>
+    <span style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">MT5 ตอนนี้:</span>
+    <input type="text" id="tzMT5Input" class="tz-input" placeholder="HH:MM" inputmode="numeric" maxlength="5" oninput="this.value=this.value.replace(/[^0-9:]/g,'')">
+    <button onclick="autoDetectTZ()" class="tz-btn">⚡ ตั้งค่า</button>
+    <span id="tzAutoMsg" style="font-size:9.5px;font-family:'DM Mono',monospace;color:var(--green)"></span>
+  </div><!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -504,8 +520,6 @@ setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLoc
   const _now=new Date();
   const _tc=document.getElementById('tzThaiClock');
   if(_tc)_tc.textContent=_now.toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-  const _uc=document.getElementById('tzUTCClock');
-  if(_uc)_uc.textContent=_now.toISOString().slice(11,19);
   const _br=new Date(_now.getTime()+brokerOffset*3600000);
   const _bc=document.getElementById('tzBrokerClock');
   if(_bc)_bc.textContent=_br.toISOString().slice(11,19);

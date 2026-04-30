@@ -1,20 +1,4 @@
-<!-- TIMEZONE BAR -->
-  <div class="tz-bar">
-    <div class="tz-clock-block">
-      <span class="tz-clock-lbl">ไทย (UTC+7)</span>
-      <span class="tz-clock-val" id="tzThaiClock" style="color:#94a3b8">--:--:--</span>
-    </div>
-    <span class="tz-sep">|</span>
-    <div class="tz-clock-block">
-      <span class="tz-clock-lbl" id="tzBrokerLabel">Broker UTC+3</span>
-      <span class="tz-clock-val" id="tzBrokerClock" style="color:#a5b4fc;font-size:17px">--:--:--</span>
-    </div>
-    <span class="tz-sep" style="margin-left:8px">·</span>
-    <span style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">MT5 ตอนนี้:</span>
-    <input type="text" id="tzMT5Input" class="tz-input" placeholder="HH:MM" inputmode="numeric" maxlength="5" oninput="this.value=this.value.replace(/[^0-9:]/g,'')">
-    <button onclick="autoDetectTZ()" class="tz-btn">⚡ ตั้งค่า</button>
-    <span id="tzAutoMsg" style="font-size:9.5px;font-family:'DM Mono',monospace;color:var(--green)"></span>
-  </div><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
 <meta charset="UTF-8">
@@ -45,8 +29,8 @@
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
   /* start loading AFTER auth is confirmed and vars are set */
-  const _tzSign2=brokerOffset>=0?'+':'';const _tzLbl2=document.getElementById('tzBrokerLabel');if(_tzLbl2)_tzLbl2.textContent='Broker UTC'+_tzSign2+brokerOffset;
-  fetchKeys().then(()=>load());
+  const _s=brokerOffset>=0?'+':'';const _l=document.getElementById('tzBrokerLabel');if(_l)_l.textContent='Broker UTC'+_s+brokerOffset;
+fetchKeys().then(()=>load());
 })();
 </script>
 <style>
@@ -323,7 +307,6 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   <div class="sb-nav">
     <div class="nav-sect">Navigation</div>
     <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
-    <a class="nav-btn" href="index.html"><div class="nav-icon">▣</div>Dashboard</a>
     <a class="nav-btn active" href="time-analysis.html"><div class="nav-icon">◈</div>Time Analysis</a>
     <a class="nav-btn" href="calendar.html"><div class="nav-icon">📅</div>Calendar</a>
     <a class="nav-btn" href="statement.html"><div class="nav-icon">💰</div>Statement</a>
@@ -346,6 +329,23 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     </div>
   </div>
 
+  <!-- TIMEZONE BAR -->
+  <div class="tz-bar">
+    <div class="tz-clock-block">
+      <span class="tz-clock-lbl">ไทย (UTC+7)</span>
+      <span class="tz-clock-val" id="tzThaiClock" style="color:#94a3b8">--:--:--</span>
+    </div>
+    <span class="tz-sep">|</span>
+    <div class="tz-clock-block">
+      <span class="tz-clock-lbl" id="tzBrokerLabel">Broker UTC+2</span>
+      <span class="tz-clock-val" id="tzBrokerClock" style="color:#a5b4fc;font-size:17px">--:--:--</span>
+    </div>
+    <span class="tz-sep" style="margin-left:8px">·</span>
+    <span style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;white-space:nowrap">MT5 ตอนนี้:</span>
+    <input type="text" id="tzMT5Input" class="tz-input" placeholder="HH:MM" inputmode="numeric" maxlength="5" oninput="this.value=this.value.replace(/[^0-9:]/g,'')">
+    <button onclick="autoDetectTZ()" class="tz-btn">⚡ ตั้งค่า</button>
+    <span id="tzAutoMsg" style="font-size:9.5px;font-family:'DM Mono',monospace;color:var(--green)"></span>
+  </div>
   <div class="content">
 
     <!-- FILTER -->
@@ -476,6 +476,13 @@ let sbc,hd=[],allZ=[],syncN=0,bCh=null,wCh=null,zm='good';
 /* ── BROKER TIMEZONE ── */
 let brokerOffset=parseInt(localStorage.getItem('aris_broker_offset')||'2',10);
 function tradeHour(r){const d=new Date(r.created_at);return((d.getUTCHours()+brokerOffset)%24+24)%24;}
+function fmtBrokerTime(ts,fmt){
+  const s=new Date(new Date(ts).getTime()+brokerOffset*3600000);
+  const hh=String(s.getUTCHours()).padStart(2,'0'),mm=String(s.getUTCMinutes()).padStart(2,'0');
+  if(fmt==='time') return hh+':'+mm;
+  const M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  return s.getUTCDate()+' '+M[s.getUTCMonth()]+' '+hh+':'+mm;
+}
 function setBrokerOffset(v){
   brokerOffset=parseInt(v,10);
   localStorage.setItem('aris_broker_offset',v);
@@ -489,25 +496,21 @@ function autoDetectTZ(){
   const msg=document.getElementById('tzAutoMsg');
   const val=(inp?.value||'').trim();
   if(!val||!val.includes(':')){
-    if(msg){msg.textContent='⚠ ใส่เวลา HH:MM ก่อน';msg.style.color='var(--amber)';}
-    else alert('ใส่เวลา HH:MM ก่อน เช่น 14:30');
+    if(inp)inp.style.borderColor='rgba(244,63,94,.5)';
+    setTimeout(()=>{if(inp)inp.style.borderColor='';},1500);
+    if(msg){msg.textContent='⚠ ใส่ HH:MM ก่อน';msg.style.color='var(--amber)';}
     return;
   }
   const parts=val.split(':');
-  const bH=parseInt(parts[0],10), bM=parseInt(parts[1]||'0',10);
-  if(isNaN(bH)){
-    if(msg){msg.textContent='⚠ รูปแบบผิด';msg.style.color='var(--amber)';}
-    return;
-  }
-  const dummy=0; // placeholder
-  const [_bH,_bM]=[bH,bM];
+  const bH=parseInt(parts[0],10),bM=parseInt(parts[1]||'0',10);
   const now=new Date();
   let diff=(bH*60+bM)-(now.getUTCHours()*60+now.getUTCMinutes());
   if(diff>720)diff-=1440;if(diff<-720)diff+=1440;
   const offset=Math.round(diff/60);
   setBrokerOffset(offset);
   const sign=offset>=0?'+':'';
-  inp.value='';inp.placeholder='UTC'+sign+offset+' ✅';
+  if(inp){inp.value='';inp.placeholder='HH:MM';}
+  if(msg){msg.textContent='✅ Broker = UTC'+sign+offset;msg.style.color='var(--green)';}
 }
 
 try{sbc=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
@@ -516,11 +519,12 @@ const _t=new Date(),_f=new Date(_t);_f.setDate(_f.getDate()-30);
 document.getElementById('dTo').value=_t.toISOString().split('T')[0];
 document.getElementById('dFrom').value=_f.toISOString().split('T')[0];
 
-setInterval(()=>{document.getElementById('clockEl').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  const _now=new Date();
+setInterval(()=>{
+  const _n=new Date();
+  document.getElementById('clockEl').textContent=_n.toLocaleString('th-TH',{timeZone:'Asia/Bangkok',hour12:false,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'});
   const _tc=document.getElementById('tzThaiClock');
-  if(_tc)_tc.textContent=_now.toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-  const _br=new Date(_now.getTime()+brokerOffset*3600000);
+  if(_tc)_tc.textContent=_n.toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const _br=new Date(_n.getTime()+brokerOffset*3600000);
   const _bc=document.getElementById('tzBrokerClock');
   if(_bc)_bc.textContent=_br.toISOString().slice(11,19);
 },1000);

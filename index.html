@@ -901,7 +901,13 @@ function setDR(btn,preset){
   btn.classList.add('active');
   const to=new Date(); /* always fresh today */
   let from=new Date();
-  if(preset==='today'){from=new Date(to);from.setHours(0,0,0,0);}
+  if(preset==='today'){
+    /* broker today starts at broker midnight = UTC midnight - brokerOffset */
+    const brokerMidnightUTC=new Date(to);
+    const brokerNow2=new Date(to.getTime()+brokerOffset*3600000);
+    brokerNow2.setUTCHours(0,0,0,0);
+    from=new Date(brokerNow2.getTime()-brokerOffset*3600000);
+  }
   else if(preset==='all'){from=new Date('2020-01-01');}
   else{from.setDate(from.getDate()-parseInt(preset));}
   drFrom=from.toISOString().split('T')[0];
@@ -1072,16 +1078,22 @@ function renderMetrics(fil){
 /* ══ TODAY CARD ══ */
 async function renderTodayCard(fil){
   const now=new Date();
-  const todayStr=now.toLocaleDateString('th-TH',{weekday:'short',day:'numeric',month:'short'});
+
+  /* ── Broker "today" — day resets at broker midnight (UTC + brokerOffset) ── */
+  const brokerNow=new Date(now.getTime()+brokerOffset*3600000);
+  const brokerDateStr=brokerNow.toISOString().split('T')[0]; // "YYYY-MM-DD" in broker time
+
+  /* Label: show broker date in Thai format */
+  const M=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const days=['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
+  const todayStr=days[brokerNow.getUTCDay()]+' '+brokerNow.getUTCDate()+' '+M[brokerNow.getUTCMonth()];
   st('todayDateLbl',todayStr);
 
-  /* filter today's closed trades */
-  /* Compare in Bangkok timezone */
-  const nowBkk=new Date(now.toLocaleString('en-US',{timeZone:'Asia/Bangkok'}));
+  /* Filter trades that belong to broker today */
   const today=dedupeForStats(fil).filter(r=>{
-    const dBkk=new Date(new Date(r.created_at).toLocaleString('en-US',{timeZone:'Asia/Bangkok'}));
-    return dBkk.getDate()===nowBkk.getDate()&&dBkk.getMonth()===nowBkk.getMonth()&&
-           dBkk.getFullYear()===nowBkk.getFullYear()&&isClose(r);
+    const traderBrokerDate=new Date(new Date(r.created_at).getTime()+brokerOffset*3600000)
+      .toISOString().split('T')[0];
+    return traderBrokerDate===brokerDateStr && isClose(r);
   });
   const pnl=today.reduce((a,r)=>a+(+r.profit||0),0);
   const wins=today.filter(r=>(+r.profit||0)>0).length;

@@ -76,6 +76,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .month-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px;font-family:'DM Mono',monospace}
 .month-sub{font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:3px}
+/* SUMMARY CARDS */
+.sum-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.sc{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:12px 14px;border-radius:var(--radius,8px);position:relative;overflow:hidden;transition:border-color .2s,transform .18s}
+.sc:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.1)}
+.sc-c{position:absolute;bottom:0;left:0;right:0;height:2px}
+.sc.gr .sc-c{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.sc.re .sc-c{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.sc.pu .sc-c{background:linear-gradient(90deg,transparent,var(--purple),transparent)}
+.sc.am .sc-c{background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.sc.bl .sc-c{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+.sc-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:5px}
+.sc-val{font-size:18px;font-weight:700;font-family:'DM Mono',monospace;color:#fff}
+.sc.gr .sc-val{color:var(--green)}.sc.re .sc-val{color:var(--red)}
+.sc.pu .sc-val{color:#a5b4fc}.sc.am .sc-val{color:var(--amber)}.sc.bl .sc-val{color:var(--blue)}
 .nav-btns{display:flex;gap:5px}
 .nav-arrow{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--txt-mid);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:14px;border-radius:6px}
 .nav-arrow:hover{background:rgba(255,255,255,.1);color:var(--txt)}
@@ -325,14 +339,23 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
         <div class="ms2"><div class="ms2-l">Trades</div><div class="ms2-v" id="mTrades">—</div></div>
         <div class="ms2"><div class="ms2-l">Win Rate</div><div class="ms2-v" id="mWR">—</div></div>
       </div>
-      <!-- Peak equity / drawdown -->
+      <!-- Stats row 2 -->
       <div class="m-equity">
-        <div class="m-eq-lbl">◈ Daily Equity Flow</div>
-        <div class="m-eq-stats">
-          <div class="m-eq-stat"><div class="m-eq-stat-l">🏆 Peak Profit</div><div class="m-eq-stat-v" id="mPeak" style="color:var(--green)">—</div></div>
-          <div class="m-eq-stat"><div class="m-eq-stat-l">📉 Max Drawdown</div><div class="m-eq-stat-v" id="mDraw" style="color:var(--red)">—</div></div>
-          <div class="m-eq-stat"><div class="m-eq-stat-l">⚡ Best Trade</div><div class="m-eq-stat-v" id="mBestTrade" style="color:var(--green)">—</div></div>
-          <div class="m-eq-stat"><div class="m-eq-stat-l">💀 Worst Trade</div><div class="m-eq-stat-v" id="mWorstTrade" style="color:var(--red)">—</div></div>
+        <div class="m-eq-stats" style="grid-template-columns:repeat(3,1fr)">
+          <div class="m-eq-stat" style="border-left:2px solid rgba(16,185,129,.4)">
+            <div class="m-eq-stat-l">🏆 Peak Profit</div>
+            <div class="m-eq-stat-v" id="mPeak" style="color:var(--green)">—</div>
+          </div>
+          <div class="m-eq-stat" style="border-left:2px solid rgba(16,185,129,.4)">
+            <div class="m-eq-stat-l">✅ Wins</div>
+            <div class="m-eq-stat-v" id="mWins" style="color:var(--green)">—</div>
+            <div style="font-size:9px;color:rgba(16,185,129,.6);font-family:'DM Mono',monospace;margin-top:2px" id="mWinsAmt">—</div>
+          </div>
+          <div class="m-eq-stat" style="border-left:2px solid rgba(244,63,94,.4)">
+            <div class="m-eq-stat-l">❌ Losses</div>
+            <div class="m-eq-stat-v" id="mLosses" style="color:var(--red)">—</div>
+            <div style="font-size:9px;color:rgba(244,63,94,.6);font-family:'DM Mono',monospace;margin-top:2px" id="mLossesAmt">—</div>
+          </div>
         </div>
       </div>
       <!-- Trade list with cumulative -->
@@ -637,15 +660,19 @@ function showDay(d){
 
   const peakEl=document.getElementById('mPeak');
   if(peakEl){peakEl.textContent=peakPnl>0?'+$'+peakPnl.toFixed(2):'$0.00';peakEl.style.color=peakPnl>0?'var(--green)':'var(--txt-dim)';}
-  const ddEl2=document.getElementById('mDraw');
-  if(ddEl2){ddEl2.textContent=troughFromPeak>0?'-$'+troughFromPeak.toFixed(2):'—';ddEl2.style.color=troughFromPeak>0?'var(--red)':'var(--txt-dim)';}
-  const profits=rows.map(r=>+r.profit||0);
-  const bestTrade=Math.max(...profits);
-  const worstTrade=Math.min(...profits);
-  const btEl=document.getElementById('mBestTrade');
-  if(btEl)btEl.textContent='+$'+bestTrade.toFixed(2);
-  const wtEl=document.getElementById('mWorstTrade');
-  if(wtEl)wtEl.textContent=(worstTrade<0?'-$':'$')+Math.abs(worstTrade).toFixed(2);
+  /* Wins / Losses breakdown */
+  const winRows=rows.filter(r=>(+r.profit||0)>0);
+  const lossRows=rows.filter(r=>(+r.profit||0)<=0);
+  const grossWin=winRows.reduce((a,r)=>a+(+r.profit||0),0);
+  const grossLoss=lossRows.reduce((a,r)=>a+(+r.profit||0),0);
+  const wEl=document.getElementById('mWins');
+  if(wEl)wEl.textContent=winRows.length+' trades';
+  const waEl=document.getElementById('mWinsAmt');
+  if(waEl)waEl.textContent='+$'+grossWin.toFixed(2);
+  const lEl=document.getElementById('mLosses');
+  if(lEl)lEl.textContent=lossRows.length+' trades';
+  const laEl=document.getElementById('mLossesAmt');
+  if(laEl)laEl.textContent='-$'+Math.abs(grossLoss).toFixed(2);
 
   /* ── Trade list ── */
   document.getElementById('mList').innerHTML=rows.map((r,i)=>{

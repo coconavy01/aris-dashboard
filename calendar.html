@@ -9,12 +9,10 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>let sbc=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");</script>
 <script>let all=[],curKey='All',vY=new Date().getFullYear(),vM=new Date().getMonth(),syncN=0;</script>
-<style>
-body{visibility:hidden;opacity:0}
-</style>
+<style>body{visibility:hidden;opacity:0}</style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{overflow-x:hidden}
+html,body{overflow-x:hidden;max-width:100vw}
 :root{
   --bg:#060608;--s1:#0c0e14;--s2:#111420;--s3:#161926;
   --purple:#6366f1;--purple-d:rgba(99,102,241,.12);--purple-g:rgba(99,102,241,.25);
@@ -25,190 +23,152 @@ html,body{overflow-x:hidden}
   --txt:#f1f5f9;--txt-mid:#94a3b8;--txt-dim:#475569;--radius:8px;
 }
 body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;display:flex;height:100vh;overflow:hidden}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.05),transparent);pointer-events:none;z-index:0}
-
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(99,102,241,.06),transparent);pointer-events:none;z-index:0}
 /* SIDEBAR */
-.sidebar{width:220px;min-width:220px;background:var(--s1);border-right:1px solid var(--border2);display:flex;flex-direction:column;z-index:20;overflow:hidden;position:relative}
+.sidebar{width:256px;min-width:256px;background:var(--s1);border-right:1px solid var(--border2);display:flex;flex-direction:column;position:relative;z-index:20;overflow:hidden}
 .sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--purple-g),transparent)}
-.sb-top{padding:18px 16px 14px;border-bottom:1px solid var(--border2)}
-.logo-row{display:flex;align-items:center;gap:8px;margin-bottom:3px}
-.logo-mark{width:30px;height:30px;background:linear-gradient(135deg,var(--purple),#8b5cf6);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0;box-shadow:0 0 16px rgba(99,102,241,.3)}
-.logo-name{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px}
-.logo-sub{font-size:8px;letter-spacing:2px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace}
-.live-pill{display:flex;align-items:center;gap:5px;margin-top:10px;padding:5px 10px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);font-size:9px;font-family:'DM Mono',monospace;color:var(--green);letter-spacing:.5px;border-radius:20px}
+.sb-top{padding:20px 18px 16px;border-bottom:1px solid var(--border2)}
+.logo-row{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--purple),#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;font-family:'DM Mono',monospace;flex-shrink:0;box-shadow:0 0 20px rgba(99,102,241,.3)}
+.logo-name{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.4px}
+.logo-sub{font-size:8.5px;letter-spacing:2.5px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace}
+.live-pill{display:flex;align-items:center;gap:6px;margin-top:12px;padding:6px 11px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);font-size:9.5px;font-family:'DM Mono',monospace;color:var(--green);letter-spacing:.5px;border-radius:20px}
 .live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,.7);animation:ping 1.5s ease infinite;flex-shrink:0}
 @keyframes ping{0%,100%{opacity:1}50%{opacity:.4}}
-.sb-nav{padding:10px 8px 4px}
-.nav-sect{font-size:8px;letter-spacing:2px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace;padding:0 8px;margin-bottom:4px}
-.nav-btn{display:flex;align-items:center;gap:8px;padding:8px 9px;cursor:pointer;transition:all .15s;color:var(--txt-dim);font-size:12px;font-weight:500;text-decoration:none;border-radius:6px;margin-bottom:1px}
+.sb-nav{padding:12px 10px 6px}
+.nav-sect{font-size:8.5px;letter-spacing:2px;color:var(--txt-dim);text-transform:uppercase;font-family:'DM Mono',monospace;padding:0 10px;margin-bottom:5px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:9px 10px;cursor:pointer;transition:all .15s;color:var(--txt-dim);font-size:12.5px;font-weight:500;text-decoration:none;border-radius:6px;margin-bottom:1px}
 .nav-btn:hover{background:rgba(255,255,255,.05);color:var(--txt)}
-.nav-btn.active{background:rgba(99,102,241,.14);color:#a5b4fc;box-shadow:inset 3px 0 0 var(--purple)}
-.nav-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
-.sb-accs{flex:1;overflow-y:auto;padding:4px 8px 8px}
+.nav-btn.active{background:rgba(99,102,241,.15);color:#a5b4fc;box-shadow:inset 3px 0 0 var(--purple)}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sb-accs{flex:1;overflow-y:auto;padding:4px 10px 10px}
 .sb-accs::-webkit-scrollbar{width:2px}
-.acc-item{display:flex;align-items:center;gap:7px;padding:7px 9px;cursor:pointer;transition:all .15s;margin-bottom:1px;color:var(--txt-dim);font-size:11.5px;font-weight:500;border-radius:6px}
+.acc-item{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;transition:all .15s;margin-bottom:1px;color:var(--txt-dim);font-size:12px;font-weight:500;border-radius:6px}
 .acc-item:hover{background:rgba(255,255,255,.04);color:var(--txt)}
 .acc-item.active{background:rgba(99,102,241,.12);color:#a5b4fc;box-shadow:inset 3px 0 0 var(--purple)}
-.acc-av{width:24px;height:24px;background:rgba(255,255,255,.06);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--txt-dim);font-family:'DM Mono',monospace;flex-shrink:0}
+.acc-av{width:26px;height:26px;background:rgba(255,255,255,.06);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--txt-dim);font-family:'DM Mono',monospace;flex-shrink:0}
 .acc-item.active .acc-av{background:rgba(99,102,241,.2);color:#a5b4fc}
 .acc-info{min-width:0}
-.acc-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
-.sb-foot{padding:10px 16px;border-top:1px solid var(--border2)}
-.lat-row{display:flex;align-items:center;gap:5px;font-size:9.5px;font-family:'DM Mono',monospace;color:var(--txt-dim)}
+.acc-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11.5px}
+.acc-bal{font-size:9.5px;font-family:'DM Mono',monospace;color:var(--txt-dim);margin-top:1px}
+.acc-item.active .acc-bal{color:rgba(165,180,252,.7)}
+.sb-foot{padding:11px 18px;border-top:1px solid var(--border2)}
+.lat-row{display:flex;align-items:center;gap:5px;font-size:10px;font-family:'DM Mono',monospace;color:var(--txt-dim)}
 .lat-v{color:var(--blue);font-weight:500}
-
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden;z-index:5}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 22px;border-bottom:1px solid var(--border2);background:rgba(6,6,8,.95);backdrop-filter:blur(20px);flex-shrink:0;position:relative;z-index:10}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;border-bottom:1px solid var(--border2);background:rgba(6,6,8,.95);backdrop-filter:blur(20px);flex-shrink:0;position:relative;z-index:10}
 .topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--purple-g),transparent)}
-.tb-left{display:flex;align-items:center;gap:10px}
-.tb-right{display:flex;align-items:center;gap:6px}
-.page-title{font-size:16px;font-weight:600;color:#fff;letter-spacing:-.2px}
-.page-sub{font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:1px}
-.chip{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:5px 11px;font-size:10px;font-family:'DM Mono',monospace;color:var(--txt-mid);border-radius:5px;cursor:pointer;transition:all .15s;text-decoration:none;white-space:nowrap}
+.page-title{font-size:17px;font-weight:600;color:#fff;letter-spacing:-.3px}
+.page-sub{font-size:9.5px;color:var(--txt-dim);margin-top:1px;font-family:'DM Mono',monospace}
+.topbar-r{display:flex;align-items:center;gap:6px}
+.chip,.clock{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:5px 12px;font-size:10.5px;font-family:'DM Mono',monospace;color:var(--txt-mid);border-radius:5px;cursor:pointer;transition:all .15s;text-decoration:none}
 .chip:hover{background:rgba(255,255,255,.09);color:var(--txt)}
-.clock{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);padding:4px 10px;font-size:10px;font-family:'DM Mono',monospace;color:var(--txt-mid);border-radius:5px}
-.logout-chip{background:rgba(244,63,94,.08)!important;border-color:rgba(244,63,94,.2)!important;color:var(--red)!important}
-.admin-chip{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.06))!important;border-color:rgba(245,158,11,.35)!important;color:var(--amber)!important;font-weight:600;animation:aGlow 2s ease-in-out infinite alternate;text-decoration:none}
-@keyframes aGlow{0%{box-shadow:0 0 6px rgba(245,158,11,.12)}100%{box-shadow:0 0 18px rgba(245,158,11,.28)}}
-.content{flex:1;overflow-y:auto;padding:18px 22px}
+.logout-chip{background:rgba(244,63,94,.08)!important;border:1px solid rgba(244,63,94,.2)!important;color:var(--red)!important}
+.admin-chip{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.06))!important;border:1px solid rgba(245,158,11,.35)!important;color:var(--amber)!important;font-weight:600;animation:aGlow 2s ease-in-out infinite alternate;text-decoration:none}
+@keyframes aGlow{0%{box-shadow:0 0 8px rgba(245,158,11,.15)}100%{box-shadow:0 0 20px rgba(245,158,11,.3)}}
+.content{flex:1;overflow-y:auto;padding:16px 22px}
 .content::-webkit-scrollbar{width:3px}
 .content::-webkit-scrollbar-thumb{background:rgba(99,102,241,.2);border-radius:3px}
+/* DR BAR */
 
 /* MONTH NAV */
-.month-nav{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative}
-.month-title-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 12px;border-radius:7px;transition:background .15s;border:1px solid transparent}
-.month-title-wrap:hover{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.07)}
-.month-title{font-size:24px;font-weight:700;color:#fff;letter-spacing:-.5px;font-family:'DM Mono',monospace}
-.year-title{font-size:22px;font-weight:600;color:#a5b4fc;letter-spacing:-.3px;font-family:'DM Mono',monospace}
-.picker-chevron{color:var(--txt-dim);font-size:11px;transition:transform .2s}
-.picker-chevron.open{transform:rotate(180deg)}
-.month-sub{font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-left:4px}
-.nav-btns{display:flex;gap:4px;margin-left:auto}
-.nav-arrow{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--txt-mid);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:13px;border-radius:6px}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.month-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px;font-family:'DM Mono',monospace}
+.month-sub{font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:3px}
+.nav-btns{display:flex;gap:5px}
+.nav-arrow{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--txt-mid);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:14px;border-radius:6px}
 .nav-arrow:hover{background:rgba(255,255,255,.1);color:var(--txt)}
-.today-btn{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.22);color:#a5b4fc;padding:0 14px;height:30px;cursor:pointer;font-size:10px;font-family:'DM Mono',monospace;letter-spacing:.5px;border-radius:6px;transition:all .15s}
+.today-btn{background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.22);color:#a5b4fc;padding:0 16px;height:32px;cursor:pointer;font-size:10.5px;font-family:'DM Mono',monospace;letter-spacing:.5px;border-radius:6px;transition:all .15s}
 .today-btn:hover{background:rgba(99,102,241,.2)}
-
-/* PICKER DROPDOWN */
-.mv-picker{position:absolute;top:calc(100% + 6px);left:0;background:#0e1018;border:1px solid rgba(99,102,241,.25);border-radius:10px;z-index:50;min-width:340px;box-shadow:0 16px 48px rgba(0,0,0,.6);overflow:hidden;animation:pkIn .15s ease}
-@keyframes pkIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-.mv-picker-hd{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.07);background:rgba(99,102,241,.06)}
-.mv-year-lbl{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:#a5b4fc}
-.mv-months{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px 10px 12px}
-.mv-month-btn{padding:7px 4px;font-size:10.5px;font-family:'DM Mono',monospace;color:var(--txt-dim);cursor:pointer;border-radius:6px;transition:all .15s;text-align:center;border:1px solid transparent}
-.mv-month-btn:hover{background:rgba(255,255,255,.06);color:var(--txt)}
-.mv-month-btn.active{background:rgba(99,102,241,.2);color:#a5b4fc;border-color:rgba(99,102,241,.3)}
-.mv-month-btn.today-month{color:var(--amber)}
-.mv-month-btn.has-data{color:var(--txt)}
-#pickerYearList::-webkit-scrollbar{width:3px}
-#pickerYearList::-webkit-scrollbar-thumb{background:rgba(99,102,241,.3);border-radius:3px}
-
-/* SUMMARY CARDS */
-.sum-row{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
-.sc{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:16px 18px;border-radius:var(--radius);position:relative;overflow:hidden;transition:border-color .2s,transform .18s}
-.sc:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.1)}
-.sc::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.02) 0%,transparent 60%);pointer-events:none}
-.sc-c{position:absolute;bottom:0;left:0;right:0;height:2px}
-.sc.gr .sc-c{background:linear-gradient(90deg,transparent,var(--green),transparent)}
-.sc.re .sc-c{background:linear-gradient(90deg,transparent,var(--red),transparent)}
-.sc.pu .sc-c{background:linear-gradient(90deg,transparent,var(--purple),transparent)}
-.sc.am .sc-c{background:linear-gradient(90deg,transparent,var(--amber),transparent)}
-.sc.bl .sc-c{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
-.sc-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:5px}
-.sc-val{font-size:22px;font-weight:700;font-family:'DM Mono',monospace;color:#fff;letter-spacing:-.6px}
-.sc.gr .sc-val{color:var(--green)}.sc.re .sc-val{color:var(--red)}
-.sc.pu .sc-val{color:#a5b4fc}.sc.am .sc-val{color:var(--amber)}.sc.bl .sc-val{color:var(--blue)}
-
+/* SUMMARY ROW */
+.month-summary{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
+.ms{background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);padding:13px 15px;border-radius:var(--radius);position:relative;overflow:hidden;transition:border-color .2s,transform .18s}
+.ms:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.1)}
+.ms::before{content:'';position:absolute;bottom:0;left:0;right:0;height:2px}
+.ms.gr::before{background:linear-gradient(90deg,transparent,var(--green),transparent)}
+.ms.re::before{background:linear-gradient(90deg,transparent,var(--red),transparent)}
+.ms.pu::before{background:linear-gradient(90deg,transparent,var(--purple),transparent)}
+.ms.am::before{background:linear-gradient(90deg,transparent,var(--amber),transparent)}
+.ms.bl::before{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
+.ms-lbl{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:5px}
+.ms-val{font-size:19px;font-weight:700;font-family:'DM Mono',monospace}
+.ms.gr .ms-val{color:var(--green)}.ms.re .ms-val{color:var(--red)}
+.ms.pu .ms-val{color:#a5b4fc}.ms.am .ms-val{color:var(--amber)}.ms.bl .ms-val{color:var(--blue)}
 /* CALENDAR GRID */
-.cal-panel{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);overflow:hidden;margin-bottom:8px}
+.cal-panel{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
 .cal-header{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid var(--border2);background:rgba(255,255,255,.02)}
-.dow{padding:10px;text-align:center;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace}
-.dow.weekend{color:rgba(244,63,94,.5)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr)}
-.day{border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);padding:10px 12px;min-height:88px;position:relative;transition:background .12s}
-.day:nth-child(7n){border-right:none}
-.day.empty{background:rgba(0,0,0,.12)}
-.day.is-today{background:rgba(99,102,241,.07);border-bottom:2px solid rgba(99,102,241,.35)}
-.day.has-data{cursor:pointer}
-.day.has-data:hover{background:rgba(255,255,255,.04);cursor:pointer}
-.day.has-data.pos-day{background:rgba(16,185,129,.025)}
-.day.has-data.neg-day{background:rgba(244,63,94,.025)}
-.day-num{font-size:12px;font-family:'DM Mono',monospace;color:var(--txt-dim);margin-bottom:6px;display:flex;align-items:center;gap:4px;font-weight:500}
-.day.is-today .day-num{color:#a5b4fc;font-weight:600}
-.today-dot{width:5px;height:5px;border-radius:50%;background:#a5b4fc;box-shadow:0 0 5px rgba(99,102,241,.6)}
-.day-pnl{font-size:14px;font-weight:700;font-family:'DM Mono',monospace;line-height:1;letter-spacing:-.3px}
+.cal-dow-row,.dow{padding:9px 10px;text-align:center;font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace}
+.cal-grid,.cal-wrap{display:grid;grid-template-columns:repeat(7,1fr)}
+.day,.cal-day{border-right:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);padding:9px 11px;min-height:76px;position:relative;transition:background .12s;cursor:default}
+.day:nth-child(7n),.cal-day:nth-child(7n){border-right:none}
+.day.empty,.cal-day.empty{background:rgba(0,0,0,.15)}
+.day.today,.cal-day.today{background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.18)}
+.day.has-data,.cal-day.has-data{cursor:pointer}
+.day.has-data:hover,.cal-day.has-data:hover{background:rgba(255,255,255,.03)}
+.day-n,.day-num{font-size:10.5px;font-family:'DM Mono',monospace;color:var(--txt-dim);margin-bottom:5px}
+.day.today .day-n,.cal-day.today .day-num{color:#a5b4fc;font-weight:600}
+.day-pnl{font-size:12.5px;font-weight:600;font-family:'DM Mono',monospace;line-height:1}
 .day-pnl.pos{color:var(--green)}.day-pnl.neg{color:var(--red)}
-.day-meta{font-size:8.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:3px;line-height:1.4}
-.day-wr{font-size:8px;font-family:'DM Mono',monospace}
-.day-wr.good{color:var(--green)}.day-wr.bad{color:var(--red)}.day-wr.mid{color:var(--amber)}
-.day-stripe{position:absolute;bottom:0;left:0;right:0;height:2px}
-.day.pos-day .day-num{color:rgba(16,185,129,.6)}
-.day.neg-day .day-num{color:rgba(244,63,94,.5)}
-.day-stripe.pos{background:linear-gradient(90deg,transparent,rgba(16,185,129,.45),transparent)}
-.day-stripe.neg{background:linear-gradient(90deg,transparent,rgba(244,63,94,.45),transparent)}
-
-/* MODAL */
-.modal-bg{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:200;backdrop-filter:blur(8px);padding:20px}
-.modal-bg.show{display:flex;align-items:center;justify-content:center}
-.modal{background:#0c0f17;border:1px solid rgba(99,102,241,.2);width:100%;max-width:520px;border-radius:12px;max-height:82vh;overflow-y:auto;animation:mdIn .2s ease;box-shadow:0 24px 60px rgba(0,0,0,.7),0 0 0 1px rgba(99,102,241,.08)}
-@keyframes mdIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
-.modal-hd{padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;background:rgba(99,102,241,.05);position:sticky;top:0;z-index:5;border-radius:12px 12px 0 0}
-.modal-title{font-size:14px;font-weight:600;color:#fff}
-.modal-sub{font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:1px}
-.modal-x{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--txt-dim);width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;border-radius:5px;transition:all .15s;flex-shrink:0}
-.modal-x:hover{background:rgba(244,63,94,.15);border-color:rgba(244,63,94,.3);color:var(--red)}
-.modal-body{padding:14px 18px}
-/* Stats row */
-.m-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px}
-.ms2{background:rgba(255,255,255,.04);padding:10px 12px;border-radius:7px;border:1px solid rgba(255,255,255,.06)}
-.ms2-l{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:3px}
-.ms2-v{font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--txt)}
-/* Equity section */
-.m-equity{margin-bottom:12px}
-.m-eq-lbl{font-size:8.5px;letter-spacing:2px;text-transform:uppercase;color:var(--purple);font-family:'DM Mono',monospace;margin-bottom:8px;display:flex;align-items:center;gap:7px}
-.m-eq-lbl::after{content:'';flex:1;height:1px;background:rgba(99,102,241,.15)}
-.m-eq-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
-.m-eq-stat{background:rgba(255,255,255,.03);padding:9px 11px;border-radius:6px;border:1px solid rgba(255,255,255,.06)}
-.m-eq-stat-l{font-size:7.5px;letter-spacing:1px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:3px}
-.m-eq-stat-v{font-size:14px;font-weight:700;font-family:'DM Mono',monospace}
-/* Trade list */
-.trade-list{border-top:1px solid rgba(255,255,255,.06);padding-top:10px}
-.tl-lbl{font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
-.trade-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;font-family:'DM Mono',monospace;font-size:10.5px;margin-bottom:2px;border:1px solid transparent;transition:background .1s}
-.trade-row:hover{background:rgba(255,255,255,.03)}
-.trade-row.is-peak{background:rgba(16,185,129,.07);border-color:rgba(16,185,129,.15)}
-.tr-num{color:var(--txt-dim);font-size:9px;min-width:20px}
-.tr-time{color:var(--txt-dim);font-size:9.5px;min-width:38px}
-.tr-sym{font-weight:600;color:var(--txt);min-width:60px}
-.tr-lots{color:var(--txt-dim);font-size:9px;min-width:28px}
-.tr-pnl{font-weight:600;margin-left:auto;min-width:60px;text-align:right}
-.tr-pnl.pos{color:var(--green)}.tr-pnl.neg{color:var(--red)}
-.tr-run{font-size:9.5px;min-width:62px;text-align:right}
-.tr-run.up{color:rgba(16,185,129,.7)}.tr-run.dn{color:rgba(244,63,94,.7)}
-.tr-peak{font-size:9px;color:rgba(16,185,129,.7);margin-left:4px}
-
+.day-cnt{font-size:8.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:2px}
+.day-wr{font-size:8.5px;font-family:'DM Mono',monospace;margin-top:1px}
+.day-stripe{position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0}
+.day-stripe.pos{background:linear-gradient(90deg,transparent,rgba(16,185,129,.5),transparent)}
+.day-stripe.neg{background:linear-gradient(90deg,transparent,rgba(244,63,94,.5),transparent)}
+/* ── MONTH/YEAR PICKER ── */
+.mv-title-wrap{display:flex;align-items:center;gap:8px}
+.mv-title-btn{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px;font-family:'DM Mono',monospace;cursor:pointer;padding:4px 10px;border-radius:6px;border:1px solid transparent;transition:all .15s;user-select:none}
+.mv-title-btn:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.25);color:#a5b4fc}
+.mv-picker{position:absolute;top:calc(100% + 4px);left:0;background:#0e1018;border:1px solid rgba(99,102,241,.25);border-radius:8px;z-index:100;box-shadow:0 12px 40px rgba(0,0,0,.5);min-width:300px;animation:dpIn .15s ease}
+@keyframes dpIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.mv-picker-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.mv-year-nav{background:rgba(255,255,255,.06);border:none;color:var(--txt);width:28px;height:28px;border-radius:5px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.mv-year-nav:hover{background:rgba(99,102,241,.2);color:#a5b4fc}
+.mv-year-lbl{font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:#fff;min-width:70px;text-align:center}
+.mv-months{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:10px}
+.mv-month-btn{padding:8px 6px;text-align:center;font-size:11.5px;font-family:'DM Mono',monospace;color:var(--txt-dim);cursor:pointer;border-radius:5px;border:1px solid transparent;transition:all .12s}
+.mv-month-btn:hover{background:rgba(255,255,255,.06);color:var(--txt)}
+.mv-month-btn.active{background:rgba(99,102,241,.2);color:#a5b4fc;border-color:rgba(99,102,241,.3);font-weight:600}
+.mv-month-btn.has-data{color:var(--txt)}
+.mv-month-btn.today-month{border-color:rgba(16,185,129,.3);color:var(--green)}
+/* DAY MODAL */
+.day-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px}
+.day-modal.show{display:flex}
+.dm-box{background:#0e1018;border:1px solid rgba(99,102,241,.22);max-width:460px;width:100%;border-radius:12px;max-height:72vh;overflow-y:auto;animation:dmIn .2s ease;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+@keyframes dmIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.dm-hd{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:space-between;background:rgba(99,102,241,.05);border-radius:12px 12px 0 0}
+.dm-title{font-size:14px;font-weight:600;color:#fff}
+.dm-sub{font-size:9.5px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:1px}
+.dm-close{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);color:var(--txt-dim);width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;border-radius:5px}
+.dm-body{padding:16px 20px}
+.dm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px}
+.dm-stat{background:rgba(255,255,255,.04);padding:9px 11px;border-radius:6px;border:1px solid rgba(255,255,255,.06)}
+.dm-stat-l{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-bottom:3px}
+.dm-stat-v{font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:var(--txt)}
+.dm-trades{border-top:1px solid rgba(255,255,255,.06);padding-top:12px}
+.dm-trade-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11px;font-family:'DM Mono',monospace}
+.dm-trade-row:last-child{border-bottom:none}
 /* MOBILE */
 .mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(12,14,20,.97);border-top:1px solid var(--border2);z-index:100;padding:8px 0 calc(8px + env(safe-area-inset-bottom));backdrop-filter:blur(20px)}
 .mob-nav-inner{display:flex;justify-content:space-around}
-.mob-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 10px;cursor:pointer;color:var(--txt-dim);font-size:9px;text-decoration:none;font-family:'DM Mono',monospace;transition:color .15s}
+.mob-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 12px;cursor:pointer;color:var(--txt-dim);font-size:9.5px;text-decoration:none;font-family:'DM Mono',monospace;transition:color .15s}
 .mob-btn.active{color:#a5b4fc}
-.mob-icon{font-size:16px}
-.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:19;backdrop-filter:blur(5px)}
+.mob-icon{font-size:17px}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:19;backdrop-filter:blur(6px)}
 .sb-overlay.show{display:block}
+#pickerYearList::-webkit-scrollbar{width:3px}#pickerYearList::-webkit-scrollbar-thumb{background:rgba(99,102,241,.3);border-radius:3px}
 @media(max-width:768px){
-  .sidebar{position:fixed;left:-220px;top:0;bottom:0;transition:left .28s;z-index:20}
+  .sidebar{position:fixed;left:-256px;top:0;bottom:0;transition:left .28s;z-index:20}
   .sidebar.open{left:0}
-  .main{padding-bottom:60px}
+  .main{padding-bottom:64px}
   .mob-nav{display:block}
-  .topbar{padding:10px 14px}
+  .topbar{padding:11px 14px}
   .content{padding:10px}
-  .sum-row{grid-template-columns:1fr 1fr;gap:6px}
-  .day{min-height:52px;padding:5px 7px}
+  .month-summary{grid-template-columns:1fr 1fr;gap:6px}
+  .day,.cal-day{min-height:52px;padding:6px 8px}
   .clock{display:none}
 }
 </style>
-
 </head>
 <body>
 <div class="sb-overlay" id="sbO" onclick="closeSb()"></div>
@@ -304,47 +264,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 <!-- DETAIL MODAL -->
-<div class="modal-bg" id="modal" onclick="if(event.target===this)closeModal()">
+<div class="modal-bg" id="modal">
   <div class="modal">
-    <div class="modal-hd">
-      <div>
-        <div class="modal-title" id="mTitle">—</div>
-        <div class="modal-sub" id="mSub">—</div>
-      </div>
-      <div class="modal-x" onclick="closeModal()">✕</div>
+    <div class="modal-x" onclick="closeModal()">✕</div>
+    <div class="modal-title" id="mTitle">—</div>
+    <div class="modal-sub" id="mSub">—</div>
+    <div class="m-stats">
+      <div class="ms2"><div class="ms2-l">Net P/L</div><div class="ms2-v" id="mPNL">—</div></div>
+      <div class="ms2"><div class="ms2-l">Trades</div><div class="ms2-v" id="mTrades">—</div></div>
+      <div class="ms2"><div class="ms2-l">Win Rate</div><div class="ms2-v" id="mWR">—</div></div>
     </div>
-    <div class="modal-body">
-      <!-- Stats -->
-      <div class="m-stats">
-        <div class="ms2"><div class="ms2-l">Net P/L</div><div class="ms2-v" id="mPNL">—</div></div>
-        <div class="ms2"><div class="ms2-l">Trades</div><div class="ms2-v" id="mTrades">—</div></div>
-        <div class="ms2"><div class="ms2-l">Win Rate</div><div class="ms2-v" id="mWR">—</div></div>
-      </div>
-      <!-- Stats row 2 -->
-      <div class="m-equity">
-        <div class="m-eq-stats" style="grid-template-columns:repeat(3,1fr)">
-          <div class="m-eq-stat" style="border-left:2px solid rgba(16,185,129,.4)">
-            <div class="m-eq-stat-l">🏆 Peak Profit</div>
-            <div class="m-eq-stat-v" id="mPeak" style="color:var(--green)">—</div>
-          </div>
-          <div class="m-eq-stat" style="border-left:2px solid rgba(16,185,129,.4)">
-            <div class="m-eq-stat-l">✅ Wins</div>
-            <div class="m-eq-stat-v" id="mWins" style="color:var(--green)">—</div>
-            <div style="font-size:9px;color:rgba(16,185,129,.6);font-family:'DM Mono',monospace;margin-top:2px" id="mWinsAmt">—</div>
-          </div>
-          <div class="m-eq-stat" style="border-left:2px solid rgba(244,63,94,.4)">
-            <div class="m-eq-stat-l">❌ Losses</div>
-            <div class="m-eq-stat-v" id="mLosses" style="color:var(--red)">—</div>
-            <div style="font-size:9px;color:rgba(244,63,94,.6);font-family:'DM Mono',monospace;margin-top:2px" id="mLossesAmt">—</div>
-          </div>
-        </div>
-      </div>
-      <!-- Trade list with cumulative -->
-      <div class="trade-list">
-        <div class="tl-lbl" style="display:flex;align-items:center;justify-content:space-between">◈ Trades <span style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace">ซ้าย = P/L · ขวา = Running Total</span></div>
-        <div id="mList"></div>
-      </div>
-    </div>
+    <div class="trade-list" id="mList"></div>
   </div>
 </div>
 
@@ -537,9 +467,7 @@ function render(){
 
   /* daily map */
   const map={};
-  /* dedup the full fil first */
-  const filDeduped=dedupeRowsCal(fil.filter(r=>(r.trade_action||'').toUpperCase()==='CLOSE'));
-  filDeduped.forEach(r=>{
+  fil.forEach(r=>{
     const d=new Date(r.created_at);
     if(d.getFullYear()!==vY||d.getMonth()!==vM)return;
     const k=d.getDate();
@@ -583,98 +511,28 @@ function render(){
       inner+=`<div class="day-wr" style="color:${wr2>=60?'var(--green)':wr2>=40?'var(--amber)':'var(--red)'}">${wr2}% win</div>`;
       inner+=`<div class="day-stripe ${pos2?'pos':'neg'}"></div>`;
     }
-    const dayColorCls=data?(data.pnl>0?' pos-day':' neg-day'):'';
-    html+=`<div class="day${isTd?' is-today':''}${data?' has-data':''}${dayColorCls}"${data?` onclick="showDay(${d})"`:''}>\${inner}</div>`;
+    html+=`<div class="day${isTd?' is-today':''}${data?' has-data':''}"${data?` onclick="showDay(${d})"`:''}>${inner}</div>`;
   }
   document.getElementById('calGrid').innerHTML=html;
 }
 
-/* ── Dedup helper (same fingerprint logic as index.html) ── */
-function contentFpCal(r){
-  const min=(r.created_at||'').slice(0,16);
-  return (r.license_key||'')+'|'+(r.symbol||'')+'|'+(+r.profit||0).toFixed(2)+'|'+(+r.account_balance||0).toFixed(2)+'|'+min;
-}
-function dedupeRowsCal(rows){
-  const seen=new Set();
-  return rows.filter(r=>{const fp=contentFpCal(r);if(seen.has(fp))return false;seen.add(fp);return true;});
-}
-
 function showDay(d){
   const fil=getFil();
-  /* filter to this day (broker time) + CLOSE only + dedup */
-  let rows=fil.filter(r=>{
-    const ac=(r.trade_action||'').toUpperCase();
-    if(ac!=='CLOSE')return false;
-    const brokerD=new Date(new Date(r.created_at).getTime()+(window.brokerOffset||0)*3600000);
-    return brokerD.getUTCDate()===d&&brokerD.getUTCMonth()===vM&&brokerD.getUTCFullYear()===vY;
-  });
-  rows=dedupeRowsCal(rows);
+  const rows=fil.filter(r=>{const dt=new Date(r.created_at);return dt.getDate()===d&&dt.getMonth()===vM&&dt.getFullYear()===vY;});
   if(!rows.length)return;
-
-  /* sort by broker time */
-  rows.sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-
   const pnl=rows.reduce((a,r)=>a+(+r.profit||0),0);
   const wins=rows.filter(r=>(+r.profit||0)>0).length;
   const wr=Math.round(wins/rows.length*100);
   const pos=pnl>=0;
-
-  /* ── Running P/L: compute cumulative series ── */
-  let running=0,peakPnl=0,peakSoFar=0,troughFromPeak=0,peakIdx=-1;
-  const cumulatives=[];
-  rows.forEach((r,i)=>{
-    running+=(+r.profit||0);
-    cumulatives.push(running);
-    if(running>peakSoFar){peakSoFar=running;peakIdx=i;}
-    const dd=peakSoFar-running;
-    if(dd>troughFromPeak)troughFromPeak=dd;
-  });
-  peakPnl=peakSoFar;
-
-  /* stats */
   document.getElementById('mTitle').textContent=d+' '+MONTHS[vM]+' '+(vY+543);
-  document.getElementById('mSub').textContent=rows.length+' closed trades · '+(pos?'+':'-')+'$'+Math.abs(pnl).toFixed(2);
-  const pEl=document.getElementById('mPNL');
-  pEl.textContent=(pos?'+$':'-$')+Math.abs(pnl).toFixed(2);
-  pEl.style.color=pos?'var(--green)':'var(--red)';
+  document.getElementById('mSub').textContent=rows.length+' closed trades';
+  const pEl=document.getElementById('mPNL');pEl.textContent=(pos?'+$':'-$')+Math.abs(pnl).toFixed(2);pEl.style.color=pos?'var(--green)':'var(--red)';
   document.getElementById('mTrades').textContent=rows.length;
   document.getElementById('mWR').textContent=wr+'%';
-
-  const peakEl=document.getElementById('mPeak');
-  if(peakEl){peakEl.textContent=peakPnl>0?'+$'+peakPnl.toFixed(2):'$0.00';peakEl.style.color=peakPnl>0?'var(--green)':'var(--txt-dim)';}
-  /* Wins / Losses breakdown */
-  const winRows=rows.filter(r=>(+r.profit||0)>0);
-  const lossRows=rows.filter(r=>(+r.profit||0)<=0);
-  const grossWin=winRows.reduce((a,r)=>a+(+r.profit||0),0);
-  const grossLoss=lossRows.reduce((a,r)=>a+(+r.profit||0),0);
-  const wEl=document.getElementById('mWins');
-  if(wEl)wEl.textContent=winRows.length+' trades';
-  const waEl=document.getElementById('mWinsAmt');
-  if(waEl)waEl.textContent='+$'+grossWin.toFixed(2);
-  const lEl=document.getElementById('mLosses');
-  if(lEl)lEl.textContent=lossRows.length+' trades';
-  const laEl=document.getElementById('mLossesAmt');
-  if(laEl)laEl.textContent='-$'+Math.abs(grossLoss).toFixed(2);
-
-  /* ── Trade list ── */
-  document.getElementById('mList').innerHTML=rows.map((r,i)=>{
+  document.getElementById('mList').innerHTML=rows.map(r=>{
     const p=+r.profit||0,po=p>=0;
-    const cum=cumulatives[i];
-    const cumPos=cum>=0;
-    const isPeak=i===peakIdx&&peakPnl>0;
-    const brokerT=new Date(new Date(r.created_at).getTime()+(window.brokerOffset||0)*3600000);
-    const hh=String(brokerT.getUTCHours()).padStart(2,'0'),mm=String(brokerT.getUTCMinutes()).padStart(2,'0');
-    return`<div class="trade-row${isPeak?' is-peak':''}">
-      <span class="tr-num">#${i+1}</span>
-      <span style="color:var(--txt-dim);min-width:40px">${hh}:${mm}</span>
-      <span style="color:var(--amber);min-width:68px">${r.symbol||'—'}</span>
-      <span style="color:var(--txt-dim);font-size:9.5px;min-width:44px">${r.lots||'—'}L</span>
-      <span style="color:${po?'var(--green)':'var(--red)'};font-weight:600;min-width:62px">${po?'+':''}$${p.toFixed(2)}</span>
-      <span style="color:${cumPos?'rgba(16,185,129,.7)':'rgba(244,63,94,.7)'};font-size:10px;margin-left:auto">${cumPos?'▲':'▼'} ${cumPos?'+':''}$${cum.toFixed(2)}</span>
-      ${isPeak?'<span style="font-size:8.5px;color:var(--green);margin-left:4px;white-space:nowrap">🏆 peak</span>':''}
-    </div>`;
+    return`<div class="trade-row"><span style="color:var(--txt-dim)">${new Date(r.created_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}</span><span style="color:var(--amber)">${r.symbol||'—'}</span><span style="color:${r.lots?'var(--txt-mid)':'var(--txt-dim)'}">${r.lots||'—'} lots</span><span style="color:${po?'var(--green)':'var(--red)'};font-weight:500">${po?'+':''}$${p.toFixed(2)}</span></div>`;
   }).join('');
-
   document.getElementById('modal').classList.add('show');
 }
 </script>

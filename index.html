@@ -33,7 +33,7 @@ function setBrokerOffset(v){
   const lbl=document.getElementById('tzBrokerLabel');
   if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
   /* update trade log column headers */
-  const th1=document.getElementById('thOpen'),th2=document.getElementById('thClose');
+  const th1=document.getElementById('thOpenTime'),th2=document.getElementById('thCloseTime');
   if(th1)th1.textContent='Open (UTC'+sign+brokerOffset+')';
   if(th2)th2.textContent='Close (UTC'+sign+brokerOffset+')';
   /* re-render table with new times */
@@ -787,7 +787,7 @@ const SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZ
     initDR();
     const _tzSign=brokerOffset>=0?'+':'';
     const _tzLbl=document.getElementById('tzBrokerLabel');if(_tzLbl)_tzLbl.textContent='Broker UTC'+_tzSign+brokerOffset;
-    const _th1=document.getElementById('thOpen'),_th2=document.getElementById('thClose');
+    const _th1=document.getElementById('thOpenTime'),_th2=document.getElementById('thCloseTime');
     if(_th1)_th1.textContent='Open (UTC'+_tzSign+brokerOffset+')';
     if(_th2)_th2.textContent='Close (UTC'+_tzSign+brokerOffset+')';
     updateUI();

@@ -216,8 +216,8 @@ async function doLogout(){await sbc.auth.signOut();window.location.replace('logi
 async function loadStatement(){
   /* get revenue_share records */
   const{data:rs}=await sbc.from('revenue_share').select('*').eq('license_key',myKey).order('created_at',{ascending:false});
-  /* get trade stats */
-  const{data:trades}=await sbc.from('trade_history').select('profit,account_balance').eq('license_key',myKey).eq('trade_action','CLOSE');
+  /* get trade stats — sort by created_at ascending so the last row is reliably the most recent trade (for latBal) */
+  const{data:trades}=await sbc.from('trade_history').select('profit,account_balance,created_at').eq('license_key',myKey).eq('trade_action','CLOSE').order('created_at',{ascending:true});
 
   /* compute totals */
   const allPNL=trades?trades.reduce((a,r)=>a+(+r.profit||0),0):0;
@@ -262,6 +262,14 @@ async function loadStatement(){
       const ps=new Date(r.period_start),pe=new Date(r.period_end);
       const periodStr=ps.getDate()+' '+MONTHS[ps.getMonth()]+' – '+pe.getDate()+' '+MONTHS[pe.getMonth()]+' '+(pe.getFullYear()+543);
       const gp=+r.gross_profit||0,fee=+r.fee_usd||0,thb=+r.fee_thb||0,rate=+r.usd_thb_rate||36,pct=+r.percent||0;
+      const carryIn=+r.loss_carried_in||0,carryOut=+r.loss_carried_out||0;
+      let carryNote='';
+      if(carryIn>0){
+        carryNote+=`<div class="stmt-note" style="background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.15);color:rgba(56,189,248,.85);padding:8px 12px;margin-top:10px;font-size:10.5px;font-family:'DM Mono',monospace;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)">ℹ รอบนี้มีการหักยอดขาดทุนจากรอบก่อน <b>-$${carryIn.toFixed(2)}</b> ออกจากกำไรก่อนคิดค่าบริการ</div>`;
+      }
+      if(carryOut>0){
+        carryNote+=`<div class="stmt-note" style="background:rgba(244,63,94,.06);border:1px solid rgba(244,63,94,.18);color:rgba(244,63,94,.85);padding:8px 12px;margin-top:10px;font-size:10.5px;font-family:'DM Mono',monospace;clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)">⚠ รอบนี้ขาดทุนสุทธิ ไม่มีการเก็บค่าบริการ และยอดขาดทุน <b>-$${carryOut.toFixed(2)}</b> จะถูกยกไปหักจากกำไรในรอบถัดไปก่อนคิดค่าบริการ</div>`;
+      }
       html+=`<div class="stmt-card ${isPending?'pending-card':'paid-card'}">
         <div class="stmt-stripe"></div>
         <div class="sc-corner2"></div>
@@ -277,11 +285,12 @@ async function loadStatement(){
             </div>
           </div>
           <div class="stmt-grid">
-            <div class="sg-item"><div class="sg-lbl">Gross Profit</div><div class="sg-val" style="color:var(--green)">+$${gp.toFixed(2)}</div></div>
+            <div class="sg-item"><div class="sg-lbl">Gross Profit</div><div class="sg-val" style="color:${gp>=0?'var(--green)':'var(--red)'}">${gp>=0?'+$':'-$'}${Math.abs(gp).toFixed(2)}</div></div>
             <div class="sg-item"><div class="sg-lbl">Fee Rate</div><div class="sg-val" style="color:var(--amber)">${pct}%</div></div>
             <div class="sg-item"><div class="sg-lbl">USD Rate</div><div class="sg-val" style="color:var(--blue)">฿${rate}</div></div>
             <div class="sg-item"><div class="sg-lbl">Created</div><div class="sg-val" style="font-size:11px;color:var(--txt-dim)">${new Date(r.created_at).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'})}</div></div>
           </div>
+          ${carryNote}
         </div>
       </div>`;
     });

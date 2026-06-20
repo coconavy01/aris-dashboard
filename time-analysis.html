@@ -29,7 +29,6 @@
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
   /* start loading AFTER auth is confirmed and vars are set */
-  const _s=brokerOffset>=0?'+':'';const _l=document.getElementById('tzBrokerLabel');if(_l)_l.textContent='Broker UTC'+_s+brokerOffset;
 fetchKeys().then(()=>load());
 })();
 </script>
@@ -394,11 +393,11 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <!-- HEATMAP -->
     <div class="panel"><div class="panel-corner"></div>
       <div class="panel-hd">
-        <div><div class="panel-title">24-Hour Profit Heatmap</div><div class="panel-sub">แต่ละช่องแทน 1 ชั่วโมง UTC · hover เพื่อดูรายละเอียด</div></div>
+        <div><div class="panel-title">24-Hour Profit Heatmap</div><div class="panel-sub" id="hmSub">แต่ละช่องแทน 1 ชั่วโมง Broker Time · hover เพื่อดูรายละเอียด</div></div>
         <div class="hm-legend"><span>LOSS</span><div class="hm-grad"></div><span>PROFIT</span></div>
       </div>
       <div class="hm-grid" id="hmGrid"></div>
-      <div class="tz-note">* Server Time UTC · ไทย = UTC+7</div>
+      <div class="tz-note" id="hmTzNote">* เวลาที่แสดงคือเวลา Broker (server MT5) ที่ชดเชยแล้ว · ไม่ใช่ UTC จริง</div>
     </div>
 
     <!-- BAR CHARTS -->
@@ -415,11 +414,12 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 
     <!-- SESSIONS -->
     <div class="sess-row">
-      <div class="sess-card" style="border-color:rgba(56,189,248,.15)"><div class="sess-dot" style="background:var(--blue)"></div><div class="sess-name" style="color:var(--blue)">🌏 ASIAN</div><div class="sess-time">00:00 – 08:00 UTC</div><div class="sess-pnl" id="sAsP">—</div><div class="sess-stats" id="sAsS">—</div></div>
-      <div class="sess-card" style="border-color:rgba(99,102,241,.15)"><div class="sess-dot" style="background:var(--purple)"></div><div class="sess-name" style="color:#a5b4fc">🏛 LONDON</div><div class="sess-time">07:00 – 16:00 UTC</div><div class="sess-pnl" id="sLoP">—</div><div class="sess-stats" id="sLoS">—</div></div>
-      <div class="sess-card" style="border-color:rgba(16,185,129,.15)"><div class="sess-dot" style="background:var(--green)"></div><div class="sess-name" style="color:var(--green)">🗽 NEW YORK</div><div class="sess-time">12:00 – 21:00 UTC</div><div class="sess-pnl" id="sNyP">—</div><div class="sess-stats" id="sNyS">—</div></div>
-      <div class="sess-card" style="border-color:rgba(245,158,11,.15)"><div class="sess-dot" style="background:var(--amber)"></div><div class="sess-name" style="color:var(--amber)">🌊 PACIFIC</div><div class="sess-time">20:00 – 04:00 UTC</div><div class="sess-pnl" id="sPaP">—</div><div class="sess-stats" id="sPaS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(56,189,248,.15)"><div class="sess-dot" style="background:var(--blue)"></div><div class="sess-name" style="color:var(--blue)">🌏 ASIAN</div><div class="sess-time" id="sAsT">00:00 – 08:00</div><div class="sess-pnl" id="sAsP">—</div><div class="sess-stats" id="sAsS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(99,102,241,.15)"><div class="sess-dot" style="background:var(--purple)"></div><div class="sess-name" style="color:#a5b4fc">🏛 LONDON</div><div class="sess-time" id="sLoT">07:00 – 16:00</div><div class="sess-pnl" id="sLoP">—</div><div class="sess-stats" id="sLoS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(16,185,129,.15)"><div class="sess-dot" style="background:var(--green)"></div><div class="sess-name" style="color:var(--green)">🗽 NEW YORK</div><div class="sess-time" id="sNyT">12:00 – 21:00</div><div class="sess-pnl" id="sNyP">—</div><div class="sess-stats" id="sNyS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(245,158,11,.15)"><div class="sess-dot" style="background:var(--amber)"></div><div class="sess-name" style="color:var(--amber)">🌊 PACIFIC</div><div class="sess-time" id="sPaT">20:00 – 04:00</div><div class="sess-pnl" id="sPaP">—</div><div class="sess-stats" id="sPaS">—</div></div>
     </div>
+    <div style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin:-6px 2px 0;text-align:right" id="sessTzNote">* ช่วงเวลา session คำนวณจาก Broker Time</div>
 
     <!-- ZONE DETECTION -->
     <div class="panel"><div class="panel-corner"></div>
@@ -486,11 +486,30 @@ function fmtBrokerTime(ts,fmt){
 function setBrokerOffset(v){
   brokerOffset=parseInt(v,10);
   localStorage.setItem('aris_broker_offset',v);
-  const sign=brokerOffset>=0?'+':'';
-  const lbl=document.getElementById('tzBrokerLabel');
-  if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
+  updateTzLabels();
   load();
 }
+/* คำนวณ label ที่ขึ้นกับ broker offset ทั้งหมดให้ตรงกับค่าจริงปัจจุบัน
+   (ไม่ใช่ UTC ตายตัว เพราะ broker server time อาจขยับตาม DST ของโบรกเกอร์) */
+function updateTzLabels(){
+  const sign=brokerOffset>=0?'+':'';
+  const tag='UTC'+sign+brokerOffset;
+  const lbl=document.getElementById('tzBrokerLabel');
+  if(lbl)lbl.textContent='Broker '+tag;
+  const hmSub=document.getElementById('hmSub');
+  if(hmSub)hmSub.textContent='แต่ละช่องแทน 1 ชั่วโมง Broker Time ('+tag+') · hover เพื่อดูรายละเอียด';
+  const hmNote=document.getElementById('hmTzNote');
+  if(hmNote)hmNote.textContent='* เวลาที่แสดงคือเวลา Broker (server MT5, '+tag+') ไม่ใช่ UTC จริง · ไทย = UTC+7';
+  const sessNote=document.getElementById('sessTzNote');
+  if(sessNote)sessNote.textContent='* ช่วงเวลา session คำนวณจาก Broker Time ('+tag+')';
+  const sAsT=document.getElementById('sAsT');if(sAsT)sAsT.textContent='00:00 – 08:00';
+  const sLoT=document.getElementById('sLoT');if(sLoT)sLoT.textContent='07:00 – 16:00';
+  const sNyT=document.getElementById('sNyT');if(sNyT)sNyT.textContent='12:00 – 21:00';
+  const sPaT=document.getElementById('sPaT');if(sPaT)sPaT.textContent='20:00 – 04:00';
+}
+/* เรียกทันทีตรงนี้ (sync, ท้าย body) เพราะ element ทุกตัวที่อ้างถึงถูก parse ครบแล้ว
+   ไม่เรียกจาก head script ที่เป็น async IIFE เพราะ timing ไม่แน่นอนว่า DOM ส่วนท้ายจะ parse ครบหรือยัง */
+updateTzLabels();
 function autoDetectTZ(){
   const inp=document.getElementById('tzMT5Input');
   const msg=document.getElementById('tzAutoMsg');
@@ -622,7 +641,7 @@ function renderZ(mode){
       <div class="zc-rank">${rk}</div>
       <div class="zc-inner">
         <div class="zc-hd">
-          <div><div class="zc-time">${sH} – ${eH} <span style="font-size:12px;opacity:.5">UTC</span></div><div class="zc-hrs">${z.hours} ชั่วโมงต่อเนื่อง · รวม ${z.cnt} orders</div></div>
+          <div><div class="zc-time">${sH} – ${eH} <span style="font-size:12px;opacity:.5">Broker</span></div><div class="zc-hrs">${z.hours} ชั่วโมงต่อเนื่อง · รวม ${z.cnt} orders</div></div>
           <div class="zc-pnl">${z.isGood?'+':''}$${z.pnl.toFixed(2)}</div>
         </div>
         <div class="zc-stats">
@@ -737,7 +756,8 @@ async function runAI(){
   const from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
   const sum=hd.map((h,i)=>({hour:i,pnl:+h.pnl.toFixed(2),trades:h.cnt,winRate:h.cnt?+(h.wins/h.cnt*100).toFixed(1):0,avgWin:h.wins>0?+(h.profits.filter(p=>p>0).reduce((a,b)=>a+b,0)/h.wins).toFixed(2):0,avgLoss:h.losses>0?+(Math.abs(h.profits.filter(p=>p<=0).reduce((a,b)=>a+b,0))/h.losses).toFixed(2):0}));
   const zones=allZ.slice(0,6).map(z=>({range:z.start.toString().padStart(2,'0')+':00-'+((z.end+1)%24).toString().padStart(2,'0')+':00',pnl:+z.pnl.toFixed(2),trades:z.cnt,winRate:+z.wr.toFixed(1),pf:isFinite(z.pf)?+z.pf.toFixed(2):'∞',type:z.isGood?'profitable':'loss'}));
-  const prompt=`คุณเป็น Quant Trading Analyst ผู้เชี่ยวชาญ EA บน MT5\n\nข้อมูล Trade (${from}–${to}):\nHourly(UTC): ${JSON.stringify(sum)}\nZones: ${JSON.stringify(zones)}\n\nตอบ JSON เท่านั้น ไม่มี markdown:\n{"recommendations":[{"type":"open","hours":"UTC range","reason":"ภาษาไทย"},{"type":"avoid","hours":"UTC range","reason":"ภาษาไทย"},{"type":"caution","hours":"UTC range","reason":"ภาษาไทย"}],"insights":["1","2","3","4","5"],"fullAnalysis":"4-5 ย่อหน้า ภาษาไทย วิเคราะห์ zone ดี/แย่ สาเหตุ session และคำแนะนำตั้ง Time Filter ใน EA (Slot_X_Start/End ที่ควรตั้ง)"}`;
+  const sign=brokerOffset>=0?'+':'';
+  const prompt=`คุณเป็น Quant Trading Analyst ผู้เชี่ยวชาญ EA บน MT5\n\nข้อมูล Trade (${from}–${to}):\nหมายเหตุ: ตัวเลขชั่วโมงทั้งหมดด้านล่างนี้คือ "เวลา Broker (MT5 Server Time, UTC${sign}${brokerOffset})" ไม่ใช่ UTC — เป็นเวลาเดียวกับที่ใช้ตั้งค่า Slot_X_Start/End ใน EA ได้ตรงทันที ไม่ต้องแปลงเวลาเพิ่ม\nHourly(Broker Time): ${JSON.stringify(sum)}\nZones(Broker Time): ${JSON.stringify(zones)}\n\nตอบ JSON เท่านั้น ไม่มี markdown:\n{"recommendations":[{"type":"open","hours":"ช่วงเวลา Broker Time เช่น 08:00-12:00","reason":"ภาษาไทย"},{"type":"avoid","hours":"ช่วงเวลา Broker Time","reason":"ภาษาไทย"},{"type":"caution","hours":"ช่วงเวลา Broker Time","reason":"ภาษาไทย"}],"insights":["1","2","3","4","5"],"fullAnalysis":"4-5 ย่อหน้า ภาษาไทย วิเคราะห์ zone ดี/แย่ สาเหตุ session และคำแนะนำตั้ง Time Filter ใน EA (Slot_X_Start/End เป็นเวลา Broker Time ที่ควรตั้ง)"}`;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1800,messages:[{role:'user',content:prompt}]})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'HTTP '+res.status)}

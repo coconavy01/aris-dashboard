@@ -5,10 +5,141 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ARISx QUANT — Time Analysis</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<style>body{visibility:hidden;opacity:0}</style>
+<style>body{visibility:hidden;opacity:0}
+/* === RO THEME === */
+
+/* ── RO THEME OVERRIDES ── */
+:root{
+  --bg:#0a0608!important;--s1:#120b0e!important;--s2:#1a1014!important;--s3:#221419!important;
+  --gold:#d4a843;--gold2:#b8872a;--gold-g:rgba(212,168,67,.2);--gold-b:rgba(212,168,67,.1);
+  --crimson:#c0392b;--crimson-d:rgba(192,57,43,.12);
+  --amber:#e8932a!important;--amber-d:rgba(232,147,42,.1)!important;
+  --green:#4a9e6b!important;--green-d:rgba(74,158,107,.1)!important;--green-g:rgba(74,158,107,.2)!important;
+  --red:#c0392b!important;--red-d:rgba(192,57,43,.1)!important;
+  --blue:#5b8db8!important;--blue-d:rgba(91,141,184,.1)!important;
+  --teal:#3d8a7a!important;--teal-d:rgba(61,138,122,.1)!important;
+  --purple:#8b6914!important;--purple-d:rgba(139,105,20,.1)!important;--purple-g:rgba(139,105,20,.18)!important;
+  --border:rgba(212,168,67,.12)!important;--border2:rgba(212,168,67,.07)!important;
+  --txt:#f0e2c8!important;--txt-mid:#c4a87a!important;--txt-dim:#7a6040!important;
+}
+body{background:#0a0608!important;color:#f0e2c8!important;font-family:'DM Sans',sans-serif!important}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.05) 3px,rgba(0,0,0,.05) 4px);pointer-events:none;z-index:100}
+/* hide old sidebar; show game topnav */
+.sidebar{display:none!important}
+/* game topnav */
+.game-topnav{display:flex;align-items:center;height:56px;background:linear-gradient(180deg,rgba(18,11,14,.99),rgba(18,11,14,.95));border-bottom:1px solid rgba(212,168,67,.12);position:relative;z-index:20;flex-shrink:0;width:100%}
+.game-topnav::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#d4a843,rgba(212,168,67,.3),transparent)}
+.gn-brand{display:flex;align-items:center;gap:10px;padding:0 20px;border-right:1px solid rgba(212,168,67,.12);height:100%;flex-shrink:0;min-width:175px}
+.gn-gem{width:32px;height:32px;flex-shrink:0}
+.gn-gem svg{width:100%;height:100%}
+.gn-name{font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#d4a843;letter-spacing:1px;text-shadow:0 0 20px rgba(212,168,67,.35);line-height:1}
+.gn-sub{font-size:7.5px;letter-spacing:3px;color:#7a6040;font-family:'DM Mono',monospace;margin-top:2px;text-transform:uppercase}
+.gn-links{display:flex;align-items:center;height:100%;flex:1;overflow-x:auto}
+.gn-link{display:flex;align-items:center;gap:6px;padding:0 13px;height:100%;font-size:10px;font-family:'DM Mono',monospace;color:#7a6040;text-decoration:none;cursor:pointer;border-right:1px solid rgba(212,168,67,.05);transition:color .15s,background .15s;position:relative;letter-spacing:.3px;white-space:nowrap}
+.gn-link:hover{color:#c4a87a;background:rgba(212,168,67,.04)}
+.gn-link.active{color:#d4a843;background:rgba(212,168,67,.07)}
+.gn-link.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#d4a843,transparent)}
+.gn-right{display:flex;align-items:center;gap:8px;padding:0 14px;margin-left:auto;height:100%;flex-shrink:0}
+.live-pill{display:flex;align-items:center;gap:5px;font-size:9px;font-family:'DM Mono',monospace;color:#4a9e6b;letter-spacing:.5px}
+.live-dot{width:5px;height:5px;background:#4a9e6b;border-radius:50%;box-shadow:0 0 7px rgba(74,158,107,.7);animation:ping 1.5s ease infinite;flex-shrink:0}
+@keyframes ping{0%,100%{opacity:1}50%{opacity:.4}}
+/* chips */
+.chip,.clock,.clock-chip,.sync-chip{background:rgba(212,168,67,.06)!important;border:1px solid rgba(212,168,67,.15)!important;padding:5px 12px;font-size:10px;font-family:'DM Mono',monospace;color:#c4a87a!important;border-radius:5px;cursor:pointer;transition:all .15s;text-decoration:none;white-space:nowrap}
+.chip:hover,.clock:hover,.sync-chip:hover{background:rgba(212,168,67,.1)!important;color:#f0e2c8!important;border-color:rgba(212,168,67,.3)!important}
+.logout-chip{background:rgba(192,57,43,.08)!important;border-color:rgba(192,57,43,.2)!important;color:#c0392b!important}
+.admin-chip{background:linear-gradient(135deg,rgba(212,168,67,.15),rgba(212,168,67,.06))!important;border-color:rgba(212,168,67,.35)!important;color:#d4a843!important;font-weight:600;text-decoration:none}
+/* panels */
+.panel,.info-card,.sum-card,.mc,.tbl-panel,.sc,.ms{background:#120b0e!important;border-color:rgba(212,168,67,.1)!important}
+.panel:hover,.info-card:hover,.sum-card:hover,.mc:hover,.sc:hover,.ms:hover{border-color:rgba(212,168,67,.2)!important}
+.panel::before,.info-card::before,.sum-card::before,.tbl-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,67,.2),transparent);z-index:1}
+.panel-hd,.tbl-hd,.modal-hd,.dm-hd,.td-hd{background:rgba(212,168,67,.03)!important;border-color:rgba(212,168,67,.08)!important}
+.panel-title,.tbl-title,.sum-title,.ic-title{color:#c4a87a!important}
+/* nav active highlight */
+.nav-btn.active{background:rgba(212,168,67,.1)!important;color:#d4a843!important;box-shadow:inset 3px 0 0 #d4a843!important}
+.nav-btn:hover{background:rgba(212,168,67,.05)!important;color:#c4a87a!important}
+/* pills */
+.pill-buy{background:rgba(74,158,107,.1)!important;border-color:rgba(74,158,107,.22)!important;color:#4a9e6b!important}
+.pill-sell{background:rgba(192,57,43,.09)!important;border-color:rgba(192,57,43,.22)!important;color:#c0392b!important}
+.pill-close{background:rgba(74,158,107,.1)!important;border-color:rgba(74,158,107,.18)!important;color:#4a9e6b!important}
+.pill-open{background:rgba(232,147,42,.09)!important;border-color:rgba(232,147,42,.2)!important;color:#e8932a!important}
+/* filter buttons */
+.flt-btn.active,.flt-btn:hover,.dr-preset.active,.c-tab.active,.tf-btn.active,.tab.on{background:rgba(212,168,67,.2)!important;color:#d4a843!important}
+/* table rows */
+tbody tr:hover{background:rgba(212,168,67,.04)!important}
+tbody tr:nth-child(even){background:rgba(212,168,67,.012)!important}
+thead th{color:#7a6040!important;background:rgba(212,168,67,.03)!important}
+/* scrollbars */
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:rgba(212,168,67,.2);border-radius:3px}
+/* modals */
+.td-box,.dm-box,.modal{background:#1a1014!important;border-color:rgba(212,168,67,.22)!important}
+.td-sect-title,.tl-lbl,.m-eq-lbl{color:#d4a843!important;opacity:.8}
+.td-item,.dm-stat,.ms2,.risk-item{background:rgba(212,168,67,.04)!important;border-color:rgba(212,168,67,.1)!important}
+/* topbar */
+.topbar{background:rgba(10,6,8,.95)!important;border-color:rgba(212,168,67,.08)!important}
+.topbar::after{background:linear-gradient(90deg,transparent,rgba(212,168,67,.15),transparent)!important}
+.page-title{font-family:'Cinzel',serif!important;color:#d4a843!important;font-size:14px!important}
+.page-sub{color:#7a6040!important}
+/* acc items */
+.acc-item.active{background:rgba(212,168,67,.12)!important;color:#d4a843!important;box-shadow:inset 3px 0 0 #d4a843!important}
+/* green/red profit */
+.p-pos{color:#4a9e6b!important}.p-neg{color:#c0392b!important}
+.up{color:#4a9e6b!important}.dn{color:#c0392b!important}
+/* calendar day colors */
+.day-pnl.pos{color:#4a9e6b!important}.day-pnl.neg{color:#c0392b!important}
+.day-stripe.pos{background:linear-gradient(90deg,transparent,rgba(74,158,107,.5),transparent)!important}
+.day-stripe.neg{background:linear-gradient(90deg,transparent,rgba(192,57,43,.5),transparent)!important}
+.day.is-today{background:rgba(212,168,67,.07)!important;border-color:rgba(212,168,67,.2)!important}
+.day.is-today .day-n{color:#d4a843!important}
+/* month nav */
+.mv-title-btn:hover{background:rgba(212,168,67,.1)!important;border-color:rgba(212,168,67,.25)!important;color:#d4a843!important}
+.mv-month-btn.active{background:rgba(212,168,67,.2)!important;color:#d4a843!important;border-color:rgba(212,168,67,.3)!important}
+.today-btn{background:rgba(212,168,67,.12)!important;border-color:rgba(212,168,67,.22)!important;color:#d4a843!important}
+.today-btn:hover{background:rgba(212,168,67,.2)!important}
+.nav-arr:hover{background:rgba(212,168,67,.1)!important;color:#d4a843!important}
+/* statement/summary cards */
+.sc.gr .sc-val,.ms.gr .ms-val{color:#4a9e6b!important}
+.sc.re .sc-val,.ms.re .ms-val{color:#c0392b!important}
+.sc.pu .sc-val,.ms.pu .ms-val{color:#d4a843!important}
+.sc.am .sc-val,.ms.am .ms-val{color:#e8932a!important}
+.sc.bl .sc-val,.ms.bl .ms-val{color:#5b8db8!important}
+/* EA settings toggle */
+.tog-on{background:#4a9e6b!important;border-color:#4a9e6b!important}
+/* progress bars */
+.tp-track{background:rgba(212,168,67,.06)!important;border:1px solid rgba(212,168,67,.1)!important}
+/* mob nav */
+.mob-nav{background:rgba(18,11,14,.97)!important;border-color:rgba(212,168,67,.1)!important}
+.mob-btn.active{color:#d4a843!important}
+/* tz bar */
+.tz-bar{background:rgba(212,168,67,.03)!important;border-color:rgba(212,168,67,.08)!important}
+.tz-btn{background:rgba(212,168,67,.14)!important;border-color:rgba(212,168,67,.3)!important;color:#d4a843!important}
+.tz-input{background:rgba(212,168,67,.06)!important;border-color:rgba(212,168,67,.18)!important}
+/* dr bar */
+.dr-bar{background:rgba(212,168,67,.02)!important;border-color:rgba(212,168,67,.08)!important}
+.dr-inp{background:rgba(212,168,67,.06)!important;border-color:rgba(212,168,67,.15)!important;color:#f0e2c8!important}
+.dr-presets,.flt-grp{background:rgba(212,168,67,.06)!important;border-color:rgba(212,168,67,.1)!important}
+.dr-info{background:rgba(212,168,67,.05)!important}
+/* heatmap + pair chips */
+.pair-chip{background:rgba(212,168,67,.04)!important;border-color:rgba(212,168,67,.1)!important}
+.pair-chip:hover{background:rgba(212,168,67,.08)!important;border-color:rgba(212,168,67,.2)!important}
+/* page buttons */
+.page-btn,.page-num{background:rgba(212,168,67,.06)!important;border-color:rgba(212,168,67,.1)!important;color:#c4a87a!important}
+.page-num.active{background:rgba(212,168,67,.2)!important;color:#d4a843!important;border-color:rgba(212,168,67,.35)!important}
+/* spin loader */
+.spin2,.chart-loader{border-color:rgba(212,168,67,.15)!important;border-top-color:#d4a843!important}
+/* candlestick / price chart legend */
+.leg-item{color:#7a6040!important}
+/* admin table */
+tbody tr.admin-row:hover{background:rgba(212,168,67,.06)!important}
+/* time-analysis filter chips */
+.f-chip.active{background:rgba(212,168,67,.2)!important;border-color:rgba(212,168,67,.35)!important;color:#d4a843!important}
+/* mobile */
+@media(max-width:768px){.gn-links{display:none}}
+
+</style>
 <script>
 (async()=>{
   const _sbc=supabase.createClient(
@@ -29,6 +160,7 @@
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
   /* start loading AFTER auth is confirmed and vars are set */
+  const _s=brokerOffset>=0?'+':'';const _l=document.getElementById('tzBrokerLabel');if(_l)_l.textContent='Broker UTC'+_s+brokerOffset;
 fetchKeys().then(()=>load());
 })();
 </script>
@@ -46,7 +178,7 @@ html,body{overflow-x:hidden;max-width:100vw}
   --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.04);
   --txt:#f1f5f9;--txt-mid:#94a3b8;--txt-dim:#475569;
 }
-body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;display:flex;height:100vh;overflow:hidden}
+body{background:var(--bg);color:var(--txt);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;height:100vh;overflow:hidden}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.011) 2px,rgba(255,255,255,.011) 4px);pointer-events:none;z-index:0}
 .glow-a{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,.06) 0%,transparent 70%);top:-200px;left:100px;animation:drift 10s ease-in-out infinite alternate;pointer-events:none;z-index:0}
 .glow-b{position:fixed;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,.04) 0%,transparent 70%);bottom:-150px;right:50px;animation:drift 12s ease-in-out infinite alternate-reverse;pointer-events:none;z-index:0}
@@ -295,6 +427,30 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 </head>
 <body>
 <div class="glow-a"></div><div class="glow-b"></div>
+<!-- GAME TOP NAVIGATION -->
+<nav class="game-topnav">
+  <div class="gn-brand">
+    <div class="gn-gem"><svg viewBox="0 0 32 32" fill="none"><polygon points="16,2 28,10 28,22 16,30 4,22 4,10" fill="rgba(212,168,67,.1)" stroke="rgba(212,168,67,.6)" stroke-width="1"/><polygon points="16,7 24,12 24,20 16,25 8,20 8,12" fill="rgba(212,168,67,.2)" stroke="rgba(212,168,67,.35)" stroke-width=".5"/><circle cx="16" cy="16" r="4" fill="rgba(212,168,67,.5)"/><circle cx="16" cy="16" r="2" fill="#d4a843"/></svg></div>
+    <div><div class="gn-name">ARISx</div><div class="gn-sub">QUANT · REALM</div></div>
+  </div>
+  <div class="gn-links">
+    <a class="gn-link" href="index.html"><span>⚔</span>DASHBOARD</a>
+<a class="gn-link active" href="time-analysis.html"><span>⏱</span>TIME ANALYSIS</a>
+<a class="gn-link" href="calendar.html"><span>📅</span>CALENDAR</a>
+<a class="gn-link" href="statement.html"><span>📜</span>STATEMENT</a>
+<a class="gn-link" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
+<a class="gn-link" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
+
+  </div>
+  <div class="gn-right">
+    <div class="live-pill"><div class="live-dot"></div><span id="engStatus">ONLINE</span></div>
+    <div class="chip clock-chip" id="clockEl" style="display:none">——</div>
+    <span id="userChip" style="font-size:10px;font-family:'DM Mono',monospace;color:#d4a843;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 8px">—</span>
+    <a class="chip admin-chip" href="admin.html" id="adminTopBtn" style="display:none">👑 ADMIN</a>
+    <button class="chip logout-chip" onclick="doLogout?doLogout():sbc.auth.signOut().then(()=>location.replace('login.html'))">⏻</button>
+  </div>
+</nav>
+
 <div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
 
 <!-- SIDEBAR -->
@@ -393,11 +549,11 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <!-- HEATMAP -->
     <div class="panel"><div class="panel-corner"></div>
       <div class="panel-hd">
-        <div><div class="panel-title">24-Hour Profit Heatmap</div><div class="panel-sub" id="hmSub">แต่ละช่องแทน 1 ชั่วโมง Broker Time · hover เพื่อดูรายละเอียด</div></div>
+        <div><div class="panel-title">24-Hour Profit Heatmap</div><div class="panel-sub">แต่ละช่องแทน 1 ชั่วโมง UTC · hover เพื่อดูรายละเอียด</div></div>
         <div class="hm-legend"><span>LOSS</span><div class="hm-grad"></div><span>PROFIT</span></div>
       </div>
       <div class="hm-grid" id="hmGrid"></div>
-      <div class="tz-note" id="hmTzNote">* เวลาที่แสดงคือเวลา Broker (server MT5) ที่ชดเชยแล้ว · ไม่ใช่ UTC จริง</div>
+      <div class="tz-note">* Server Time UTC · ไทย = UTC+7</div>
     </div>
 
     <!-- BAR CHARTS -->
@@ -414,12 +570,11 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 
     <!-- SESSIONS -->
     <div class="sess-row">
-      <div class="sess-card" style="border-color:rgba(56,189,248,.15)"><div class="sess-dot" style="background:var(--blue)"></div><div class="sess-name" style="color:var(--blue)">🌏 ASIAN</div><div class="sess-time" id="sAsT">00:00 – 08:00</div><div class="sess-pnl" id="sAsP">—</div><div class="sess-stats" id="sAsS">—</div></div>
-      <div class="sess-card" style="border-color:rgba(99,102,241,.15)"><div class="sess-dot" style="background:var(--purple)"></div><div class="sess-name" style="color:#a5b4fc">🏛 LONDON</div><div class="sess-time" id="sLoT">07:00 – 16:00</div><div class="sess-pnl" id="sLoP">—</div><div class="sess-stats" id="sLoS">—</div></div>
-      <div class="sess-card" style="border-color:rgba(16,185,129,.15)"><div class="sess-dot" style="background:var(--green)"></div><div class="sess-name" style="color:var(--green)">🗽 NEW YORK</div><div class="sess-time" id="sNyT">12:00 – 21:00</div><div class="sess-pnl" id="sNyP">—</div><div class="sess-stats" id="sNyS">—</div></div>
-      <div class="sess-card" style="border-color:rgba(245,158,11,.15)"><div class="sess-dot" style="background:var(--amber)"></div><div class="sess-name" style="color:var(--amber)">🌊 PACIFIC</div><div class="sess-time" id="sPaT">20:00 – 04:00</div><div class="sess-pnl" id="sPaP">—</div><div class="sess-stats" id="sPaS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(56,189,248,.15)"><div class="sess-dot" style="background:var(--blue)"></div><div class="sess-name" style="color:var(--blue)">🌏 ASIAN</div><div class="sess-time">00:00 – 08:00 UTC</div><div class="sess-pnl" id="sAsP">—</div><div class="sess-stats" id="sAsS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(99,102,241,.15)"><div class="sess-dot" style="background:var(--purple)"></div><div class="sess-name" style="color:#a5b4fc">🏛 LONDON</div><div class="sess-time">07:00 – 16:00 UTC</div><div class="sess-pnl" id="sLoP">—</div><div class="sess-stats" id="sLoS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(16,185,129,.15)"><div class="sess-dot" style="background:var(--green)"></div><div class="sess-name" style="color:var(--green)">🗽 NEW YORK</div><div class="sess-time">12:00 – 21:00 UTC</div><div class="sess-pnl" id="sNyP">—</div><div class="sess-stats" id="sNyS">—</div></div>
+      <div class="sess-card" style="border-color:rgba(245,158,11,.15)"><div class="sess-dot" style="background:var(--amber)"></div><div class="sess-name" style="color:var(--amber)">🌊 PACIFIC</div><div class="sess-time">20:00 – 04:00 UTC</div><div class="sess-pnl" id="sPaP">—</div><div class="sess-stats" id="sPaS">—</div></div>
     </div>
-    <div style="font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin:-6px 2px 0;text-align:right" id="sessTzNote">* ช่วงเวลา session คำนวณจาก Broker Time</div>
 
     <!-- ZONE DETECTION -->
     <div class="panel"><div class="panel-corner"></div>
@@ -486,30 +641,11 @@ function fmtBrokerTime(ts,fmt){
 function setBrokerOffset(v){
   brokerOffset=parseInt(v,10);
   localStorage.setItem('aris_broker_offset',v);
-  updateTzLabels();
+  const sign=brokerOffset>=0?'+':'';
+  const lbl=document.getElementById('tzBrokerLabel');
+  if(lbl)lbl.textContent='Broker UTC'+sign+brokerOffset;
   load();
 }
-/* คำนวณ label ที่ขึ้นกับ broker offset ทั้งหมดให้ตรงกับค่าจริงปัจจุบัน
-   (ไม่ใช่ UTC ตายตัว เพราะ broker server time อาจขยับตาม DST ของโบรกเกอร์) */
-function updateTzLabels(){
-  const sign=brokerOffset>=0?'+':'';
-  const tag='UTC'+sign+brokerOffset;
-  const lbl=document.getElementById('tzBrokerLabel');
-  if(lbl)lbl.textContent='Broker '+tag;
-  const hmSub=document.getElementById('hmSub');
-  if(hmSub)hmSub.textContent='แต่ละช่องแทน 1 ชั่วโมง Broker Time ('+tag+') · hover เพื่อดูรายละเอียด';
-  const hmNote=document.getElementById('hmTzNote');
-  if(hmNote)hmNote.textContent='* เวลาที่แสดงคือเวลา Broker (server MT5, '+tag+') ไม่ใช่ UTC จริง · ไทย = UTC+7';
-  const sessNote=document.getElementById('sessTzNote');
-  if(sessNote)sessNote.textContent='* ช่วงเวลา session คำนวณจาก Broker Time ('+tag+')';
-  const sAsT=document.getElementById('sAsT');if(sAsT)sAsT.textContent='00:00 – 08:00';
-  const sLoT=document.getElementById('sLoT');if(sLoT)sLoT.textContent='07:00 – 16:00';
-  const sNyT=document.getElementById('sNyT');if(sNyT)sNyT.textContent='12:00 – 21:00';
-  const sPaT=document.getElementById('sPaT');if(sPaT)sPaT.textContent='20:00 – 04:00';
-}
-/* เรียกทันทีตรงนี้ (sync, ท้าย body) เพราะ element ทุกตัวที่อ้างถึงถูก parse ครบแล้ว
-   ไม่เรียกจาก head script ที่เป็น async IIFE เพราะ timing ไม่แน่นอนว่า DOM ส่วนท้ายจะ parse ครบหรือยัง */
-updateTzLabels();
 function autoDetectTZ(){
   const inp=document.getElementById('tzMT5Input');
   const msg=document.getElementById('tzAutoMsg');
@@ -641,7 +777,7 @@ function renderZ(mode){
       <div class="zc-rank">${rk}</div>
       <div class="zc-inner">
         <div class="zc-hd">
-          <div><div class="zc-time">${sH} – ${eH} <span style="font-size:12px;opacity:.5">Broker</span></div><div class="zc-hrs">${z.hours} ชั่วโมงต่อเนื่อง · รวม ${z.cnt} orders</div></div>
+          <div><div class="zc-time">${sH} – ${eH} <span style="font-size:12px;opacity:.5">UTC</span></div><div class="zc-hrs">${z.hours} ชั่วโมงต่อเนื่อง · รวม ${z.cnt} orders</div></div>
           <div class="zc-pnl">${z.isGood?'+':''}$${z.pnl.toFixed(2)}</div>
         </div>
         <div class="zc-stats">
@@ -756,8 +892,7 @@ async function runAI(){
   const from=document.getElementById('dFrom').value,to=document.getElementById('dTo').value;
   const sum=hd.map((h,i)=>({hour:i,pnl:+h.pnl.toFixed(2),trades:h.cnt,winRate:h.cnt?+(h.wins/h.cnt*100).toFixed(1):0,avgWin:h.wins>0?+(h.profits.filter(p=>p>0).reduce((a,b)=>a+b,0)/h.wins).toFixed(2):0,avgLoss:h.losses>0?+(Math.abs(h.profits.filter(p=>p<=0).reduce((a,b)=>a+b,0))/h.losses).toFixed(2):0}));
   const zones=allZ.slice(0,6).map(z=>({range:z.start.toString().padStart(2,'0')+':00-'+((z.end+1)%24).toString().padStart(2,'0')+':00',pnl:+z.pnl.toFixed(2),trades:z.cnt,winRate:+z.wr.toFixed(1),pf:isFinite(z.pf)?+z.pf.toFixed(2):'∞',type:z.isGood?'profitable':'loss'}));
-  const sign=brokerOffset>=0?'+':'';
-  const prompt=`คุณเป็น Quant Trading Analyst ผู้เชี่ยวชาญ EA บน MT5\n\nข้อมูล Trade (${from}–${to}):\nหมายเหตุ: ตัวเลขชั่วโมงทั้งหมดด้านล่างนี้คือ "เวลา Broker (MT5 Server Time, UTC${sign}${brokerOffset})" ไม่ใช่ UTC — เป็นเวลาเดียวกับที่ใช้ตั้งค่า Slot_X_Start/End ใน EA ได้ตรงทันที ไม่ต้องแปลงเวลาเพิ่ม\nHourly(Broker Time): ${JSON.stringify(sum)}\nZones(Broker Time): ${JSON.stringify(zones)}\n\nตอบ JSON เท่านั้น ไม่มี markdown:\n{"recommendations":[{"type":"open","hours":"ช่วงเวลา Broker Time เช่น 08:00-12:00","reason":"ภาษาไทย"},{"type":"avoid","hours":"ช่วงเวลา Broker Time","reason":"ภาษาไทย"},{"type":"caution","hours":"ช่วงเวลา Broker Time","reason":"ภาษาไทย"}],"insights":["1","2","3","4","5"],"fullAnalysis":"4-5 ย่อหน้า ภาษาไทย วิเคราะห์ zone ดี/แย่ สาเหตุ session และคำแนะนำตั้ง Time Filter ใน EA (Slot_X_Start/End เป็นเวลา Broker Time ที่ควรตั้ง)"}`;
+  const prompt=`คุณเป็น Quant Trading Analyst ผู้เชี่ยวชาญ EA บน MT5\n\nข้อมูล Trade (${from}–${to}):\nHourly(UTC): ${JSON.stringify(sum)}\nZones: ${JSON.stringify(zones)}\n\nตอบ JSON เท่านั้น ไม่มี markdown:\n{"recommendations":[{"type":"open","hours":"UTC range","reason":"ภาษาไทย"},{"type":"avoid","hours":"UTC range","reason":"ภาษาไทย"},{"type":"caution","hours":"UTC range","reason":"ภาษาไทย"}],"insights":["1","2","3","4","5"],"fullAnalysis":"4-5 ย่อหน้า ภาษาไทย วิเคราะห์ zone ดี/แย่ สาเหตุ session และคำแนะนำตั้ง Time Filter ใน EA (Slot_X_Start/End ที่ควรตั้ง)"}`;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1800,messages:[{role:'user',content:prompt}]})});
     if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'HTTP '+res.status)}

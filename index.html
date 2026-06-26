@@ -2195,40 +2195,201 @@ function updateBossBar(d){
   if(bt)bt.textContent='$'+remaining.toFixed(2)+' / $'+target.toFixed(2);
 }
 
-/* PROFIT CARD DROP */
+/* ══ JACKPOT WIN CARD ══ */
 let _seenTrades=new Set();
+let _jackpotActive=false;
+let _jackpotQueue=[];
+let _initialLoadDone=false;   /* true หลัง sync ครั้งแรกเสร็จ */
+
 function checkNewClosedTrades(d){
-  const closed=d.filter(r=>isClose(r)&&(+r.profit||0)!==0);
+  const closed=d.filter(r=>isClose(r));
+  /* ครั้งแรก: จำ id ทั้งหมดที่มีอยู่ แต่ไม่ pop */
+  if(!_initialLoadDone){
+    closed.forEach(r=>_seenTrades.add(r.id||r.created_at));
+    _initialLoadDone=true;
+    return;
+  }
+  /* sync ถัดไป: เจอ id ใหม่ + WIN → queue */
   closed.forEach(r=>{
     const id=r.id||r.created_at;
-    if(!_seenTrades.has(id)){if(_seenTrades.size>0)spawnProfitCard(r);_seenTrades.add(id);}
+    if(!_seenTrades.has(id)){
+      _seenTrades.add(id);
+      if((+r.profit||0)>0) _jackpotQueue.push(r);
+    }
+  });
+  if(!_jackpotActive && _jackpotQueue.length>0) _nextJackpot();
+}
+
+function _nextJackpot(){
+  if(_jackpotQueue.length===0){_jackpotActive=false;return;}
+  _jackpotActive=true;
+  const r=_jackpotQueue.shift();
+  showJackpotCard(r, ()=>{
+    /* หลังการ์ดหายไปรอ 800ms แล้วโชว์ใบต่อไป (ถ้ามี queue) */
+    setTimeout(_nextJackpot, 800);
   });
 }
-function spawnProfitCard(r){
-  const overlay=document.getElementById('profitCardOverlay');if(!overlay)return;
-  const pv=+r.profit||0,pos=pv>0;
-  const card=document.createElement('div');card.className='profit-card';
-  card.style.cssText=`left:${15+Math.random()*60}%;top:${15+Math.random()*30}%`;
-  card.innerHTML=`<div class="pc-corner pc-tl"></div><div class="pc-corner pc-br"></div>
-    <div class="pc-tag">✦ ORDER CLOSED</div>
-    <div class="pc-val${pos?'':' neg'}">${pos?'+':''}$${Math.abs(pv).toFixed(2)}</div>
-    <div class="pc-sym">${r.symbol||'—'} · ${pos?'WIN ⚔':'LOSS'}</div>
-    <div class="pc-collect">TAP TO COLLECT ✦</div>`;
-  card.onclick=()=>{card.style.transition='opacity .3s';card.style.opacity='0';setTimeout(()=>card.remove(),300);if(pos){spawnSparkles(card);showAchToast('⚔','ORDER COLLECTED','+$'+Math.abs(pv).toFixed(2)+' · '+r.symbol);}};
-  document.getElementById('profitCardOverlay').appendChild(card);
-  setTimeout(()=>{if(card.parentNode){card.style.transition='opacity .5s';card.style.opacity='0';setTimeout(()=>card.remove(),500);}},9000);
-  if(pos)spawnSparkles(card);
+
+function showJackpotCard(r, onDone){
+  const overlay=document.getElementById('profitCardOverlay');
+  if(!overlay) return;
+
+  const pv=(+r.profit||0).toFixed(2);
+  const sym=r.symbol||'XAUUSD';
+
+  /* backdrop */
+  const bd=document.createElement('div');
+  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(3px);z-index:200;display:flex;align-items:center;justify-content:center;animation:jbdIn .3s ease';
+  bd.id='jackpotBd';
+
+  /* card */
+  bd.innerHTML=`
+  <div id="jackpotCard" style="
+    position:relative;
+    background:linear-gradient(160deg,#1c1208,#241608,#1a1005);
+    border:2px solid #d4a843;
+    border-radius:18px;
+    padding:40px 52px 32px;
+    min-width:320px;
+    max-width:380px;
+    text-align:center;
+    box-shadow:0 0 80px rgba(212,168,67,.5),0 0 160px rgba(212,168,67,.2),0 30px 60px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,240,180,.15);
+    animation:jackpotPop .6s cubic-bezier(.34,1.56,.64,1) both;
+    cursor:pointer;
+    user-select:none;
+    z-index:201;
+    overflow:hidden;
+  ">
+    <!-- corner ornaments -->
+    <div style="position:absolute;top:8px;left:8px;width:18px;height:18px;border-top:1.5px solid #d4a843;border-left:1.5px solid #d4a843;border-radius:4px 0 0 0;opacity:.8"></div>
+    <div style="position:absolute;top:8px;right:8px;width:18px;height:18px;border-top:1.5px solid #d4a843;border-right:1.5px solid #d4a843;border-radius:0 4px 0 0;opacity:.8"></div>
+    <div style="position:absolute;bottom:8px;left:8px;width:18px;height:18px;border-bottom:1.5px solid #d4a843;border-left:1.5px solid #d4a843;border-radius:0 0 0 4px;opacity:.8"></div>
+    <div style="position:absolute;bottom:8px;right:8px;width:18px;height:18px;border-bottom:1.5px solid #d4a843;border-right:1.5px solid #d4a843;border-radius:0 0 4px 0;opacity:.8"></div>
+
+    <!-- shimmer sweep -->
+    <div style="position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,240,180,.08) 50%,transparent 60%);background-size:200% 100%;animation:shimmer 2s linear infinite;pointer-events:none;border-radius:18px"></div>
+
+    <!-- glow ring -->
+    <div style="position:absolute;inset:-2px;border-radius:19px;background:transparent;pointer-events:none;animation:jackpotRing 1.2s ease-in-out infinite alternate"></div>
+
+    <!-- emoji header -->
+    <div style="font-size:28px;margin-bottom:8px;filter:drop-shadow(0 0 10px rgba(212,168,67,.5))">🏆</div>
+    <!-- header -->
+    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(212,168,67,.7);text-transform:uppercase;margin-bottom:16px">✦ ORDER WIN ✦</div>
+
+    <!-- profit amount -->
+    <div id="jackpotAmt" style="
+      font-family:'DM Mono',monospace;
+      font-size:58px;
+      font-weight:700;
+      color:#6fd99a;
+      letter-spacing:-2px;
+      line-height:1;
+      text-shadow:0 0 40px rgba(74,158,107,.7),0 0 80px rgba(74,158,107,.3),0 0 120px rgba(74,158,107,.15);
+      animation:jackpotPulse .9s ease-in-out infinite alternate;
+      margin-bottom:6px;
+    ">+$${pv}</div>
+
+    <!-- win label -->
+    <div style="font-family:'Cinzel',serif;font-size:22px;color:#d4a843;letter-spacing:4px;text-shadow:0 0 30px rgba(212,168,67,.6),0 0 60px rgba(212,168,67,.2);margin-bottom:8px">W I N</div>
+    <div style="font-size:9px;font-family:'DM Mono',monospace;color:rgba(212,168,67,.4);letter-spacing:1.5px;margin-bottom:20px">${sym}</div>
+
+    <!-- tap hint -->
+    <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(212,168,67,.4);letter-spacing:2px;animation:jackpotBlink 1s ease-in-out infinite">TAP TO COLLECT ✦</div>
+  </div>
+  `;
+
+  /* inject keyframes once */
+  if(!document.getElementById('jackpotStyle')){
+    const st=document.createElement('style');st.id='jackpotStyle';
+    st.textContent=`
+      @keyframes jbdIn{from{opacity:0;backdrop-filter:blur(0px)}to{opacity:1;backdrop-filter:blur(4px)}}
+      @keyframes jackpotPop{
+        0%{opacity:0;transform:scale(.1) translateY(-120px) rotate(-15deg)}
+        50%{opacity:1;transform:scale(1.12) translateY(10px) rotate(2deg)}
+        70%{transform:scale(.95) translateY(-5px) rotate(-1deg)}
+        85%{transform:scale(1.04) translateY(2px) rotate(.5deg)}
+        100%{opacity:1;transform:scale(1) translateY(0) rotate(0)}
+      }
+      @keyframes jackpotPulse{
+        from{text-shadow:0 0 20px rgba(74,158,107,.5),0 0 40px rgba(74,158,107,.2);transform:scale(1)}
+        to{text-shadow:0 0 60px rgba(74,158,107,.9),0 0 100px rgba(74,158,107,.4),0 0 140px rgba(74,158,107,.15);transform:scale(1.06)}
+      }
+      @keyframes jackpotRing{
+        from{box-shadow:0 0 30px rgba(212,168,67,.3),inset 0 0 30px rgba(212,168,67,.05)}
+        to{box-shadow:0 0 80px rgba(212,168,67,.7),0 0 120px rgba(212,168,67,.25),inset 0 0 40px rgba(212,168,67,.08)}
+      }
+      @keyframes jackpotBlink{0%,100%{opacity:.25;letter-spacing:2px}50%{opacity:1;letter-spacing:3px}}
+      @keyframes coinFly{
+        0%{opacity:1;transform:translate(0,0) scale(1.2) rotate(0deg)}
+        100%{opacity:0;transform:translate(var(--cx),var(--cy)) scale(0) rotate(1080deg)}
+      }
+      @keyframes screenFlash{0%{opacity:.6}100%{opacity:0}}
+      @keyframes jackpotOut{to{opacity:0;transform:scale(.8) translateY(-30px);filter:blur(4px)}}
+      @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+    `;
+    document.head.appendChild(st);
+  }
+
+  overlay.appendChild(bd);
+
+  /* coin burst particles */
+  function burstCoins(){
+    const card=document.getElementById('jackpotCard');
+    if(!card)return;
+    const rect=card.getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+    const coins=['🪙','⭐','✦','★','💰','✧','◆','🌟'];
+    for(let i=0;i<36;i++){
+      const el=document.createElement('div');
+      const angle=(i/28)*Math.PI*2;
+      const dist=150+Math.random()*250;
+      const dx=Math.cos(angle)*dist, dy=Math.sin(angle)*dist - 60;
+      const size=14+Math.random()*18;
+      const dur=0.7+Math.random()*0.6;
+      el.textContent=coins[Math.floor(Math.random()*coins.length)];
+      el.style.cssText=`
+        position:fixed;left:${cx}px;top:${cy}px;
+        font-size:${size}px;pointer-events:none;z-index:210;
+        --cx:${dx}px;--cy:${dy}px;
+        animation:coinFly ${dur}s cubic-bezier(.2,1,.4,1) forwards;
+        animation-delay:${Math.random()*0.15}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),(dur+0.2)*1000);
+    }
+    /* extra glow flash */
+    const flash=document.createElement('div');
+    flash.style.cssText=`position:fixed;left:${cx-100}px;top:${cy-100}px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,.5),transparent 70%);pointer-events:none;z-index:209;animation:jackpotOut .6s ease forwards`;
+    document.body.appendChild(flash);
+    setTimeout(()=>flash.remove(),700);
+    /* screen edge flash */
+    const edge=document.createElement('div');
+    edge.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:208;background:radial-gradient(ellipse at center,transparent 30%,rgba(212,168,67,.15) 100%);animation:screenFlash .5s ease forwards';
+    document.body.appendChild(edge);
+    setTimeout(()=>edge.remove(),600);
+  }
+
+  /* burst on entry */
+  setTimeout(burstCoins, 400);
+
+  /* dismiss */
+  let dismissed=false;
+  function dismiss(){
+    if(dismissed)return;
+    dismissed=true;
+    burstCoins();
+    const card=document.getElementById('jackpotCard');
+    if(card){card.style.animation='jackpotOut .35s ease forwards';}
+    bd.style.animation='jbdIn .3s ease reverse forwards';
+    setTimeout(()=>{bd.remove();_jackpotActive=false;if(onDone)onDone();},380);
+  }
+  bd.addEventListener('click', dismiss);
+
+  /* auto dismiss after 6s */
+  setTimeout(dismiss, 6000);
 }
-function spawnSparkles(anchor){
-  const o=document.getElementById('profitCardOverlay');if(!o||!anchor)return;
-  const rect=anchor.getBoundingClientRect();
-  ['✦','★','✧','◆'].forEach((s,i)=>{
-    const sp=document.createElement('div');
-    sp.style.cssText=`position:fixed;left:${rect.left+rect.width/2+((i%2?1:-1)*(20+i*15))}px;top:${rect.top+20}px;color:#d4a843;font-size:${10+i*3}px;pointer-events:none;z-index:160;animation:sparkFloat ${1.5+i*.3}s ease-out forwards;animation-delay:${i*.1}s`;
-    sp.textContent=s;o.appendChild(sp);
-    setTimeout(()=>sp.remove(),2000+i*300);
-  });
-}
+
 function showAchToast(icon,title,msg){
   const c=document.getElementById('achToastContainer');if(!c)return;
   const t=document.createElement('div');t.className='ach-toast';t.style.pointerEvents='auto';
@@ -2241,19 +2402,6 @@ function showAchToast(icon,title,msg){
 document.addEventListener('DOMContentLoaded',()=>{
   const _orig=window.renderAll;
   if(_orig){window.renderAll=function(d,...a){_orig.call(this,d,...a);updateGameUI(allData);checkNewClosedTrades(allData);};}
-  /* Patch renderSidebar so accList in topbar gets compact styling */
-  const _origRS=window.renderSidebar;
-  if(_origRS){
-    window.renderSidebar=function(d,...a){
-      _origRS.call(this,d,...a);
-      document.getElementById('keysLabel')&&(document.getElementById('keysLabel').style.display='none');
-      const topAL=document.getElementById('accList');
-      if(topAL){topAL.querySelectorAll('.acc-item').forEach(el=>{
-        el.style.cssText='display:inline-flex;align-items:center;gap:5px;padding:4px 10px;font-size:10px;font-family:DM Mono,monospace;border-radius:5px;cursor:pointer;color:var(--txt-dim);background:rgba(212,168,67,.04);border:1px solid rgba(212,168,67,.1);margin-right:4px;transition:all .15s';
-        if(el.classList.contains('active')){el.style.color='var(--gold)';el.style.background='rgba(212,168,67,.12)';el.style.borderColor='rgba(212,168,67,.25)';}
-      });}
-    };
-  }
 });
 
 /* ── ACCOUNT SWITCHER BAR (replaces sidebar accList) ── */

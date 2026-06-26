@@ -140,6 +140,16 @@ tbody tr.admin-row:hover{background:rgba(212,168,67,.06)!important}
 /* mobile */
 @media(max-width:768px){.gn-links{display:none}}
 
+
+/* ── ACCOUNT SWITCHER BAR ── */
+.acc-bar{display:flex;align-items:center;gap:6px;padding:7px 22px;background:rgba(212,168,67,.03);border-bottom:1px solid rgba(212,168,67,.08);flex-shrink:0;flex-wrap:wrap;min-height:40px}
+.acc-bar-lbl{font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;color:#7a6040;font-family:'DM Mono',monospace;white-space:nowrap;flex-shrink:0}
+.acc-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;font-size:10px;font-family:'DM Mono',monospace;color:#7a6040;background:rgba(212,168,67,.04);border:1px solid rgba(212,168,67,.1);border-radius:5px;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0}
+.acc-chip:hover{background:rgba(212,168,67,.1);color:#c4a87a;border-color:rgba(212,168,67,.25)}
+.acc-chip.active{background:rgba(212,168,67,.18);color:#d4a843;border-color:rgba(212,168,67,.35);font-weight:600}
+.acc-chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.7}
+.acc-bar-hidden{display:none!important}
+
 </style>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -362,6 +372,11 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     <button class="chip logout-chip" onclick="doLogout?doLogout():sbc.auth.signOut().then(()=>location.replace('login.html'))">⏻</button>
   </div>
 </nav>
+<!-- ACCOUNT SWITCHER BAR -->
+<div class="acc-bar" id="accBar" style="display:none">
+  <span class="acc-bar-lbl">⚔ VIEW :</span>
+  <div id="accChips" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
+</div>
 
 <div class="sb-overlay" id="sbO" onclick="closeSb()"></div>
 
@@ -382,7 +397,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
   </div>
   <div class="sb-accs">
     <div class="nav-sect" style="margin-bottom:8px">License Keys</div>
-    <div id="accList"></div>
+    <div id="accListHidden" style="display:none"></div>
   </div>
   <div class="sb-foot">
     <div class="lat-row">▸ <span class="lat-v" id="latVal">—</span> ms <span style="margin-left:auto;font-size:9px" id="syncLbl">—</span></div>
@@ -478,11 +493,16 @@ function buildSidebar(){
       </div>
     </div>`;
   });
-  document.getElementById('accList').innerHTML=h;
+  const _bar=document.getElementById('accBar'),_chips=document.getElementById('accChips');
+  if(_bar)_bar.style.display='flex';
+  if(_chips)_chips.innerHTML=h;
 }
 
 function selectKey(k){
   curKey=k;
+  document.querySelectorAll('.acc-chip').forEach(el=>{
+    el.classList.toggle('active', el.textContent.trim().startsWith(k)||( k==='All'&&el.textContent.includes('All')));
+  });
   const snaps=allSnaps.filter(r=>r.license_key===k);
   selSnap=snaps[0];
   buildSidebar();renderAll();
@@ -798,6 +818,40 @@ function renderEmpty(){
       <div class="no-data-sub">รัน EA ใหม่หลังติดตั้งไฟล์ที่อัพเดตแล้ว<br>ระบบจะส่ง Settings มาอัตโนมัติ</div>
     </div>`;
 }
+
+/* ── ACCOUNT SWITCHER BAR (replaces sidebar accList) ── */
+function renderAccBar(d, curKeyRef, onSelect, getBalFn){
+  const bar = document.getElementById('accBar');
+  const chips = document.getElementById('accChips');
+  if(!bar || !chips) return;
+  const isAdm = window._isAdmin || false;
+  const myKey = window._myLicenseKey || '';
+  if(!isAdm){ bar.style.display='none'; return; }
+  bar.style.display = 'flex';
+  const keys = [...new Set(d.map(r=>r.license_key||'').filter(Boolean))].sort();
+  let html = `<div class="acc-chip${curKeyRef()==='All'?' active':''}" onclick="${onSelect}('All')">
+    <span class="acc-chip-dot"></span>All Keys</div>`;
+  keys.forEach(k=>{
+    const bal = getBalFn ? getBalFn(d,k) : 0;
+    html += `<div class="acc-chip${curKeyRef()===k?' active':''}" onclick="${onSelect}('${k.replace(/'/g,"\\'")}')">
+      <span class="acc-chip-dot"></span>${k}
+      <span style="opacity:.5;font-size:9px">$${(+bal).toFixed(0)}</span></div>`;
+  });
+  chips.innerHTML = html;
+}
+
+
+/* ── patch buildSidebar → also render top acc bar ── */
+(function(){
+  const _orig = window.buildSidebar;
+  if(!_orig) return;
+  window.buildSidebar = function(){
+    _orig.call(this);
+    const d = allRows || allData || [];
+    renderAccBar(d, ()=>curKey, 'switchKey', null);
+  };
+})();
+
 </script>
 </body>
 </html>

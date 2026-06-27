@@ -361,7 +361,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 <a class="gn-link" href="calendar.html"><span>📅</span>CALENDAR</a>
 <a class="gn-link" href="statement.html"><span>📜</span>STATEMENT</a>
 <a class="gn-link active" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
-<a class="gn-link" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
+<a class="gn-link" id="gnAdminLink" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
 
   </div>
   <div class="gn-right">
@@ -376,7 +376,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 <div class="acc-bar" id="accBar" style="display:none">
   <span class="acc-bar-lbl">⚔ VIEW :</span>
   <div id="accChips" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
-</div>
+
 
 <div class="sb-overlay" id="sbO" onclick="closeSb()"></div>
 
@@ -443,6 +443,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
     if(!lk){window.location.replace('login.html');return;}
     if(!lk.is_admin){window.location.replace('index.html');return;}
     window._isAdmin=lk.is_admin||false;
+  setTimeout(()=>applyAdminNavVisibility(window._isAdmin||false),300);
     window._myLicenseKey=lk.license_key||'';
     window._displayName=lk.display_name||lk.license_key||'';
     window._userId=session.user.id;
@@ -480,32 +481,27 @@ async function loadAll(){
 }
 
 function buildSidebar(){
-  const keys=isAdm?[...new Set(allSnaps.map(r=>r.license_key))].sort():[myKey];
+  const keys=isAdm?[...new Set(allSnaps.map(r=>r.license_key)).values()].sort():[myKey];
+  const _bar=document.getElementById('accBar'),_chips=document.getElementById('accChips');
+  if(!_chips) return;
+  if(keys.length<=1 && !isAdm){ if(_bar)_bar.style.display='none'; return; }
+  if(_bar)_bar.style.display='flex';
   let h='';
   keys.forEach(k=>{
     const snaps=allSnaps.filter(r=>r.license_key===k);
-    const latest=snaps[0];
-    h+=`<div class="acc-item${curKey===k?' active':''}" onclick="selectKey('${k}')">
-      <div class="acc-av">${k[0]?.toUpperCase()||'?'}</div>
-      <div>
-        <div style="font-size:12px">${k}</div>
-        <div style="font-size:9.5px;font-family:'DM Mono',monospace;color:var(--txt-dim);margin-top:1px">${snaps.length} snapshot${snaps.length!==1?'s':''}</div>
-      </div>
+    h+=`<div class="acc-chip${curKey===k?' active':''}" onclick="selectKey('${k.replace(/'/g,"\\'")}')">
+      <span class="acc-chip-dot"></span>${k}
+      <span style="opacity:.45;font-size:9px">${snaps.length}snap</span>
     </div>`;
   });
-  const _bar=document.getElementById('accBar'),_chips=document.getElementById('accChips');
-  if(_bar)_bar.style.display='flex';
-  if(_chips)_chips.innerHTML=h;
+  _chips.innerHTML=h;
 }
 
 function selectKey(k){
   curKey=k;
-  document.querySelectorAll('.acc-chip').forEach(el=>{
-    el.classList.toggle('active', el.textContent.trim().startsWith(k)||( k==='All'&&el.textContent.includes('All')));
-  });
-  const snaps=allSnaps.filter(r=>r.license_key===k);
-  selSnap=snaps[0];
-  buildSidebar();renderAll();
+  selSnap=allSnaps.filter(r=>r.license_key===k)[0]||null;
+  buildSidebar();
+  renderAll();
 }
 
 function selectSnap(id){
@@ -852,6 +848,24 @@ function renderAccBar(d, curKeyRef, onSelect, getBalFn){
   };
 })();
 
+
+/* ── TOPNAV ADMIN VISIBILITY FIX ── */
+function applyAdminNavVisibility(isAdminUser){
+  /* game-topnav links */
+  const ea = document.getElementById('gnEaLink');
+  const ad = document.getElementById('gnAdminLink');
+  if(ea) ea.style.display = isAdminUser ? 'flex' : 'none';
+  if(ad) ad.style.display = isAdminUser ? 'flex' : 'none';
+  /* admin chip in topnav right */
+  document.querySelectorAll('#adminTopBtn').forEach(el=>{
+    el.style.display = isAdminUser ? 'flex' : 'none';
+  });
+  /* mobile nav */
+  const mEa = document.querySelector('.mob-nav a[href="ea-settings.html"]');
+  const mAd = document.querySelector('.mob-nav a[href="admin.html"]');
+  if(mEa) mEa.style.display = isAdminUser ? 'flex' : 'none';
+  if(mAd) mAd.style.display = isAdminUser ? 'flex' : 'none';
+}
 </script>
 </body>
 </html>

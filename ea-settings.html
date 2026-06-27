@@ -744,7 +744,7 @@ function renderAll(){
       const st=snapStats[s.id];
       let statStr='';
       if(st&&st.total>0){
-        const pnlSign=st.pnl>=0?'+':'';
+        const pnlSign=st.pnl>=0?'+':'-';
         const pnlStr=pnlSign+'$'+Math.abs(st.pnl).toFixed(2);
         const wrStr=st.wr!==null?st.wr+'%WR':'';
         const trStr=st.total+'trades('+st.wins+'W/'+st.losses+'L)';

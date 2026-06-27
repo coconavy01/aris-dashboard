@@ -281,8 +281,8 @@ tbody tr.admin-row:hover{background:rgba(212,168,67,.06)!important}
 <a class="gn-link" href="time-analysis.html"><span>⏱</span>TIME ANALYSIS</a>
 <a class="gn-link" href="calendar.html"><span>📅</span>CALENDAR</a>
 <a class="gn-link active" href="statement.html"><span>📜</span>STATEMENT</a>
-<a class="gn-link" id="gnEaLink" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
-<a class="gn-link" id="gnAdminLink" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
+<a class="gn-link" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
+<a class="gn-link" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
 
   </div>
   <div class="gn-right">
@@ -444,24 +444,6 @@ async function loadStatement(){
   }
 
   document.getElementById('mainContent').innerHTML=html;
-}
-
-/* ── TOPNAV ADMIN VISIBILITY FIX ── */
-function applyAdminNavVisibility(isAdminUser){
-  /* game-topnav links */
-  const ea = document.getElementById('gnEaLink');
-  const ad = document.getElementById('gnAdminLink');
-  if(ea) ea.style.display = isAdminUser ? 'flex' : 'none';
-  if(ad) ad.style.display = isAdminUser ? 'flex' : 'none';
-  /* admin chip in topnav right */
-  document.querySelectorAll('#adminTopBtn').forEach(el=>{
-    el.style.display = isAdminUser ? 'flex' : 'none';
-  });
-  /* mobile nav */
-  const mEa = document.querySelector('.mob-nav a[href="ea-settings.html"]');
-  const mAd = document.querySelector('.mob-nav a[href="admin.html"]');
-  if(mEa) mEa.style.display = isAdminUser ? 'flex' : 'none';
-  if(mAd) mAd.style.display = isAdminUser ? 'flex' : 'none';
 }
 </script>
 </body>

@@ -164,7 +164,6 @@ tbody tr.admin-row:hover{background:rgba(212,168,67,.06)!important}
   const{data:lk}=await _sbc.from('license_keys').select('license_key,is_admin').eq('user_id',session.user.id).single();
   if(lk){
     window._isAdmin=lk.is_admin;
-  setTimeout(()=>applyAdminNavVisibility(window._isAdmin||false),300);
     window._myLicenseKey=lk.license_key;
     if(lk.is_admin){const n=document.getElementById('adminNav');if(n)n.style.display='flex';}
   }
@@ -449,8 +448,8 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 <a class="gn-link active" href="time-analysis.html"><span>⏱</span>TIME ANALYSIS</a>
 <a class="gn-link" href="calendar.html"><span>📅</span>CALENDAR</a>
 <a class="gn-link" href="statement.html"><span>📜</span>STATEMENT</a>
-<a class="gn-link" id="gnEaLink" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
-<a class="gn-link" id="gnAdminLink" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
+<a class="gn-link" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
+<a class="gn-link" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
 
   </div>
   <div class="gn-right">
@@ -465,7 +464,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 <div class="acc-bar" id="accBar" style="display:none">
   <span class="acc-bar-lbl">⚔ VIEW :</span>
   <div id="accChips" style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"></div>
-
+</div>
 
 <div class="sb-overlay" id="sbOverlay" onclick="closeSb()"></div>
 
@@ -968,24 +967,6 @@ function renderAccBar(d, curKeyRef, onSelect, getBalFn){
   };
 })();
 
-
-/* ── TOPNAV ADMIN VISIBILITY FIX ── */
-function applyAdminNavVisibility(isAdminUser){
-  /* game-topnav links */
-  const ea = document.getElementById('gnEaLink');
-  const ad = document.getElementById('gnAdminLink');
-  if(ea) ea.style.display = isAdminUser ? 'flex' : 'none';
-  if(ad) ad.style.display = isAdminUser ? 'flex' : 'none';
-  /* admin chip in topnav right */
-  document.querySelectorAll('#adminTopBtn').forEach(el=>{
-    el.style.display = isAdminUser ? 'flex' : 'none';
-  });
-  /* mobile nav */
-  const mEa = document.querySelector('.mob-nav a[href="ea-settings.html"]');
-  const mAd = document.querySelector('.mob-nav a[href="admin.html"]');
-  if(mEa) mEa.style.display = isAdminUser ? 'flex' : 'none';
-  if(mAd) mAd.style.display = isAdminUser ? 'flex' : 'none';
-}
 </script>
 </body>
 </html>

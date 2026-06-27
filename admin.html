@@ -341,7 +341,7 @@ tbody tr.admin-row:hover{background:rgba(212,168,67,.06)!important}
 <a class="gn-link" href="time-analysis.html"><span>⏱</span>TIME ANALYSIS</a>
 <a class="gn-link" href="calendar.html"><span>📅</span>CALENDAR</a>
 <a class="gn-link" href="statement.html"><span>📜</span>STATEMENT</a>
-<a class="gn-link" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
+<a class="gn-link" id="gnEaLink" href="ea-settings.html" style="display:none"><span>⚙</span>EA SETTINGS</a>
 <a class="gn-link active" href="admin.html" style="display:none"><span>👑</span>ADMIN</a>
 
   </div>
@@ -551,6 +551,8 @@ let allUsers=[],calcResult=null;
   if(!session){window.location.replace('login.html');return;}
   const{data:lk}=await sbc.from('license_keys').select('is_admin').eq('user_id',session.user.id).single();
   if(!lk||!lk.is_admin){window.location.replace('index.html');return;}
+  window._isAdmin=true;
+  setTimeout(()=>applyAdminNavVisibility(true),50);
   document.getElementById('adminEmail').textContent=session.user.email;
   document.body.style.visibility='visible';
   document.body.style.opacity='1';
@@ -783,6 +785,24 @@ async function loadRevHistory(){
 async function markPaid(id){await sbc.from('revenue_share').update({status:'paid'}).eq('id',id);loadRevHistory()}
 async function deleteRev(id){if(confirm('ลบรายการนี้?')){await sbc.from('revenue_share').delete().eq('id',id);loadRevHistory()}}
 function st(id,v){const e=document.getElementById(id);if(e)e.textContent=v}
+
+/* ── TOPNAV ADMIN VISIBILITY FIX ── */
+function applyAdminNavVisibility(isAdminUser){
+  /* game-topnav links */
+  const ea = document.getElementById('gnEaLink');
+  const ad = document.getElementById('gnAdminLink');
+  if(ea) ea.style.display = isAdminUser ? 'flex' : 'none';
+  if(ad) ad.style.display = isAdminUser ? 'flex' : 'none';
+  /* admin chip in topnav right */
+  document.querySelectorAll('#adminTopBtn').forEach(el=>{
+    el.style.display = isAdminUser ? 'flex' : 'none';
+  });
+  /* mobile nav */
+  const mEa = document.querySelector('.mob-nav a[href="ea-settings.html"]');
+  const mAd = document.querySelector('.mob-nav a[href="admin.html"]');
+  if(mEa) mEa.style.display = isAdminUser ? 'flex' : 'none';
+  if(mAd) mAd.style.display = isAdminUser ? 'flex' : 'none';
+}
 </script>
 </body>
 </html>

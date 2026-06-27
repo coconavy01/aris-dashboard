@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>let sbc=supabase.createClient("https://tfnikhovkbbrhvrkobpu.supabase.co","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmbmlraG92a2Jicmh2cmtvYnB1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NjQ0MjAsImV4cCI6MjA5MDM0MDQyMH0.hHHhXvLBBQfag3Rcf3pNC04NBlu17CSgi1sec3wysJo");</script>
-<script>let isAdm=false,myKey='',allSnaps=[],curKey='',selSnap=null,cmpKey='',cmpSnap=null,diff={};</script>
+<script>let isAdm=false,myKey='',allSnaps=[],allTrades=[],snapStats={},curKey='',selSnap=null,cmpKey='',cmpSnap=null,diff={};</script>
 <style>body{visibility:hidden;opacity:0}
 /* === RO THEME === */
 
@@ -544,12 +544,19 @@ async function doLogout(){await sbc.auth.signOut();window.location.replace('logi
 
 async function loadAll(){
   const t0=performance.now();
+  /* fetch snapshots */
   let q=sbc.from('ea_settings').select('*').order('created_at',{ascending:false});
   if(!isAdm&&myKey) q=q.eq('license_key',myKey);
   const{data}=await q;
+  /* fetch trade_history for P&L stats */
+  let tq=sbc.from('trade_history').select('id,license_key,profit,trade_action,created_at').order('created_at',{ascending:true});
+  if(!isAdm&&myKey) tq=tq.eq('license_key',myKey);
+  const{data:td}=await tq;
   document.getElementById('latVal').textContent=Math.round(performance.now()-t0);
   document.getElementById('syncLbl').textContent=new Date().toLocaleTimeString('th-TH');
   allSnaps=data||[];
+  allTrades=(td||[]).filter(r=>(r.trade_action||'').toUpperCase()==='CLOSE');
+  computeSnapStats();
   if(!allSnaps.length){renderEmpty();return;}
   buildSidebar();
   /* auto-select first key */
@@ -557,6 +564,48 @@ async function loadAll(){
   curKey=isAdm?keys[0]:myKey;
   selSnap=allSnaps.find(r=>r.license_key===curKey);
   renderAll();
+}
+
+/* Compute P&L stats for each snapshot interval:
+   snapshot[i] covers from created_at[i] → created_at[i-1] (or now)
+   i.e. trades that happened AFTER this snapshot was saved */
+function computeSnapStats(){
+  snapStats={};
+  /* group trades by license_key */
+  const byKey={};
+  allTrades.forEach(t=>{
+    if(!byKey[t.license_key]) byKey[t.license_key]=[];
+    byKey[t.license_key].push(t);
+  });
+  /* for each key, snaps are already sorted descending (newest first) */
+  const bySnapKey={};
+  allSnaps.forEach(s=>{
+    if(!bySnapKey[s.license_key]) bySnapKey[s.license_key]=[];
+    bySnapKey[s.license_key].push(s);
+  });
+  Object.keys(bySnapKey).forEach(key=>{
+    const snaps=bySnapKey[key]; /* newest → oldest */
+    const trades=(byKey[key]||[]).slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    snaps.forEach((snap,idx)=>{
+      const from=new Date(snap.created_at);
+      /* end = next older snapshot's time, or now */
+      const nextSnap=snaps[idx-1]; /* idx-1 = newer snap = already processed = this snap's "end" is the next newer snap's start? */
+      /* Actually: trades AFTER this snapshot until the PREVIOUS (newer) snapshot */
+      /* snaps[0]=newest, snaps[1]=second newest, etc.
+         trades for snaps[1] = trades between snaps[1].created_at and snaps[0].created_at */
+      const to=idx===0 ? new Date() : new Date(snaps[idx-1].created_at);
+      const relevant=trades.filter(t=>{
+        const d=new Date(t.created_at);
+        return d>=from && d<to;
+      });
+      const pnl=relevant.reduce((a,t)=>a+(+t.profit||0),0);
+      const wins=relevant.filter(t=>(+t.profit||0)>0).length;
+      const losses=relevant.filter(t=>(+t.profit||0)<0).length;
+      const total=wins+losses;
+      const wr=total>0?Math.round(wins/total*100):null;
+      snapStats[snap.id]={pnl,wins,losses,total,wr};
+    });
+  });
 }
 
 function buildSidebar(){
@@ -692,7 +741,18 @@ function renderAll(){
     dd.innerHTML=snaps.map((s,i)=>{
       const dt=new Date(s.created_at).toLocaleString('th-TH',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
       const sel=selSnap?.id===s.id?'selected':'';
-      return`<option value="${s.id}" ${sel}>${i===0?'[LATEST] ':''}${dt} · ${s.symbol||''} ${s.timeframe||''}</option>`;
+      const st=snapStats[s.id];
+      let statStr='';
+      if(st&&st.total>0){
+        const pnlSign=st.pnl>=0?'+':'';
+        const pnlStr=pnlSign+'$'+Math.abs(st.pnl).toFixed(2);
+        const wrStr=st.wr!==null?st.wr+'%WR':'';
+        const trStr=st.total+'trades('+st.wins+'W/'+st.losses+'L)';
+        statStr=` │ ${pnlStr} · ${trStr} · ${wrStr}`;
+      } else if(st&&st.total===0){
+        statStr=' │ ไม่มี trade ในช่วงนี้';
+      }
+      return`<option value="${s.id}" ${sel}>${i===0?'[LATEST] ':''}${dt} · ${s.symbol||''} ${s.timeframe||''}${statStr}</option>`;
     }).join('');
   }
   if(sc)sc.textContent=snaps.length+' records';

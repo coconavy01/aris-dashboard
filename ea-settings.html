@@ -815,38 +815,10 @@ function renderEmpty(){
     </div>`;
 }
 
-/* ── ACCOUNT SWITCHER BAR (replaces sidebar accList) ── */
-function renderAccBar(d, curKeyRef, onSelect, getBalFn){
-  const bar = document.getElementById('accBar');
-  const chips = document.getElementById('accChips');
-  if(!bar || !chips) return;
-  const isAdm = window._isAdmin || false;
-  const myKey = window._myLicenseKey || '';
-  if(!isAdm){ bar.style.display='none'; return; }
-  bar.style.display = 'flex';
-  const keys = [...new Set(d.map(r=>r.license_key||'').filter(Boolean))].sort();
-  let html = `<div class="acc-chip${curKeyRef()==='All'?' active':''}" onclick="${onSelect}('All')">
-    <span class="acc-chip-dot"></span>All Keys</div>`;
-  keys.forEach(k=>{
-    const bal = getBalFn ? getBalFn(d,k) : 0;
-    html += `<div class="acc-chip${curKeyRef()===k?' active':''}" onclick="${onSelect}('${k.replace(/'/g,"\\'")}')">
-      <span class="acc-chip-dot"></span>${k}
-      <span style="opacity:.5;font-size:9px">$${(+bal).toFixed(0)}</span></div>`;
-  });
-  chips.innerHTML = html;
-}
+/* renderAccBar: handled by buildSidebar in ea-settings */
 
 
-/* ── patch buildSidebar → also render top acc bar ── */
-(function(){
-  const _orig = window.buildSidebar;
-  if(!_orig) return;
-  window.buildSidebar = function(){
-    _orig.call(this);
-    const d = allRows || allData || [];
-    renderAccBar(d, ()=>curKey, 'switchKey', null);
-  };
-})();
+/* ea-settings: buildSidebar handles acc-bar directly */
 
 
 /* ── TOPNAV ADMIN VISIBILITY FIX ── */

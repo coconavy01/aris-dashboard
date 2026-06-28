@@ -64,7 +64,7 @@ function autoDetectTZ(){
   if(msg){msg.textContent='✅ Broker = UTC'+sign+offset;msg.style.color='var(--green)';}
 }
 
-let priceCh=null,lastPriceSym='',lastPriceTF='15min',lastPriceData=null,priceLoading=false;</script>
+/* TradingView handles price chart state */</script>
 <style>body{visibility:hidden;opacity:0}
 /* ── ACCOUNT SWITCHER BAR ── */
 .acc-bar{display:flex;align-items:center;gap:6px;padding:7px 22px;background:rgba(212,168,67,.03);border-bottom:1px solid rgba(212,168,67,.08);flex-shrink:0;flex-wrap:wrap;min-height:40px}
@@ -74,6 +74,13 @@ let priceCh=null,lastPriceSym='',lastPriceTF='15min',lastPriceData=null,priceLoa
 .acc-chip.active{background:rgba(212,168,67,.18);color:#d4a843;border-color:rgba(212,168,67,.35);font-weight:600}
 .acc-chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;opacity:.7}
 .acc-bar-hidden{display:none!important}
+
+
+.tv-tf{background:transparent;border:none;color:var(--txt-dim);
+  padding:3px 9px;font-size:9.5px;cursor:pointer;
+  font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
+.tv-tf:hover{background:rgba(212,168,67,.08);color:var(--txt-mid)}
+.tv-tf.active{background:rgba(212,168,67,.18);color:var(--gold);font-weight:600}
 
 </style>
 <style>
@@ -256,7 +263,7 @@ body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradie
 .panel-title{font-size:10.5px;font-weight:600;letter-spacing:1px;color:var(--txt-mid);text-transform:uppercase;font-family:'DM Mono',monospace;display:flex;align-items:center;gap:6px}
 .panel-title::before{content:'◈';color:var(--gold);font-size:9px;opacity:.7}
 .panel-sub{font-size:9px;color:var(--txt-dim);font-family:'DM Mono',monospace;margin-top:1px}
-.eq-wrap{padding:4px 8px 8px;height:180px;position:relative}
+.eq-wrap{padding:6px 10px 10px;height:164px;position:relative}
 canvas{width:100%!important}
 .c-tabs{display:flex;gap:3px;background:rgba(212,168,67,.06);border-radius:5px;padding:2px;border:1px solid var(--border2)}
 .c-tab{background:transparent;border:none;color:var(--txt-dim);padding:3px 10px;font-size:9.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
@@ -560,7 +567,7 @@ tbody tr:nth-child(even){background:rgba(212,168,67,.015)}
 .panel-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--border2)}
 .panel-title{font-size:11px;font-weight:600;letter-spacing:.5px;color:#e2e8f0;text-transform:uppercase;font-family:'DM Mono',monospace}
 .panel-sub{font-size:9px;color:#64748b;font-family:'DM Mono',monospace;margin-top:1px}
-.eq-wrap{padding:4px 8px 8px;height:180px;position:relative}
+.eq-wrap{padding:6px 10px 10px;height:164px;position:relative}
 canvas{width:100%!important}
 .c-tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border-radius:5px;padding:2px}
 .c-tab{background:transparent;border:none;color:#94a3b8;padding:3px 10px;font-size:9.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
@@ -1035,66 +1042,41 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       </div>
     </div>
 
-    <!-- PRICE CHART -->
-    <div class="panel" id="pricePanel" style="margin-bottom:14px">
+    <!-- TRADINGVIEW CHART -->
+    <div class="panel" id="pricePanel" style="margin-bottom:14px;overflow:hidden">
       <div class="panel-corner"></div>
-      <div class="panel-hd" style="padding:10px 16px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div>
-            <div class="panel-title" id="priceTitle" style="font-size:12px">XAUUSD</div>
-            <div class="panel-sub" id="priceSub" style="margin-top:1px">M15 · TwelveData</div>
-          </div>
-          <div style="display:flex;align-items:baseline;gap:5px">
-            <span id="priceLastVal" style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace;color:#fff">—</span>
-            <span id="priceChg" style="font-size:11px;font-family:'DM Mono',monospace;color:var(--txt-dim)">—</span>
-          </div>
+      <!-- toolbar -->
+      <div class="panel-hd" style="padding:8px 14px;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="panel-title">◈ PRICE CHART</div>
+          <span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--txt-dim);letter-spacing:1px">TradingView</span>
         </div>
-        <div class="chart-toolbar">
-          <select class="sym-sel" id="symSel" onchange="loadPriceChart()">
-            <option value="XAU/USD">XAU/USD</option>
-            <option value="EUR/USD">EUR/USD</option>
-            <option value="GBP/USD">GBP/USD</option>
-            <option value="USD/JPY">USD/JPY</option>
-            <option value="BTC/USD">BTC/USD</option>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+          <!-- Symbol selector -->
+          <select id="tvSymSel" onchange="updateTVChart()"
+            style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);
+              color:var(--txt);font-family:'DM Mono',monospace;font-size:10px;
+              padding:4px 8px;border-radius:5px;outline:none;cursor:pointer">
+            <option value="OANDA:XAUUSD">XAU/USD</option>
+            <option value="OANDA:EURUSD">EUR/USD</option>
+            <option value="OANDA:GBPUSD">GBP/USD</option>
+            <option value="OANDA:USDJPY">USD/JPY</option>
+            <option value="BINANCE:BTCUSDT">BTC/USD</option>
+            <option value="BINANCE:ETHUSDT">ETH/USD</option>
           </select>
-          <div style="display:flex;gap:3px">
-            <button class="tf-btn" onclick="setTF(this,'5min')">M5</button>
-            <button class="tf-btn active" onclick="setTF(this,'15min')">M15</button>
-            <button class="tf-btn" onclick="setTF(this,'1h')">H1</button>
-            <button class="tf-btn" onclick="setTF(this,'4h')">H4</button>
-            <button class="tf-btn" onclick="setTF(this,'1day')">D1</button>
+          <!-- Interval selector -->
+          <div style="display:flex;gap:2px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.1);padding:2px;border-radius:5px">
+            <button class="tv-tf active" data-interval="5">M5</button>
+            <button class="tv-tf" data-interval="15">M15</button>
+            <button class="tv-tf" data-interval="60">H1</button>
+            <button class="tv-tf" data-interval="240">H4</button>
+            <button class="tv-tf" data-interval="D">D1</button>
           </div>
-          <button onclick="loadPriceChart(true)" style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#a5b4fc;padding:4px 10px;font-size:9.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s" title="Refresh">↻</button>
         </div>
       </div>
-      <div class="price-statbar" id="priceStatbar" style="display:none">
-        <div class="psb-item"><div class="psb-lbl">Open</div><div class="psb-val" id="psO">—</div></div>
-        <div class="psb-sep"></div>
-        <div class="psb-item"><div class="psb-lbl">High</div><div class="psb-val" style="color:var(--green)" id="psH">—</div></div>
-        <div class="psb-sep"></div>
-        <div class="psb-item"><div class="psb-lbl">Low</div><div class="psb-val" style="color:var(--red)" id="psL">—</div></div>
-        <div class="psb-sep"></div>
-        <div class="psb-item"><div class="psb-lbl">Close</div><div class="psb-val" id="psC">—</div></div>
-        <div class="psb-sep"></div>
-        <div class="psb-item"><div class="psb-lbl">Volume</div><div class="psb-val" style="color:var(--blue)" id="psV">—</div></div>
-        <div style="margin-left:auto;font-size:9px;font-family:'DM Mono',monospace;color:var(--txt-dim)" id="psCnt">—</div>
-      </div>
-      <div class="price-wrap">
-        <canvas id="priceChart"></canvas>
-        <div class="chart-status" id="chartStatus">
-          <div class="chart-loader"></div>
-          <span>Loading XAUUSD…</span>
-        </div>
-      </div>
-      <div class="chart-legend">
-        <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Buy entry</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Sell entry</div>
-        <div class="leg-item"><div class="leg-dot" style="background:rgba(255,255,255,.6)"></div>Close</div>
-        <div class="leg-item"><div class="leg-dot" style="background:var(--amber)"></div>Open</div>
-        <div class="leg-item"><div class="leg-line" style="background:rgba(244,63,94,.5)"></div>SL</div>
-        <div class="leg-item"><div class="leg-line" style="background:rgba(56,189,248,.5)"></div>TP</div>
-        <div style="margin-left:auto;font-size:9px;font-family:'DM Mono',monospace;color:var(--txt-dim)" id="priceTradeCount"></div>
-      </div>
+      <!-- TradingView widget container -->
+      <div id="tvChartWrap" style="height:460px;background:#0a0608"></div>
+    </div>
     </div>
 
     <!-- HOURLY HEATMAP + SYMBOL PERFORMANCE -->
@@ -1692,33 +1674,9 @@ function renderEqChart(fil){
   if(!d.length){if(eqCh){eqCh.destroy();eqCh=null;}return;}
   const labels=d.map(r=>new Date(r.created_at).toLocaleDateString('th-TH',{month:'short',day:'numeric'}));
   const vals=d.map(r=>+r.account_balance||0);
-  const ctx2d=document.getElementById('eqChart').getContext('2d');
-  const grad=ctx2d.createLinearGradient(0,0,0,160);
-  grad.addColorStop(0,'rgba(212,168,67,.28)');
-  grad.addColorStop(0.5,'rgba(212,168,67,.08)');
-  grad.addColorStop(1,'rgba(212,168,67,0)');
-  const minVal=Math.min(...vals), maxVal=Math.max(...vals);
-  const padding=(maxVal-minVal)*0.08||50;
-  const cfg={data:{labels,datasets:[{data:vals,borderColor:'#d4a843',borderWidth:1.8,
-    backgroundColor:grad,fill:true,pointRadius:0,pointHoverRadius:4,
-    pointHoverBackgroundColor:'#d4a843',tension:.35}]},
-    options:{responsive:true,maintainAspectRatio:false,
-      animation:{duration:400},
-      plugins:{legend:{display:false},
-        tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toLocaleString(undefined,{minimumFractionDigits:2})},
-          backgroundColor:'rgba(18,11,14,.97)',
-          titleFont:{family:'DM Mono',size:10},
-          bodyFont:{family:'DM Mono',size:12},
-          padding:10,
-          borderColor:'rgba(212,168,67,.3)',borderWidth:1}},
-      scales:{
-        x:{display:false},
-        y:{display:true,
-          min:minVal-padding,
-          suggestedMax:maxVal+padding,
-          grid:{color:'rgba(212,168,67,.06)',drawBorder:false},
-          ticks:{color:'rgba(212,168,67,.5)',font:{family:'DM Mono',size:9},
-            callback:v=>'$'+v.toLocaleString()}}}}};
+  const grad=document.getElementById('eqChart').getContext('2d').createLinearGradient(0,0,0,150);
+  grad.addColorStop(0,'rgba(99,102,241,.35)');grad.addColorStop(1,'rgba(99,102,241,0)');
+  const cfg={data:{labels,datasets:[{data:vals,borderColor:'#6366f1',borderWidth:1.5,backgroundColor:grad,fill:true,pointRadius:0,pointHoverRadius:3,tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.parsed.y.toLocaleString(undefined,{minimumFractionDigits:2})},backgroundColor:'rgba(12,14,20,.95)',titleFont:{family:'DM Mono',size:10},bodyFont:{family:'DM Mono',size:11},padding:10,borderColor:'rgba(99,102,241,.3)',borderWidth:1}},scales:{x:{display:false},y:{display:true,grid:{color:'rgba(255,255,255,.04)',drawBorder:false},ticks:{color:'var(--txt-dim)',font:{family:'DM Mono',size:9},callback:v=>'$'+v.toLocaleString()}}}}};
   if(eqCh){eqCh.data=cfg.data;eqCh.update('none');}else{eqCh=new Chart(document.getElementById('eqChart').getContext('2d'),{type:'line',...cfg});}
 }
 
@@ -1726,216 +1684,100 @@ function renderEqChart(fil){
 function renderDonut(fil){
   const cl=dedupeForStats(fil).filter(isClose);
   const ws=cl.filter(r=>(+r.profit||0)>0).length,ls=cl.length-ws;
-  const cfg={data:{datasets:[{data:[ws||0.001,ls||0.001],backgroundColor:['rgba(74,158,107,.8)','rgba(192,57,43,.7)'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return(c.dataIndex===0?'WIN':'LOSS')+': '+Math.round(c.parsed/t*100)+'%'}},backgroundColor:'rgba(12,14,20,.95)',bodyFont:{family:'DM Mono',size:11},padding:8,borderColor:'rgba(212,168,67,.15)',borderWidth:1}}}};
+  const cfg={data:{datasets:[{data:[ws||0.001,ls||0.001],backgroundColor:['rgba(16,185,129,.7)','rgba(244,63,94,.6)'],borderWidth:0,hoverOffset:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const t=c.dataset.data.reduce((a,b)=>a+b,0);return(c.dataIndex===0?'WIN':'LOSS')+': '+Math.round(c.parsed/t*100)+'%'}},backgroundColor:'rgba(12,14,20,.95)',bodyFont:{family:'DM Mono',size:11},padding:8,borderColor:'rgba(255,255,255,.08)',borderWidth:1}}}};
   if(donutCh){donutCh.data=cfg.data;donutCh.update('none');}else{donutCh=new Chart(document.getElementById('donutChart').getContext('2d'),{type:'doughnut',...cfg});}
 }
 
 /* ══ TRADE TABLE WITH PAGINATION ══ */
 
 
-/* ══ PRICE CHART — TwelveData ══ */
-const TD_KEY = '560a06a200674372ab2179f75a80632e';
+/* ══ PRICE CHART — TradingView Widget ══ */
+let _tvInterval = '5';
+let _tvSymbol   = 'OANDA:XAUUSD';
 
-function setTF(btn, tf){
-  document.querySelectorAll('.tf-btn').forEach(b=>b.classList.remove('active'));
+function initTVChart(){
+  const wrap = document.getElementById('tvChartWrap');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  const container = document.createElement('div');
+  container.id = 'tv_chart_container';
+  container.style.cssText = 'width:100%;height:100%';
+  wrap.appendChild(container);
+  if(typeof TradingView === 'undefined'){ console.warn('TradingView not loaded'); return; }
+  new TradingView.widget({
+    container_id: 'tv_chart_container',
+    width:  '100%',
+    height: 460,
+    symbol: _tvSymbol,
+    interval: _tvInterval,
+    timezone: 'Asia/Bangkok',
+    theme: 'dark',
+    style: '1',
+    locale: 'th',
+    toolbar_bg: '#0a0608',
+    enable_publishing: false,
+    hide_side_toolbar: false,
+    save_image: false,
+    backgroundColor: '#0a0608',
+    gridColor: 'rgba(212,168,67,0.06)',
+    overrides: {
+      'paneProperties.background': '#0a0608',
+      'paneProperties.backgroundGradientStartColor': '#0a0608',
+      'paneProperties.backgroundGradientEndColor':   '#0f0a0c',
+      'paneProperties.vertGridProperties.color': 'rgba(212,168,67,0.05)',
+      'paneProperties.horzGridProperties.color': 'rgba(212,168,67,0.05)',
+      'scalesProperties.textColor': '#7a6040',
+      'scalesProperties.backgroundColor': '#0a0608',
+      'scalesProperties.lineColor': 'rgba(212,168,67,0.1)',
+      'mainSeriesProperties.candleStyle.upColor':         '#4a9e6b',
+      'mainSeriesProperties.candleStyle.downColor':       '#c0392b',
+      'mainSeriesProperties.candleStyle.borderUpColor':   '#4a9e6b',
+      'mainSeriesProperties.candleStyle.borderDownColor': '#c0392b',
+      'mainSeriesProperties.candleStyle.wickUpColor':     '#4a9e6b',
+      'mainSeriesProperties.candleStyle.wickDownColor':   '#c0392b',
+    },
+    studies_overrides: {
+      'volume.volume.color.0': 'rgba(192,57,43,.4)',
+      'volume.volume.color.1': 'rgba(74,158,107,.4)',
+    },
+    loading_screen: { backgroundColor: '#0a0608', foregroundColor: '#d4a843' },
+    autosize: true,
+  });
+}
+
+function updateTVChart(){
+  const s = document.getElementById('tvSymSel');
+  if(s) _tvSymbol = s.value;
+  initTVChart();
+}
+
+function setTVInterval(btn, interval){
+  document.querySelectorAll('.tv-tf').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  lastPriceTF = tf;
-  loadPriceChart(true);
+  _tvInterval = interval;
+  initTVChart();
 }
 
-async function loadPriceChart(force){
-  if(priceLoading) return;
-  const sym = document.getElementById('symSel')?.value || 'XAU/USD';
-  const tf  = lastPriceTF;
-  if(!force && sym===lastPriceSym && lastPriceData){ renderPriceChart(lastPriceData, allData); return; }
-  priceLoading = true;
-  const statusEl = document.getElementById('chartStatus');
-  if(statusEl){ statusEl.style.display='flex'; statusEl.innerHTML='<div class="chart-loader"></div><span>Loading '+sym.replace('/','')+'…</span>'; }
-  const outputSize = tf==='1day'?200 : tf==='4h'?150 : tf==='1h'?120 : tf==='15min'?100 : 80;
-  try {
-    const url=`https://api.twelvedata.com/time_series?symbol=${encodeURIComponent(sym)}&interval=${tf}&outputsize=${outputSize}&apikey=${TD_KEY}&format=JSON`;
-    const res = await fetch(url);
-    const json = await res.json();
-    if(json.status==='error'){ if(statusEl){statusEl.innerHTML='<span>⚠ '+json.message+'</span>';} priceLoading=false; return; }
-    const values=(json.values||[]).reverse();
-    if(!values.length){ if(statusEl)statusEl.innerHTML='<span>No data available</span>'; priceLoading=false; return; }
-    lastPriceData=values; lastPriceSym=sym;
-    if(statusEl) statusEl.style.display='none';
-    /* update header */
-    const symName=sym.replace('/','');
-    const tfLabel={'5min':'M5','15min':'M15','1h':'H1','4h':'H4','1day':'D1'}[tf]||tf;
-    const last=values[values.length-1], prev=values[values.length-2];
-    const lastClose=+last?.close||0, prevClose=+prev?.close||0;
-    const chgPct=prevClose?((lastClose-prevClose)/prevClose*100):0;
-    const chgPos=chgPct>=0;
-    const titleEl=document.getElementById('priceTitle');
-    if(titleEl)titleEl.textContent=symName;
-    const subEl=document.getElementById('priceSub');
-    if(subEl)subEl.textContent=tfLabel+' · '+values.length+' candles · TwelveData';
-    const lvEl=document.getElementById('priceLastVal');
-    if(lvEl){lvEl.textContent=lastClose.toFixed(lastClose>100?2:5);lvEl.style.color=chgPos?'var(--green)':'var(--red)';}
-    const chgEl=document.getElementById('priceChg');
-    if(chgEl){chgEl.textContent=(chgPos?'+':'')+chgPct.toFixed(2)+'%';chgEl.style.color=chgPos?'var(--green)':'var(--red)';}
-    /* stat bar */
-    const sb=document.getElementById('priceStatbar');
-    if(sb){sb.style.display='flex';['O','H','L','C'].forEach((k,i)=>{const v=[+last.open,+last.high,+last.low,+last.close][i];const el=document.getElementById('ps'+k);if(el)el.textContent=v.toFixed(v>100?2:5);});const vEl=document.getElementById('psV');if(vEl)vEl.textContent=last.volume?Number(last.volume).toLocaleString():'—';const cEl=document.getElementById('psCnt');if(cEl)cEl.textContent=values.length+' candles';}
-    renderPriceChart(values, allData);
-  } catch(e) {
-    if(statusEl){ statusEl.innerHTML='<span>⚠ Network error — check console</span>'; }
-    console.error('TwelveData error:', e);
-  }
-  priceLoading=false;
-}
+/* Stubs so existing calls don't crash */
+function loadPriceChart(){ }
+function renderPriceChart(){ }
+function setTF(b,tf){ }
 
-function renderPriceChart(candles, trades){
-  const ctx = document.getElementById('priceChart');
-  if(!ctx) return;
-
-  // Map candles to OHLC format
-  const ohlc = candles.map(c=>({
-    x: new Date(c.datetime.replace(' ','T')+'Z').getTime(),
-    o: +c.open, h: +c.high, l: +c.low, c: +c.close
-  }));
-
-  // Filter trades for this symbol
-  const sym = (document.getElementById('symSel')?.value||'XAU/USD').replace('/','');
-  const chartStart = ohlc[0]?.x || 0;
-  const chartEnd   = ohlc[ohlc.length-1]?.x || Date.now();
-
-  // Collect trade annotations
-  const buyPoints=[], sellPoints=[], closePoints=[], openPoints=[];
-  const relTrades = trades.filter(r=>{
-    const s=(r.symbol||'').toUpperCase().replace('/','');
-    return s===sym.toUpperCase() || s.includes(sym.slice(0,3).toUpperCase());
-  });
-
-  relTrades.forEach(r=>{
-    const t = new Date(r.created_at).getTime();
-    if(t < chartStart-3600000 || t > chartEnd+3600000) return;
-    const ac = (r.trade_action||'').toUpperCase();
-    const px = +r.open_price||+r.close_price||0;
-    if(!px) return;
-    if(ac==='CLOSE'){
-      closePoints.push({x:t, y:+r.close_price||px});
-    } else if(ac.includes('BUY')){
-      buyPoints.push({x:t, y:px});
-    } else if(ac.includes('SELL')){
-      sellPoints.push({x:t, y:px});
-    }
-    // open positions (no close)
-    const isOpen = !trades.find(c2=>(c2.trade_action||'').toUpperCase()==='CLOSE' && c2.ticket===r.ticket);
-    if(isOpen && !ac.includes('CLOSE')){
-      openPoints.push({x:t, y:px, sl:+r.sl||0, tp:+r.tp||0});
-    }
-  });
-
-  // Build SL/TP annotation lines for open positions
-  const slLines = openPoints.filter(p=>p.sl>0).map(p=>({
-    type:'line', yMin:p.sl, yMax:p.sl,
-    borderColor:'rgba(192,57,43,.6)', borderWidth:1, borderDash:[4,4],
-    label:{content:'SL '+p.sl.toFixed(2),display:false}
-  }));
-  const tpLines = openPoints.filter(p=>p.tp>0).map(p=>({
-    type:'line', yMin:p.tp, yMax:p.tp,
-    borderColor:'rgba(91,141,184,.6)', borderWidth:1, borderDash:[4,4],
-    label:{content:'TP '+p.tp.toFixed(2),display:false}
-  }));
-
-  const datasets = [
-    {
-      label: sym,
-      type: 'candlestick',
-      data: ohlc,
-      color: {
-        up:   'rgba(74,158,107,.85)',
-        down: 'rgba(192,57,43,.8)',
-        unchanged: 'rgba(122,96,64,.5)',
-      },
-      borderColor:{
-        up:   'rgba(74,158,107,1)',
-        down: 'rgba(192,57,43,1)',
-        unchanged: 'rgba(122,96,64,.7)',
-      }
-    },
-    // BUY markers
-    buyPoints.length ? {
-      label:'Buy',type:'scatter',data:buyPoints,
-      pointStyle:'triangle',pointRadius:7,rotation:0,
-      backgroundColor:'rgba(74,158,107,.95)',borderColor:'rgba(74,158,107,1)',borderWidth:1.5,
-      showLine:false,
-    } : null,
-    // SELL markers
-    sellPoints.length ? {
-      label:'Sell',type:'scatter',data:sellPoints,
-      pointStyle:'triangle',pointRadius:7,rotation:180,
-      backgroundColor:'rgba(192,57,43,.95)',borderColor:'rgba(192,57,43,1)',borderWidth:1.5,
-      showLine:false,
-    } : null,
-    // CLOSE markers
-    closePoints.length ? {
-      label:'Close',type:'scatter',data:closePoints,
-      pointStyle:'crossRot',pointRadius:6,
-      backgroundColor:'rgba(255,255,255,.7)',borderColor:'rgba(255,255,255,.8)',borderWidth:2,
-      showLine:false,
-    } : null,
-    // OPEN positions
-    openPoints.length ? {
-      label:'Open',type:'scatter',data:openPoints.map(p=>({x:p.x,y:p.y})),
-      pointStyle:'star',pointRadius:7,
-      backgroundColor:'rgba(245,158,11,.9)',borderColor:'rgba(245,158,11,1)',borderWidth:1.5,
-      showLine:false,
-    } : null,
-  ].filter(Boolean);
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction:{mode:'index',intersect:false},
-    plugins:{
-      legend:{display:false},
-      tooltip:{
-        callbacks:{
-          title:items=>{
-            const d=new Date(items[0].parsed?.x||items[0].raw?.x);
-            return d.toLocaleString('th-TH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-          },
-          label:item=>{
-            if(item.dataset.type==='candlestick'){
-              const r=item.raw;
-              return[`O: ${r.o}  H: ${r.h}  L: ${r.l}  C: ${r.c}`];
-            }
-            return `${item.dataset.label}: ${item.raw.y}`;
-          }
-        },
-        backgroundColor:'rgba(12,14,20,.96)',
-        titleFont:{family:'DM Mono',size:10},
-        bodyFont:{family:'DM Mono',size:11},
-        padding:10,borderColor:'rgba(99,102,241,.3)',borderWidth:1,
-      }
-    },
-    scales:{
-      x:{
-        type:'time',
-        adapters:{date:{locale:'en'}},
-        time:{tooltipFormat:'HH:mm'},
-        grid:{color:'rgba(255,255,255,.04)',drawBorder:false},
-        ticks:{color:'rgba(148,163,184,.6)',font:{family:'DM Mono',size:8},maxTicksLimit:8}
-      },
-      y:{
-        position:'right',
-        grid:{color:'rgba(255,255,255,.04)',drawBorder:false},
-        ticks:{color:'rgba(148,163,184,.6)',font:{family:'DM Mono',size:8},maxTicksLimit:6}
-      }
-    }
+/* Load TradingView library */
+(function(){
+  if(document.getElementById('tvScript')) return;
+  const s=document.createElement('script');
+  s.id='tvScript';
+  s.src='https://s3.tradingview.com/tv.js';
+  s.onload=()=>{
+    initTVChart();
+    /* wire TF buttons */
+    document.querySelectorAll('.tv-tf').forEach(btn=>{
+      btn.addEventListener('click',()=>setTVInterval(btn,btn.dataset.interval));
+    });
   };
-
-  if(priceCh){ priceCh.destroy(); priceCh=null; }
-  priceCh = new Chart(ctx.getContext('2d'),{type:'candlestick', data:{datasets}, options});
-}
-
-// Auto-refresh price chart every 5 minutes
-setInterval(()=>{ if(lastPriceSym) loadPriceChart(true); }, 5*60*1000);
-
+  document.head.appendChild(s);
+})();
 
 /* ══ SPARKLINE ══ */
 function drawSpark(o, c){

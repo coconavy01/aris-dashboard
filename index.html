@@ -2236,140 +2236,181 @@ function showJackpotCard(r, onDone){
   if(!document.getElementById('roCardStyle')){
     const st=document.createElement('style');st.id='roCardStyle';
     st.textContent=`
-      .drop-overlay{position:fixed;inset:0;z-index:200;background:rgba(8,10,16,0);
-        backdrop-filter:blur(0px) brightness(1);-webkit-backdrop-filter:blur(0px) brightness(1);
+      .ro-overlay{position:fixed;inset:0;z-index:200;
+        background:rgba(8,10,16,0);backdrop-filter:blur(0px) brightness(1);
         pointer-events:none;display:flex;align-items:center;justify-content:center;
         transition:background .55s ease,backdrop-filter .55s ease}
-      .drop-overlay.show{background:rgba(8,10,16,.6);backdrop-filter:blur(9px) brightness(.5);
-        -webkit-backdrop-filter:blur(9px) brightness(.5);pointer-events:auto}
-      .drop-burst{position:absolute;width:1100px;height:1100px;border-radius:50%;
+      .ro-overlay.show{background:rgba(8,10,16,.6);backdrop-filter:blur(9px) brightness(.5);pointer-events:auto}
+      .ro-burst{position:absolute;width:1100px;height:1100px;border-radius:50%;
         background:radial-gradient(circle,rgba(212,168,67,.4) 0%,rgba(212,140,50,.18) 28%,transparent 62%);
         opacity:0;transform:scale(.3);pointer-events:none}
-      .drop-overlay.show .drop-burst{animation:roBurstIn 1.1s cubic-bezier(.2,.8,.2,1) forwards}
+      .ro-overlay.show .ro-burst{animation:roBurstIn 1.1s cubic-bezier(.2,.8,.2,1) forwards}
       @keyframes roBurstIn{0%{opacity:0;transform:scale(.2)}35%{opacity:1;transform:scale(1.05)}100%{opacity:.8;transform:scale(1)}}
-      .drop-rays{position:absolute;width:1100px;height:1100px;opacity:0;pointer-events:none}
-      .drop-overlay.show .drop-rays{animation:roRaysIn 1s ease-out forwards,roRaysSpin 18s linear infinite}
+      .ro-rays{position:absolute;width:1100px;height:1100px;opacity:0;pointer-events:none}
+      .ro-overlay.show .ro-rays{animation:roRaysIn 1s ease-out forwards,roRaysSpin 18s linear infinite}
       @keyframes roRaysIn{to{opacity:.45}}
       @keyframes roRaysSpin{to{transform:rotate(360deg)}}
-      .drop-rays::before{content:'';position:absolute;inset:0;border-radius:50%;
-        background:conic-gradient(from 0deg,transparent 0deg,rgba(212,168,67,.3) 4deg,transparent 10deg,
+      .ro-rays::before{content:'';position:absolute;inset:0;border-radius:50%;
+        background:conic-gradient(from 0deg,
+          transparent 0deg,rgba(212,168,67,.3) 4deg,transparent 10deg,
           transparent 30deg,rgba(212,168,67,.25) 34deg,transparent 40deg,
           transparent 70deg,rgba(212,168,67,.28) 74deg,transparent 82deg,
           transparent 130deg,rgba(212,168,67,.22) 136deg,transparent 144deg,
           transparent 200deg,rgba(212,168,67,.25) 206deg,transparent 214deg,
           transparent 280deg,rgba(212,168,67,.27) 286deg,transparent 296deg)}
-      .drop-sparkle{position:absolute;color:#ffe9b8;font-size:14px;opacity:0;pointer-events:none;
+      .ro-sparkle{position:absolute;color:#ffe9b8;opacity:0;pointer-events:none;
         text-shadow:0 0 8px rgba(255,220,150,.9)}
-      .drop-sparkle.go{animation:roSparkleFloat 1.8s ease-out forwards}
-      @keyframes roSparkleFloat{0%{opacity:0;transform:translateY(0) scale(.3) rotate(0deg)}
+      .ro-sparkle.go{animation:roSparkle 1.8s ease-out forwards}
+      @keyframes roSparkle{
+        0%{opacity:0;transform:translateY(0) scale(.3) rotate(0deg)}
         15%{opacity:1;transform:translateY(-10px) scale(1.1) rotate(40deg)}
         100%{opacity:0;transform:translateY(-90px) scale(.6) rotate(180deg)}}
-      .drop-stage{position:relative;z-index:3;perspective:1400px}
-      .ro-drop-card{width:320px;height:460px;position:relative;opacity:0;
+      .ro-stage{position:relative;z-index:3;perspective:1400px}
+      .ro-card{width:320px;height:460px;position:relative;opacity:0;
         transform:rotateY(-130deg) scale(.6) translateZ(-100px)}
-      .drop-overlay.show .ro-drop-card{animation:roCardSpinIn 1.05s cubic-bezier(.2,.7,.2,1.05) .25s forwards}
-      @keyframes roCardSpinIn{
+      .ro-overlay.show .ro-card{
+        animation:roCardSpin 1.05s cubic-bezier(.2,.7,.2,1.05) .25s forwards}
+      @keyframes roCardSpin{
         0%{opacity:0;transform:rotateY(-130deg) scale(.6) translateZ(-100px)}
         55%{opacity:1;transform:rotateY(18deg) scale(1.05) translateZ(20px)}
         78%{transform:rotateY(-8deg) scale(1.01)}
         100%{opacity:1;transform:rotateY(0deg) scale(1) translateZ(0)}}
-      .ro-card-frame{width:100%;height:100%;border-radius:20px;position:relative;overflow:hidden;
-        background:linear-gradient(165deg,#1e1608,#130e04);border:5px solid transparent;
-        background-clip:padding-box;box-shadow:0 25px 70px rgba(0,0,0,.8)}
-      .ro-card-frame::before{content:'';position:absolute;inset:-5px;border-radius:20px;z-index:-1;
+      .ro-frame{width:100%;height:100%;border-radius:20px;position:relative;
+        overflow:hidden;background:linear-gradient(165deg,#1e1608,#130e04);
+        border:5px solid transparent;background-clip:padding-box;
+        box-shadow:0 25px 70px rgba(0,0,0,.8)}
+      .ro-frame::before{content:'';position:absolute;inset:-5px;border-radius:20px;z-index:-1;
         background:linear-gradient(135deg,#ffd580,#fff6df,#d4a843,#ffe9b8,#ffd580);
-        opacity:0;box-shadow:0 0 35px rgba(212,168,67,0)}
-      .drop-overlay.show .ro-card-frame::before{animation:roFrameGlow 1.05s ease .25s forwards,roFrameShimmer 3s linear 1.3s infinite}
+        opacity:0}
+      .ro-overlay.show .ro-frame::before{
+        animation:roFrameGlow 1.05s ease .25s forwards,roFrameShimmer 3s linear 1.3s infinite}
       @keyframes roFrameGlow{to{opacity:1;box-shadow:0 0 40px rgba(212,168,67,.7)}}
-      @keyframes roFrameShimmer{0%{filter:hue-rotate(0deg) brightness(1)}50%{filter:hue-rotate(8deg) brightness(1.3)}100%{filter:hue-rotate(0deg) brightness(1)}}
-      .ro-card-frame::after{content:'';position:absolute;inset:0;border-radius:18px;pointer-events:none;
-        box-shadow:inset 0 0 50px rgba(212,168,67,0)}
-      .drop-overlay.show .ro-card-frame::after{animation:roInnerGlow 1.05s ease .25s forwards}
+      @keyframes roFrameShimmer{
+        0%{filter:brightness(1)}50%{filter:brightness(1.3)}100%{filter:brightness(1)}}
+      .ro-frame::after{content:'';position:absolute;inset:0;border-radius:18px;pointer-events:none}
+      .ro-overlay.show .ro-frame::after{animation:roInnerGlow 1.05s ease .25s forwards}
       @keyframes roInnerGlow{to{box-shadow:inset 0 0 50px rgba(212,168,67,.15)}}
-      .ro-glowring{position:absolute;top:50%;left:50%;width:420px;height:420px;border-radius:50%;
-        transform:translate(-50%,-50%);background:radial-gradient(circle,rgba(212,168,67,.4),transparent 70%);
+      .ro-ring{position:absolute;top:50%;left:50%;width:420px;height:420px;border-radius:50%;
+        transform:translate(-50%,-50%);
+        background:radial-gradient(circle,rgba(212,168,67,.4),transparent 70%);
         opacity:0;z-index:-2;filter:blur(8px)}
-      .drop-overlay.show .ro-glowring{animation:roRingPulse 1.05s ease .25s forwards,roRingBreathe 2.4s ease-in-out 1.3s infinite}
+      .ro-overlay.show .ro-ring{
+        animation:roRingPulse 1.05s ease .25s forwards,roRingBreathe 2.4s ease-in-out 1.3s infinite}
       @keyframes roRingPulse{to{opacity:1}}
-      @keyframes roRingBreathe{0%,100%{opacity:.75;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
-      .ro-card-art{position:absolute;top:54px;left:20px;right:20px;height:200px;border-radius:12px;overflow:hidden;
-        background:linear-gradient(160deg,#16a085 0%,#0d6e60 40%,#0a3d35 100%);
+      @keyframes roRingBreathe{
+        0%,100%{opacity:.75;transform:translate(-50%,-50%) scale(1)}
+        50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+      .ro-art{position:absolute;top:54px;left:20px;right:20px;height:200px;border-radius:12px;
+        overflow:hidden;background:linear-gradient(160deg,#16a085,#0d6e60 40%,#0a3d35);
         display:flex;align-items:center;justify-content:center;z-index:2;
         border:1px solid rgba(212,168,67,.25)}
-      .ro-card-art-glow{position:absolute;inset:0;background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.15),transparent 60%)}
-      .ro-tap-hint{position:absolute;bottom:-40px;left:0;right:0;text-align:center;font-size:12px;
-        color:rgba(255,255,255,.5);opacity:0;font-family:'DM Sans',sans-serif}
-      .drop-overlay.show .ro-tap-hint{animation:roHintFade .6s ease 1.2s forwards}
+      .ro-art-glow{position:absolute;inset:0;
+        background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.15),transparent 60%)}
+      .ro-hint{position:absolute;bottom:-40px;left:0;right:0;text-align:center;
+        font-size:12px;color:rgba(255,255,255,.5);opacity:0;font-family:'DM Sans',sans-serif}
+      .ro-overlay.show .ro-hint{animation:roHintFade .6s ease 1.2s forwards}
       @keyframes roHintFade{to{opacity:1}}
-      @keyframes roCardOut{to{opacity:0;transform:rotateY(90deg) scale(.6);filter:blur(4px)}}
+      @keyframes roCardOut{to{opacity:0;transform:rotateY(90deg) scale(.5);filter:blur(4px)}}
     `;
     document.head.appendChild(st);
   }
 
-  const pv=(+r.profit||0).toFixed(2);
-  const sym=r.symbol||'XAUUSD';
-  const side=r.trade_action||r.type||'';
-  const lots=r.volume||r.lots||'—';
-  const key=r.license_key||'—';
-  const closedAt=r.created_at?new Date(r.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+  const pv   = (+r.profit||0).toFixed(2);
+  const sym  = r.symbol||'XAUUSD';
+  const side = (r.trade_action||r.type||'').toUpperCase();
+  const lots = r.volume||r.lots||'—';
+  const key  = r.license_key||'—';
+  const cAt  = r.created_at
+    ? new Date(r.created_at).toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+    : '—';
 
-  /* ── build overlay ── */
-  const bd=document.createElement('div');
-  bd.className='drop-overlay';
-  bd.id='roDropOverlay';
-  bd.innerHTML=`
-    <div class="drop-burst"></div>
-    <div class="drop-rays"></div>
-    <div class="drop-stage">
-      <div class="ro-drop-card">
-        <div class="ro-glowring"></div>
-        <div class="ro-card-frame">
-          <!-- corner ornaments -->
-          <div style="position:absolute;top:8px;left:8px;width:28px;height:28px;border:2px solid rgba(212,168,67,.6);border-right:none;border-bottom:none;border-radius:8px 0 0 0;z-index:4"></div>
-          <div style="position:absolute;top:8px;right:8px;width:28px;height:28px;border:2px solid rgba(212,168,67,.6);border-left:none;border-bottom:none;border-radius:0 8px 0 0;z-index:4"></div>
-          <div style="position:absolute;bottom:8px;left:8px;width:28px;height:28px;border:2px solid rgba(212,168,67,.6);border-right:none;border-top:none;border-radius:0 0 0 8px;z-index:4"></div>
-          <div style="position:absolute;bottom:8px;right:8px;width:28px;height:28px;border:2px solid rgba(212,168,67,.6);border-left:none;border-top:none;border-radius:0 0 8px 0;z-index:4"></div>
-          <!-- banner -->
-          <div style="position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;z-index:5">
-            <span style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:#ffd580;background:rgba(0,0,0,.4);padding:4px 9px;border-radius:6px;border:1px solid rgba(212,168,67,.3)">ORDER CLOSED</span>
-            <span style="background:linear-gradient(135deg,#ffd580,#d4a843);color:#2b1a05;font-weight:700;font-size:10px;padding:4px 10px;border-radius:14px;font-family:'DM Sans',sans-serif;box-shadow:0 2px 8px rgba(212,168,67,.4)">WIN</span>
-          </div>
-          <!-- art panel -->
-          <div class="ro-card-art">
-            <div class="ro-card-art-glow"></div>
-            <div style="text-align:center;position:relative;z-index:2">
-              <div style="font-size:48px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))">💰</div>
-              <div style="font-family:'DM Mono',monospace;font-size:32px;font-weight:700;color:#5cffb0;text-shadow:0 0 20px rgba(92,255,176,.7);margin-top:4px">+$${pv}</div>
-            </div>
-          </div>
-          <!-- info -->
-          <div style="position:absolute;bottom:0;left:0;right:0;padding:12px 18px 16px;z-index:5;background:linear-gradient(180deg,transparent,rgba(10,8,20,.5) 30%,rgba(10,8,20,.88))">
-            <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:7px;font-family:'DM Sans',sans-serif">${sym} · ${side.toUpperCase()}</div>
-            <div style="height:1px;background:rgba(212,168,67,.25);margin-bottom:7px"></div>
-            <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:#b8a9d9;margin-bottom:3px"><span>Lot Size</span><span style="color:#e8d9ff">${lots}</span></div>
-            <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:#b8a9d9;margin-bottom:3px"><span>License Key</span><span style="color:#e8d9ff">${key}</span></div>
-            <div style="display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;color:#b8a9d9"><span>Closed At</span><span style="color:#e8d9ff">${closedAt}</span></div>
-          </div>
-        </div>
-        <div class="ro-tap-hint">คลิกที่ใดก็ได้เพื่อปิด</div>
-      </div>
-    </div>`;
+  /* ── build overlay DOM ── */
+  const bd = document.createElement('div');
+  bd.className = 'ro-overlay';
+  bd.id = 'roDropOverlay';
 
+  const inner = document.createElement('div');
+  inner.className = 'ro-burst';
+  bd.appendChild(inner);
+
+  const rays = document.createElement('div');
+  rays.className = 'ro-rays';
+  bd.appendChild(rays);
+
+  const stage = document.createElement('div');
+  stage.className = 'ro-stage';
+
+  const card = document.createElement('div');
+  card.className = 'ro-card';
+
+  const ring = document.createElement('div');
+  ring.className = 'ro-ring';
+  card.appendChild(ring);
+
+  const frame = document.createElement('div');
+  frame.className = 'ro-frame';
+
+  /* corner ornaments */
+  [['top:8px;left:8px;border-right:none;border-bottom:none;border-radius:8px 0 0 0',],
+   ['top:8px;right:8px;border-left:none;border-bottom:none;border-radius:0 8px 0 0',],
+   ['bottom:8px;left:8px;border-right:none;border-top:none;border-radius:0 0 0 8px',],
+   ['bottom:8px;right:8px;border-left:none;border-top:none;border-radius:0 0 8px 0',],
+  ].forEach(([s])=>{
+    const c=document.createElement('div');
+    c.style.cssText='position:absolute;width:28px;height:28px;border:2px solid rgba(212,168,67,.6);z-index:4;'+s;
+    frame.appendChild(c);
+  });
+
+  /* banner */
+  const banner=document.createElement('div');
+  banner.style.cssText='position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;z-index:5';
+  banner.innerHTML='<span style="font-family:\'DM Mono\',monospace;font-size:9px;letter-spacing:2px;color:#ffd580;background:rgba(0,0,0,.4);padding:4px 9px;border-radius:6px;border:1px solid rgba(212,168,67,.3)">ORDER CLOSED</span>'
+    +'<span style="background:linear-gradient(135deg,#ffd580,#d4a843);color:#2b1a05;font-weight:700;font-size:10px;padding:4px 10px;border-radius:14px;font-family:\'DM Sans\',sans-serif;box-shadow:0 2px 8px rgba(212,168,67,.4)">WIN</span>';
+  frame.appendChild(banner);
+
+  /* art panel */
+  const art=document.createElement('div');
+  art.className='ro-art';
+  art.innerHTML='<div class="ro-art-glow"></div>'
+    +'<div style="text-align:center;position:relative;z-index:2">'
+    +'<div style="font-size:48px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))">💰</div>'
+    +'<div style="font-family:\'DM Mono\',monospace;font-size:32px;font-weight:700;color:#5cffb0;text-shadow:0 0 20px rgba(92,255,176,.7);margin-top:4px">+$'+pv+'</div>'
+    +'</div>';
+  frame.appendChild(art);
+
+  /* info panel */
+  const info=document.createElement('div');
+  info.style.cssText='position:absolute;bottom:0;left:0;right:0;padding:12px 18px 16px;z-index:5;background:linear-gradient(180deg,transparent,rgba(10,8,20,.5) 30%,rgba(10,8,20,.88))';
+  info.innerHTML='<div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:7px;font-family:\'DM Sans\',sans-serif">'+sym+(side?' · '+side:'')+'</div>'
+    +'<div style="height:1px;background:rgba(212,168,67,.25);margin-bottom:7px"></div>'
+    +[['Lot Size',lots],['License Key',key],['Closed At',cAt]].map(([l,v])=>
+      '<div style="display:flex;justify-content:space-between;font-family:\'DM Mono\',monospace;font-size:10px;color:#b8a9d9;margin-bottom:3px"><span>'+l+'</span><span style="color:#e8d9ff">'+v+'</span></div>'
+    ).join('');
+  frame.appendChild(info);
+
+  card.appendChild(frame);
+
+  const hint=document.createElement('div');
+  hint.className='ro-hint';
+  hint.textContent='คลิกที่ใดก็ได้เพื่อปิด';
+  card.appendChild(hint);
+
+  stage.appendChild(card);
+  bd.appendChild(stage);
   document.body.appendChild(bd);
 
-  /* trigger show class on next frame */
+  /* trigger animation on next frame */
   requestAnimationFrame(()=>requestAnimationFrame(()=>bd.classList.add('show')));
 
   /* sparkles */
   function spawnSparkles(){
     for(let i=0;i<22;i++){
       const s=document.createElement('div');
-      s.className='drop-sparkle';
+      s.className='ro-sparkle';
       s.textContent=['✦','✧','★','✦'][Math.floor(Math.random()*4)];
-      const angle=Math.random()*Math.PI*2;
-      const dist=160+Math.random()*120;
-      s.style.left=(window.innerWidth/2+Math.cos(angle)*dist)+'px';
-      s.style.top=(window.innerHeight/2+Math.sin(angle)*dist)+'px';
+      const a=Math.random()*Math.PI*2, d=160+Math.random()*120;
+      s.style.left=(window.innerWidth/2+Math.cos(a)*d)+'px';
+      s.style.top=(window.innerHeight/2+Math.sin(a)*d)+'px';
       s.style.fontSize=(10+Math.random()*10)+'px';
       bd.appendChild(s);
       setTimeout(()=>s.classList.add('go'),300+Math.random()*600);
@@ -2382,161 +2423,14 @@ function showJackpotCard(r, onDone){
   let dismissed=false;
   function dismiss(){
     if(dismissed)return; dismissed=true;
-    const card=bd.querySelector('.ro-drop-card');
-    if(card) card.style.animation='roCardOut .4s ease forwards';
-    bd.style.transition='opacity .4s ease';
-    bd.style.opacity='0';
-    setTimeout(()=>{bd.remove();_jackpotActive=false;if(onDone)onDone();},420);
+    card.style.animation='roCardOut .4s ease forwards';
+    setTimeout(()=>{
+      bd.style.transition='opacity .4s';bd.style.opacity='0';
+      setTimeout(()=>{bd.remove();_jackpotActive=false;if(onDone)onDone();},420);
+    },200);
   }
   bd.addEventListener('click',dismiss);
   setTimeout(dismiss,8000);
-
-  /* card */
-  bd.innerHTML=`
-  <div id="jackpotCard" style="
-    position:relative;
-    background:linear-gradient(160deg,#1c1208,#241608,#1a1005);
-    border:2px solid #d4a843;
-    border-radius:18px;
-    padding:40px 52px 32px;
-    min-width:320px;
-    max-width:380px;
-    text-align:center;
-    box-shadow:0 0 80px rgba(212,168,67,.5),0 0 160px rgba(212,168,67,.2),0 30px 60px rgba(0,0,0,.8),inset 0 1px 0 rgba(255,240,180,.15);
-    animation:jackpotPop .6s cubic-bezier(.34,1.56,.64,1) both;
-    cursor:pointer;
-    user-select:none;
-    z-index:201;
-    overflow:hidden;
-  ">
-    <!-- corner ornaments -->
-    <div style="position:absolute;top:8px;left:8px;width:18px;height:18px;border-top:1.5px solid #d4a843;border-left:1.5px solid #d4a843;border-radius:4px 0 0 0;opacity:.8"></div>
-    <div style="position:absolute;top:8px;right:8px;width:18px;height:18px;border-top:1.5px solid #d4a843;border-right:1.5px solid #d4a843;border-radius:0 4px 0 0;opacity:.8"></div>
-    <div style="position:absolute;bottom:8px;left:8px;width:18px;height:18px;border-bottom:1.5px solid #d4a843;border-left:1.5px solid #d4a843;border-radius:0 0 0 4px;opacity:.8"></div>
-    <div style="position:absolute;bottom:8px;right:8px;width:18px;height:18px;border-bottom:1.5px solid #d4a843;border-right:1.5px solid #d4a843;border-radius:0 0 4px 0;opacity:.8"></div>
-
-    <!-- shimmer sweep -->
-    <div style="position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(255,240,180,.08) 50%,transparent 60%);background-size:200% 100%;animation:shimmer 2s linear infinite;pointer-events:none;border-radius:18px"></div>
-
-    <!-- glow ring -->
-    <div style="position:absolute;inset:-2px;border-radius:19px;background:transparent;pointer-events:none;animation:jackpotRing 1.2s ease-in-out infinite alternate"></div>
-
-    <!-- emoji header -->
-    <div style="font-size:28px;margin-bottom:8px;filter:drop-shadow(0 0 10px rgba(212,168,67,.5))">🏆</div>
-    <!-- header -->
-    <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(212,168,67,.7);text-transform:uppercase;margin-bottom:16px">✦ ORDER WIN ✦</div>
-
-    <!-- profit amount -->
-    <div id="jackpotAmt" style="
-      font-family:'DM Mono',monospace;
-      font-size:58px;
-      font-weight:700;
-      color:#6fd99a;
-      letter-spacing:-2px;
-      line-height:1;
-      text-shadow:0 0 40px rgba(74,158,107,.7),0 0 80px rgba(74,158,107,.3),0 0 120px rgba(74,158,107,.15);
-      animation:jackpotPulse .9s ease-in-out infinite alternate;
-      margin-bottom:6px;
-    ">+$${pv}</div>
-
-    <!-- win label -->
-    <div style="font-family:'Cinzel',serif;font-size:22px;color:#d4a843;letter-spacing:4px;text-shadow:0 0 30px rgba(212,168,67,.6),0 0 60px rgba(212,168,67,.2);margin-bottom:8px">W I N</div>
-    <div style="font-size:9px;font-family:'DM Mono',monospace;color:rgba(212,168,67,.4);letter-spacing:1.5px;margin-bottom:20px">${sym}</div>
-
-    <!-- tap hint -->
-    <div style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(212,168,67,.4);letter-spacing:2px;animation:jackpotBlink 1s ease-in-out infinite">TAP TO COLLECT ✦</div>
-  </div>
-  `;
-
-  /* inject keyframes once */
-  if(!document.getElementById('jackpotStyle')){
-    const st=document.createElement('style');st.id='jackpotStyle';
-    st.textContent=`
-      @keyframes jbdIn{from{opacity:0;backdrop-filter:blur(0px)}to{opacity:1;backdrop-filter:blur(4px)}}
-      @keyframes jackpotPop{
-        0%{opacity:0;transform:scale(.1) translateY(-120px) rotate(-15deg)}
-        50%{opacity:1;transform:scale(1.12) translateY(10px) rotate(2deg)}
-        70%{transform:scale(.95) translateY(-5px) rotate(-1deg)}
-        85%{transform:scale(1.04) translateY(2px) rotate(.5deg)}
-        100%{opacity:1;transform:scale(1) translateY(0) rotate(0)}
-      }
-      @keyframes jackpotPulse{
-        from{text-shadow:0 0 20px rgba(74,158,107,.5),0 0 40px rgba(74,158,107,.2);transform:scale(1)}
-        to{text-shadow:0 0 60px rgba(74,158,107,.9),0 0 100px rgba(74,158,107,.4),0 0 140px rgba(74,158,107,.15);transform:scale(1.06)}
-      }
-      @keyframes jackpotRing{
-        from{box-shadow:0 0 30px rgba(212,168,67,.3),inset 0 0 30px rgba(212,168,67,.05)}
-        to{box-shadow:0 0 80px rgba(212,168,67,.7),0 0 120px rgba(212,168,67,.25),inset 0 0 40px rgba(212,168,67,.08)}
-      }
-      @keyframes jackpotBlink{0%,100%{opacity:.25;letter-spacing:2px}50%{opacity:1;letter-spacing:3px}}
-      @keyframes coinFly{
-        0%{opacity:1;transform:translate(0,0) scale(1.2) rotate(0deg)}
-        100%{opacity:0;transform:translate(var(--cx),var(--cy)) scale(0) rotate(1080deg)}
-      }
-      @keyframes screenFlash{0%{opacity:.6}100%{opacity:0}}
-      @keyframes jackpotOut{to{opacity:0;transform:scale(.8) translateY(-30px);filter:blur(4px)}}
-      @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-    `;
-    document.head.appendChild(st);
-  }
-
-  overlay.appendChild(bd);
-
-  /* coin burst particles */
-  function burstCoins(){
-    const card=document.getElementById('jackpotCard');
-    if(!card)return;
-    const rect=card.getBoundingClientRect();
-    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
-    const coins=['🪙','⭐','✦','★','💰','✧','◆','🌟'];
-    for(let i=0;i<36;i++){
-      const el=document.createElement('div');
-      const angle=(i/28)*Math.PI*2;
-      const dist=150+Math.random()*250;
-      const dx=Math.cos(angle)*dist, dy=Math.sin(angle)*dist - 60;
-      const size=14+Math.random()*18;
-      const dur=0.7+Math.random()*0.6;
-      el.textContent=coins[Math.floor(Math.random()*coins.length)];
-      el.style.cssText=`
-        position:fixed;left:${cx}px;top:${cy}px;
-        font-size:${size}px;pointer-events:none;z-index:210;
-        --cx:${dx}px;--cy:${dy}px;
-        animation:coinFly ${dur}s cubic-bezier(.2,1,.4,1) forwards;
-        animation-delay:${Math.random()*0.15}s;
-      `;
-      document.body.appendChild(el);
-      setTimeout(()=>el.remove(),(dur+0.2)*1000);
-    }
-    /* extra glow flash */
-    const flash=document.createElement('div');
-    flash.style.cssText=`position:fixed;left:${cx-100}px;top:${cy-100}px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(212,168,67,.5),transparent 70%);pointer-events:none;z-index:209;animation:jackpotOut .6s ease forwards`;
-    document.body.appendChild(flash);
-    setTimeout(()=>flash.remove(),700);
-    /* screen edge flash */
-    const edge=document.createElement('div');
-    edge.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:208;background:radial-gradient(ellipse at center,transparent 30%,rgba(212,168,67,.15) 100%);animation:screenFlash .5s ease forwards';
-    document.body.appendChild(edge);
-    setTimeout(()=>edge.remove(),600);
-  }
-
-  /* burst on entry */
-  setTimeout(burstCoins, 400);
-
-  /* dismiss */
-  let dismissed=false;
-  function dismiss(){
-    if(dismissed)return;
-    dismissed=true;
-    burstCoins();
-    const card=document.getElementById('jackpotCard');
-    if(card){card.style.animation='jackpotOut .35s ease forwards';}
-    bd.style.animation='jbdIn .3s ease reverse forwards';
-    setTimeout(()=>{bd.remove();_jackpotActive=false;if(onDone)onDone();},380);
-  }
-  bd.addEventListener('click', dismiss);
-
-  /* auto dismiss after 6s */
-  setTimeout(dismiss, 6000);
 }
 
 function showAchToast(icon,title,msg){

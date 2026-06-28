@@ -1075,8 +1075,7 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
         </div>
       </div>
       <!-- TradingView widget container -->
-      <div id="tvChartWrap" style="height:460px;background:#0a0608"></div>
-    </div>
+      <div id="tvChartWrap" style="height:500px;background:#0a0608;position:relative"></div>
     </div>
 
     <!-- HOURLY HEATMAP + SYMBOL PERFORMANCE -->
@@ -1698,51 +1697,34 @@ let _tvSymbol   = 'OANDA:XAUUSD';
 function initTVChart(){
   const wrap = document.getElementById('tvChartWrap');
   if(!wrap) return;
-  wrap.innerHTML = '';
-  const container = document.createElement('div');
-  container.id = 'tv_chart_container';
-  container.style.cssText = 'width:100%;height:100%';
-  wrap.appendChild(container);
-  if(typeof TradingView === 'undefined'){ console.warn('TradingView not loaded'); return; }
-  new TradingView.widget({
-    container_id: 'tv_chart_container',
-    width:  '100%',
-    height: 460,
-    symbol: _tvSymbol,
-    interval: _tvInterval,
-    timezone: 'Asia/Bangkok',
-    theme: 'dark',
-    style: '1',
-    locale: 'th',
-    toolbar_bg: '#0a0608',
-    enable_publishing: false,
-    hide_side_toolbar: false,
-    save_image: false,
-    backgroundColor: '#0a0608',
-    gridColor: 'rgba(212,168,67,0.06)',
-    overrides: {
-      'paneProperties.background': '#0a0608',
-      'paneProperties.backgroundGradientStartColor': '#0a0608',
-      'paneProperties.backgroundGradientEndColor':   '#0f0a0c',
-      'paneProperties.vertGridProperties.color': 'rgba(212,168,67,0.05)',
-      'paneProperties.horzGridProperties.color': 'rgba(212,168,67,0.05)',
-      'scalesProperties.textColor': '#7a6040',
-      'scalesProperties.backgroundColor': '#0a0608',
-      'scalesProperties.lineColor': 'rgba(212,168,67,0.1)',
-      'mainSeriesProperties.candleStyle.upColor':         '#4a9e6b',
-      'mainSeriesProperties.candleStyle.downColor':       '#c0392b',
-      'mainSeriesProperties.candleStyle.borderUpColor':   '#4a9e6b',
-      'mainSeriesProperties.candleStyle.borderDownColor': '#c0392b',
-      'mainSeriesProperties.candleStyle.wickUpColor':     '#4a9e6b',
-      'mainSeriesProperties.candleStyle.wickDownColor':   '#c0392b',
-    },
-    studies_overrides: {
-      'volume.volume.color.0': 'rgba(192,57,43,.4)',
-      'volume.volume.color.1': 'rgba(74,158,107,.4)',
-    },
-    loading_screen: { backgroundColor: '#0a0608', foregroundColor: '#d4a843' },
-    autosize: true,
-  });
+
+  /* Use iframe embed — most reliable, no library needed */
+  const sym   = encodeURIComponent(_tvSymbol);
+  const itvl  = _tvInterval;
+  const w     = wrap.offsetWidth || window.innerWidth;
+
+  wrap.innerHTML = `<iframe
+    id="tvIframe"
+    src="https://www.tradingview.com/widgetembed/?frameElementId=tvIframe
+      &symbol=${sym}
+      &interval=${itvl}
+      &hidesidetoolbar=0
+      &hidetoptoolbar=0
+      &symboledit=1
+      &saveimage=0
+      &toolbarbg=0a0608
+      &studies=[]
+      &theme=dark
+      &style=1
+      &timezone=Asia%2FBangkok
+      &withdateranges=1
+      &showpopupbutton=1
+      &locale=th_TH"
+    style="width:100%;height:500px;border:none;display:block"
+    allowtransparency="true"
+    allowfullscreen
+    scrolling="no">
+  </iframe>`;
 }
 
 function updateTVChart(){
@@ -1764,20 +1746,15 @@ function renderPriceChart(){ }
 function setTF(b,tf){ }
 
 /* Load TradingView library */
-(function(){
-  if(document.getElementById('tvScript')) return;
-  const s=document.createElement('script');
-  s.id='tvScript';
-  s.src='https://s3.tradingview.com/tv.js';
-  s.onload=()=>{
-    initTVChart();
-    /* wire TF buttons */
-    document.querySelectorAll('.tv-tf').forEach(btn=>{
-      btn.addEventListener('click',()=>setTVInterval(btn,btn.dataset.interval));
-    });
-  };
-  document.head.appendChild(s);
-})();
+/* Init TradingView after page fully loaded */
+window.addEventListener('load', function(){
+  /* Wire TF buttons */
+  document.querySelectorAll('.tv-tf').forEach(btn=>{
+    btn.addEventListener('click', ()=>setTVInterval(btn, btn.dataset.interval));
+  });
+  /* Init chart directly — iframe approach needs no external library */
+  initTVChart();
+});
 
 /* ══ SPARKLINE ══ */
 function drawSpark(o, c){

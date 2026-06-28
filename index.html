@@ -76,9 +76,7 @@ function autoDetectTZ(){
 .acc-bar-hidden{display:none!important}
 
 
-.tv-tf{background:transparent;border:none;color:var(--txt-dim);
-  padding:3px 9px;font-size:9.5px;cursor:pointer;
-  font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
+.tv-tf{background:transparent;border:none;color:var(--txt-dim);padding:3px 9px;font-size:9.5px;cursor:pointer;font-family:'DM Mono',monospace;border-radius:4px;transition:all .15s}
 .tv-tf:hover{background:rgba(212,168,67,.08);color:var(--txt-mid)}
 .tv-tf.active{background:rgba(212,168,67,.18);color:var(--gold);font-weight:600}
 
@@ -1042,20 +1040,18 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       </div>
     </div>
 
-    <!-- TRADINGVIEW CHART -->
+    <!-- PRICE CHART -->
     <div class="panel" id="pricePanel" style="margin-bottom:14px;overflow:hidden">
       <div class="panel-corner"></div>
-      <!-- toolbar -->
-      <div class="panel-hd" style="padding:8px 14px;gap:10px">
+      <div class="panel-hd" style="padding:8px 14px">
         <div style="display:flex;align-items:center;gap:10px">
           <div class="panel-title">◈ PRICE CHART</div>
-          <span id="priceLastVal" style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--txt)">—</span>
+          <span id="priceLastVal" style="font-size:15px;font-weight:700;font-family:'DM Mono',monospace;color:var(--txt)">—</span>
           <span id="priceChg" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--txt-dim)">—</span>
-          <span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--txt-dim);letter-spacing:1px" id="priceSub">M15 · TwelveData</span>
+          <span id="priceSub" style="font-size:9px;font-family:'DM Mono',monospace;color:var(--txt-dim);letter-spacing:.5px">—</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
-          <!-- Symbol selector -->
-          <select id="tvSymSel" onchange="updateTVChart()"
+          <select id="tvSymSel"
             style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);
               color:var(--txt);font-family:'DM Mono',monospace;font-size:10px;
               padding:4px 8px;border-radius:5px;outline:none;cursor:pointer">
@@ -1066,18 +1062,24 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
             <option value="BINANCE:BTCUSDT">BTC/USD</option>
             <option value="BINANCE:ETHUSDT">ETH/USD</option>
           </select>
-          <!-- Interval selector -->
           <div style="display:flex;gap:2px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.1);padding:2px;border-radius:5px">
-            <button class="tv-tf active" data-interval="5">M5</button>
-            <button class="tv-tf" data-interval="15">M15</button>
-            <button class="tv-tf" data-interval="60">H1</button>
-            <button class="tv-tf" data-interval="240">H4</button>
-            <button class="tv-tf" data-interval="D">D1</button>
+            <button class="tv-tf" data-tf="1">M1</button>
+            <button class="tv-tf" data-tf="5">M5</button>
+            <button class="tv-tf active" data-tf="15">M15</button>
+            <button class="tv-tf" data-tf="60">H1</button>
+            <button class="tv-tf" data-tf="240">H4</button>
+            <button class="tv-tf" data-tf="D">D1</button>
           </div>
+          <button onclick="refreshChart()" title="Refresh"
+            style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);
+              color:var(--txt-dim);padding:4px 9px;font-size:11px;cursor:pointer;border-radius:4px">↻</button>
         </div>
       </div>
-      <!-- TradingView widget container -->
-      <div id="tvChartWrap" style="height:400px;background:#0a0608;position:relative"></div>
+      <!-- Chart: TradingView iframe dark -->
+      <div id="tvChartWrap" style="height:360px;background:#131722;position:relative;overflow:hidden"></div>
+      <!-- Trade activity row below chart -->
+      <div id="chartTradeBar" style="display:none;padding:6px 14px;border-top:1px solid rgba(212,168,67,.08);
+        background:rgba(212,168,67,.02);overflow-x:auto;white-space:nowrap"></div>
     </div>
 
     <!-- HOURLY HEATMAP + SYMBOL PERFORMANCE -->
@@ -1692,211 +1694,146 @@ function renderDonut(fil){
 /* ══ TRADE TABLE WITH PAGINATION ══ */
 
 
-/* ══ PRICE CHART — Lightweight Charts (TradingView OSS) ══ */
-const TD_KEY2 = '560a06a200674372ab2179f75a80632e';
-let _lwChart = null, _lwSeries = null, _lwVolSeries = null;
-let _lwInterval = '15min', _lwSymbol = 'XAU/USD';
-let _lwLoading = false;
+/* ══ PRICE CHART — TradingView Widget (dark) ══ */
+let _tvSym = 'OANDA:XAUUSD';
+let _tvTF  = '15';
 
-const TF_MAP = { '5':'5min', '15':'15min', '60':'1h', '240':'4h', 'D':'1day' };
-const TF_OUT = { '5min':80, '15min':100, '1h':120, '4h':150, '1day':200 };
+/* Symbol map: select value → TradingView symbol */
+const TV_SYM_MAP = {
+  'OANDA:XAUUSD':   'OANDA:XAUUSD',
+  'OANDA:EURUSD':   'OANDA:EURUSD',
+  'OANDA:GBPUSD':   'OANDA:GBPUSD',
+  'OANDA:USDJPY':   'OANDA:USDJPY',
+  'BINANCE:BTCUSDT':'BINANCE:BTCUSDT',
+  'BINANCE:ETHUSDT':'BINANCE:ETHUSDT',
+};
 
-async function initLWChart(){
+function initTVChart(){
   const wrap = document.getElementById('tvChartWrap');
-  if(!wrap || typeof LightweightCharts === 'undefined') return;
-  wrap.innerHTML = '';
+  if(!wrap) return;
+  const sym = encodeURIComponent(_tvSym);
+  const tf  = _tvTF;
 
-  const h = 400;
-  wrap.style.height = h + 'px';
+  wrap.innerHTML = `<iframe
+    id="tvFrame"
+    src="https://s.tradingview.com/widgetembed/?symbol=${sym}&interval=${tf}&theme=dark&style=1&locale=th_TH&timezone=Asia%2FBangkok&hide_top_toolbar=0&hide_legend=0&save_image=0&backgroundColor=%23131722&gridColor=rgba%28212%2C168%2C67%2C0.05%29"
+    style="width:100%;height:360px;border:none;display:block"
+    allowtransparency="true" allowfullscreen scrolling="no">
+  </iframe>`;
 
-  _lwChart = LightweightCharts.createChart(wrap, {
-    width:  wrap.clientWidth,
-    height: h,
-    layout: {
-      background:   { type:'solid', color:'#0a0608' },
-      textColor:    '#7a6040',
-      fontFamily:   "'DM Mono', monospace",
-      fontSize:     11,
-    },
-    grid: {
-      vertLines:  { color:'rgba(212,168,67,.05)' },
-      horzLines:  { color:'rgba(212,168,67,.05)' },
-    },
-    crosshair: {
-      mode: LightweightCharts.CrosshairMode.Normal,
-      vertLine: { color:'rgba(212,168,67,.4)', labelBackgroundColor:'#241608' },
-      horzLine: { color:'rgba(212,168,67,.4)', labelBackgroundColor:'#241608' },
-    },
-    rightPriceScale: {
-      borderColor: 'rgba(212,168,67,.12)',
-      scaleMargins: { top:.08, bottom:.2 },
-    },
-    timeScale: {
-      borderColor: 'rgba(212,168,67,.12)',
-      timeVisible: true,
-      secondsVisible: false,
-      tickMarkFormatter: (t) => {
-        const d = new Date(t*1000);
-        return (d.getMonth()+1)+'/'+(d.getDate())+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
-      },
-    },
-    handleScroll: true,
-    handleScale:  true,
-  });
+  /* Update header info */
+  const sub = document.getElementById('priceSub');
+  const tfL = {1:'M1',5:'M5',15:'M15',60:'H1',240:'H4','D':'D1'}[tf]||tf;
+  if(sub) sub.textContent = tfL + ' · TradingView';
 
-  /* Candlestick series */
-  _lwSeries = _lwChart.addCandlestickSeries({
-    upColor:        '#4a9e6b',
-    downColor:      '#c0392b',
-    borderUpColor:  '#4a9e6b',
-    borderDownColor:'#c0392b',
-    wickUpColor:    '#4a9e6b',
-    wickDownColor:  '#c0392b',
-  });
-
-  /* Volume series */
-  _lwVolSeries = _lwChart.addHistogramSeries({
-    priceFormat:   { type:'volume' },
-    priceScaleId:  'vol',
-  });
-  _lwChart.priceScale('vol').applyOptions({
-    scaleMargins: { top:.82, bottom:0 },
-  });
-
-  /* Resize observer */
-  new ResizeObserver(()=>{
-    if(_lwChart) _lwChart.applyOptions({ width: wrap.clientWidth });
-  }).observe(wrap);
-
-  await loadLWData();
+  /* Render trade bar for this symbol */
+  renderChartTradeBar();
 }
 
-async function loadLWData(){
-  if(_lwLoading) return;
-  _lwLoading = true;
+function renderChartTradeBar(){
+  const bar = document.getElementById('chartTradeBar');
+  if(!bar || !allData?.length) return;
 
-  /* Loading indicator */
-  const wrap = document.getElementById('tvChartWrap');
-  const loader = document.createElement('div');
-  loader.id = 'lwLoader';
-  loader.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,6,8,.7);z-index:10;gap:8px;font-family:DM Mono,monospace;font-size:11px;color:#7a6040;pointer-events:none';
-  loader.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(212,168,67,.15);border-top-color:#d4a843;border-radius:50%;animation:rot .7s linear infinite"></div> Loading…';
-  if(wrap) wrap.style.position='relative', wrap.appendChild(loader);
+  /* match symbol: OANDA:XAUUSD → XAUUSD */
+  const rawSym = _tvSym.split(':')[1]||_tvSym;
+  const sym3   = rawSym.slice(0,3).toUpperCase();
 
-  try {
-    const sym = encodeURIComponent(_lwSymbol);
-    const out = TF_OUT[_lwInterval] || 100;
-    const url = `https://api.twelvedata.com/time_series?symbol=${sym}&interval=${_lwInterval}&outputsize=${out}&apikey=${TD_KEY2}&format=JSON`;
-    const res  = await fetch(url);
-    const json = await res.json();
-    if(json.status === 'error'){ console.warn('TwelveData:', json.message); _lwLoading=false; loader?.remove(); return; }
+  const relevant = allData
+    .filter(r=>{
+      const s=(r.symbol||'').toUpperCase().replace('/','');
+      return s===rawSym || s.startsWith(sym3);
+    })
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+    .slice(0, 30);
 
-    const raw = (json.values||[]).reverse();
-    const candles = raw.map(c=>({
-      time:  Math.floor(new Date(c.datetime.replace(' ','T')).getTime()/1000),
-      open:  +c.open, high:+c.high, low:+c.low, close:+c.close,
-    }));
-    const vols = raw.map((c,i)=>({
-      time:  candles[i].time,
-      value: +c.volume||0,
-      color: +c.close>+c.open ? 'rgba(74,158,107,.35)' : 'rgba(192,57,43,.35)',
-    }));
+  if(!relevant.length){ bar.style.display='none'; return; }
 
-    if(_lwSeries)    _lwSeries.setData(candles);
-    if(_lwVolSeries) _lwVolSeries.setData(vols);
-    if(_lwChart)     _lwChart.timeScale().fitContent();
+  bar.style.display = 'block';
 
-    /* Update header */
-    const last = raw[raw.length-1], prev = raw[raw.length-2];
-    const close = +last?.close||0, open = +last?.open||0;
-    const chg   = prev ? ((close - +prev.close)/+prev.close*100) : 0;
-    const pos   = chg >= 0;
-    const te    = document.getElementById('priceLastVal');
-    const ce    = document.getElementById('priceChg');
-    const se    = document.getElementById('priceSub');
-    if(te){ te.textContent = close.toFixed(close>100?2:5); te.style.color = pos?'var(--green)':'var(--red)'; }
-    if(ce){ ce.textContent = (pos?'+':'')+chg.toFixed(2)+'%'; ce.style.color = pos?'var(--green)':'var(--red)'; }
-    if(se){ const tfL={'5min':'M5','15min':'M15','1h':'H1','4h':'H4','1day':'D1'}[_lwInterval]||_lwInterval;
-            se.textContent = tfL + ' · ' + raw.length + ' candles · TwelveData'; }
-
-    /* Add trade markers from allData */
-    try { addTradeMarkers(candles); } catch(e){}
-
-  } catch(e){ console.error('LW chart error:', e); }
-  _lwLoading = false;
-  document.getElementById('lwLoader')?.remove();
-}
-
-function addTradeMarkers(candles){
-  if(!_lwSeries || !allData?.length || !candles.length) return;
-  const sym = _lwSymbol.replace('/','').toUpperCase();
-  const start = candles[0].time * 1000;
-  const end   = candles[candles.length-1].time * 1000;
-  const markers = [];
-  allData.filter(r=>{
-    const s=(r.symbol||'').toUpperCase().replace('/','');
-    return (s===sym||s.includes(sym.slice(0,3))) && r.created_at;
-  }).forEach(r=>{
-    const t = Math.floor(new Date(r.created_at).getTime()/1000);
-    if(t < candles[0].time || t > candles[candles.length-1].time) return;
-    const ac = (r.trade_action||'').toUpperCase();
-    const px = +r.close_price||+r.open_price||0;
-    if(!px) return;
-    if(ac==='CLOSE'){
-      const win = (+r.profit||0) >= 0;
-      markers.push({ time:t, position:'aboveBar', color: win?'#4a9e6b':'#c0392b',
-        shape: win?'arrowDown':'arrowUp', text: win?'+$'+(+r.profit).toFixed(2):'-$'+Math.abs(+r.profit).toFixed(2) });
-    } else if(ac.includes('BUY')){
-      markers.push({ time:t, position:'belowBar', color:'#4a9e6b', shape:'arrowUp', text:'B' });
-    } else if(ac.includes('SELL')){
-      markers.push({ time:t, position:'aboveBar', color:'#c0392b', shape:'arrowDown', text:'S' });
-    }
+  /* Group: pair up OPEN → CLOSE by ticket */
+  const trades = [];
+  const byTicket = {};
+  relevant.forEach(r=>{
+    const tk = r.ticket||r.id;
+    if(!byTicket[tk]) byTicket[tk]={};
+    const ac=(r.trade_action||'').toUpperCase();
+    if(ac==='CLOSE') byTicket[tk].close=r;
+    else             byTicket[tk].open=r;
   });
-  markers.sort((a,b)=>a.time-b.time);
-  if(markers.length) _lwSeries.setMarkers(markers);
+
+  Object.values(byTicket).forEach(pair=>{
+    const o=pair.open, c=pair.close;
+    const ref=c||o;
+    if(!ref) return;
+    const ac=(ref.trade_action||'').toUpperCase();
+    const isBuy=ac.includes('BUY')||(o&&(o.trade_action||'').toUpperCase().includes('BUY'));
+    const profit=c?(+c.profit||0):null;
+    const isWin=profit!==null&&profit>=0;
+    const t=new Date(ref.created_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    trades.push({isBuy,profit,isWin,t,open:o?.open_price,close:c?.close_price,lot:ref.volume||ref.lots||'—',key:ref.license_key||'—',done:!!c});
+  });
+
+  /* Only show trades that belong to current user (or all if admin) */
+  const isAdm = window._isAdmin||false;
+  const myKey = window._myLicenseKey||'';
+
+  bar.innerHTML = trades.slice(0,20).map(tr=>{
+    const side = tr.isBuy
+      ? `<span style="color:#4a9e6b;font-weight:700">▲ BUY</span>`
+      : `<span style="color:#c0392b;font-weight:700">▼ SELL</span>`;
+    const status = tr.done
+      ? (tr.isWin
+          ? `<span style="color:#4a9e6b">WIN +$${tr.profit.toFixed(2)}</span>`
+          : `<span style="color:#c0392b">LOSS -$${Math.abs(tr.profit).toFixed(2)}</span>`)
+      : `<span style="color:var(--amber)">OPEN</span>`;
+    const keyBadge = isAdm
+      ? `<span style="color:var(--txt-dim);font-size:8px">${tr.key}</span>`
+      : '';
+    return `<span style="display:inline-flex;align-items:center;gap:5px;
+      margin-right:8px;padding:3px 8px;border-radius:5px;
+      background:${tr.done?(tr.isWin?'rgba(74,158,107,.08)':'rgba(192,57,43,.08)'):'rgba(232,147,42,.06)'};
+      border:1px solid ${tr.done?(tr.isWin?'rgba(74,158,107,.2)':'rgba(192,57,43,.2)'):'rgba(232,147,42,.15)'};
+      font-family:'DM Mono',monospace;font-size:9.5px;white-space:nowrap;cursor:default"
+      title="Lot: ${tr.lot} | Open: ${tr.open||'—'} | Close: ${tr.close||'—'}">
+      <span style="color:var(--txt-dim)">${tr.t}</span>
+      ${side} ${status} ${keyBadge}
+    </span>`;
+  }).join('');
 }
 
-function updateLWChart(){
-  const s = document.getElementById('tvSymSel');
-  if(s){
-    /* convert OANDA:XAUUSD → XAU/USD format for TwelveData */
-    const val = s.value;
-    const raw = val.split(':')[1]||val;
-    _lwSymbol = raw.slice(0,3)+'/'+raw.slice(3,6);
-  }
-  loadLWData();
+function updateTVChart(){
+  const s=document.getElementById('tvSymSel');
+  if(s) _tvSym=s.value;
+  initTVChart();
 }
 
-function setLWInterval(btn, tf){
+function setTVInterval(btn,tf){
   document.querySelectorAll('.tv-tf').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  _lwInterval = TF_MAP[tf] || tf;
-  loadLWData();
+  _tvTF=tf;
+  initTVChart();
 }
 
-/* Stubs for old calls */
-function loadPriceChart(){ loadLWData(); }
-function renderPriceChart(){ }
-function setTF(b,tf){ }
-function updateTVChart(){ updateLWChart(); }
-function setTVInterval(btn,tf){ setLWInterval(btn,tf); }
+function refreshChart(){ initTVChart(); }
 
-/* Init on load */
-window.addEventListener('load', function(){
+/* Stubs */
+function loadPriceChart(){ }
+function renderPriceChart(){ renderChartTradeBar(); }
+function setTF(){ }
+function updateLWChart(){ updateTVChart(); }
+function setLWInterval(btn,tf){ setTVInterval(btn,tf); }
+
+window.addEventListener('load',function(){
+  /* Wire symbol select */
+  const sel=document.getElementById('tvSymSel');
+  if(sel) sel.addEventListener('change',updateTVChart);
+
+  /* Wire TF buttons — use data-tf attr */
   document.querySelectorAll('.tv-tf').forEach(btn=>{
-    btn.addEventListener('click', ()=>setLWInterval(btn, btn.dataset.interval));
+    btn.addEventListener('click',()=>setTVInterval(btn,btn.dataset.tf||btn.dataset.interval||'15'));
   });
-  document.getElementById('tvSymSel')?.addEventListener('change', updateLWChart);
 
-  /* Load Lightweight Charts library then init */
-  if(typeof LightweightCharts !== 'undefined'){
-    initLWChart();
-  } else {
-    const s = document.createElement('script');
-    s.src = 'https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js';
-    s.onload = ()=>{ initLWChart(); };
-    document.head.appendChild(s);
-  }
+  initTVChart();
 });
 
 /* ══ SPARKLINE ══ */

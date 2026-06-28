@@ -1047,9 +1047,11 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
       <div class="panel-corner"></div>
       <!-- toolbar -->
       <div class="panel-hd" style="padding:8px 14px;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px">
           <div class="panel-title">◈ PRICE CHART</div>
-          <span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--txt-dim);letter-spacing:1px">TradingView</span>
+          <span id="priceLastVal" style="font-size:16px;font-weight:700;font-family:'DM Mono',monospace;color:var(--txt)">—</span>
+          <span id="priceChg" style="font-size:10px;font-family:'DM Mono',monospace;color:var(--txt-dim)">—</span>
+          <span style="font-size:9px;font-family:'DM Mono',monospace;color:var(--txt-dim);letter-spacing:1px" id="priceSub">M15 · TwelveData</span>
         </div>
         <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
           <!-- Symbol selector -->
@@ -1075,7 +1077,7 @@ tbody tr:nth-child(even){background:rgba(255,255,255,.007)}
         </div>
       </div>
       <!-- TradingView widget container -->
-      <div id="tvChartWrap" style="height:500px;background:#0a0608;position:relative"></div>
+      <div id="tvChartWrap" style="height:400px;background:#0a0608;position:relative"></div>
     </div>
 
     <!-- HOURLY HEATMAP + SYMBOL PERFORMANCE -->
@@ -1690,70 +1692,211 @@ function renderDonut(fil){
 /* ══ TRADE TABLE WITH PAGINATION ══ */
 
 
-/* ══ PRICE CHART — TradingView Widget ══ */
-let _tvInterval = '5';
-let _tvSymbol   = 'OANDA:XAUUSD';
+/* ══ PRICE CHART — Lightweight Charts (TradingView OSS) ══ */
+const TD_KEY2 = '560a06a200674372ab2179f75a80632e';
+let _lwChart = null, _lwSeries = null, _lwVolSeries = null;
+let _lwInterval = '15min', _lwSymbol = 'XAU/USD';
+let _lwLoading = false;
 
-function initTVChart(){
+const TF_MAP = { '5':'5min', '15':'15min', '60':'1h', '240':'4h', 'D':'1day' };
+const TF_OUT = { '5min':80, '15min':100, '1h':120, '4h':150, '1day':200 };
+
+async function initLWChart(){
   const wrap = document.getElementById('tvChartWrap');
-  if(!wrap) return;
+  if(!wrap || typeof LightweightCharts === 'undefined') return;
+  wrap.innerHTML = '';
 
-  /* Use iframe embed — most reliable, no library needed */
-  const sym   = encodeURIComponent(_tvSymbol);
-  const itvl  = _tvInterval;
-  const w     = wrap.offsetWidth || window.innerWidth;
+  const h = 400;
+  wrap.style.height = h + 'px';
 
-  wrap.innerHTML = `<iframe
-    id="tvIframe"
-    src="https://www.tradingview.com/widgetembed/?frameElementId=tvIframe
-      &symbol=${sym}
-      &interval=${itvl}
-      &hidesidetoolbar=0
-      &hidetoptoolbar=0
-      &symboledit=1
-      &saveimage=0
-      &toolbarbg=0a0608
-      &studies=[]
-      &theme=dark
-      &style=1
-      &timezone=Asia%2FBangkok
-      &withdateranges=1
-      &showpopupbutton=1
-      &locale=th_TH"
-    style="width:100%;height:500px;border:none;display:block"
-    allowtransparency="true"
-    allowfullscreen
-    scrolling="no">
-  </iframe>`;
+  _lwChart = LightweightCharts.createChart(wrap, {
+    width:  wrap.clientWidth,
+    height: h,
+    layout: {
+      background:   { type:'solid', color:'#0a0608' },
+      textColor:    '#7a6040',
+      fontFamily:   "'DM Mono', monospace",
+      fontSize:     11,
+    },
+    grid: {
+      vertLines:  { color:'rgba(212,168,67,.05)' },
+      horzLines:  { color:'rgba(212,168,67,.05)' },
+    },
+    crosshair: {
+      mode: LightweightCharts.CrosshairMode.Normal,
+      vertLine: { color:'rgba(212,168,67,.4)', labelBackgroundColor:'#241608' },
+      horzLine: { color:'rgba(212,168,67,.4)', labelBackgroundColor:'#241608' },
+    },
+    rightPriceScale: {
+      borderColor: 'rgba(212,168,67,.12)',
+      scaleMargins: { top:.08, bottom:.2 },
+    },
+    timeScale: {
+      borderColor: 'rgba(212,168,67,.12)',
+      timeVisible: true,
+      secondsVisible: false,
+      tickMarkFormatter: (t) => {
+        const d = new Date(t*1000);
+        return (d.getMonth()+1)+'/'+(d.getDate())+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+      },
+    },
+    handleScroll: true,
+    handleScale:  true,
+  });
+
+  /* Candlestick series */
+  _lwSeries = _lwChart.addCandlestickSeries({
+    upColor:        '#4a9e6b',
+    downColor:      '#c0392b',
+    borderUpColor:  '#4a9e6b',
+    borderDownColor:'#c0392b',
+    wickUpColor:    '#4a9e6b',
+    wickDownColor:  '#c0392b',
+  });
+
+  /* Volume series */
+  _lwVolSeries = _lwChart.addHistogramSeries({
+    priceFormat:   { type:'volume' },
+    priceScaleId:  'vol',
+  });
+  _lwChart.priceScale('vol').applyOptions({
+    scaleMargins: { top:.82, bottom:0 },
+  });
+
+  /* Resize observer */
+  new ResizeObserver(()=>{
+    if(_lwChart) _lwChart.applyOptions({ width: wrap.clientWidth });
+  }).observe(wrap);
+
+  await loadLWData();
 }
 
-function updateTVChart(){
+async function loadLWData(){
+  if(_lwLoading) return;
+  _lwLoading = true;
+
+  /* Loading indicator */
+  const wrap = document.getElementById('tvChartWrap');
+  const loader = document.createElement('div');
+  loader.id = 'lwLoader';
+  loader.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,6,8,.7);z-index:10;gap:8px;font-family:DM Mono,monospace;font-size:11px;color:#7a6040;pointer-events:none';
+  loader.innerHTML = '<div style="width:14px;height:14px;border:2px solid rgba(212,168,67,.15);border-top-color:#d4a843;border-radius:50%;animation:rot .7s linear infinite"></div> Loading…';
+  if(wrap) wrap.style.position='relative', wrap.appendChild(loader);
+
+  try {
+    const sym = encodeURIComponent(_lwSymbol);
+    const out = TF_OUT[_lwInterval] || 100;
+    const url = `https://api.twelvedata.com/time_series?symbol=${sym}&interval=${_lwInterval}&outputsize=${out}&apikey=${TD_KEY2}&format=JSON`;
+    const res  = await fetch(url);
+    const json = await res.json();
+    if(json.status === 'error'){ console.warn('TwelveData:', json.message); _lwLoading=false; loader?.remove(); return; }
+
+    const raw = (json.values||[]).reverse();
+    const candles = raw.map(c=>({
+      time:  Math.floor(new Date(c.datetime.replace(' ','T')).getTime()/1000),
+      open:  +c.open, high:+c.high, low:+c.low, close:+c.close,
+    }));
+    const vols = raw.map((c,i)=>({
+      time:  candles[i].time,
+      value: +c.volume||0,
+      color: +c.close>+c.open ? 'rgba(74,158,107,.35)' : 'rgba(192,57,43,.35)',
+    }));
+
+    if(_lwSeries)    _lwSeries.setData(candles);
+    if(_lwVolSeries) _lwVolSeries.setData(vols);
+    if(_lwChart)     _lwChart.timeScale().fitContent();
+
+    /* Update header */
+    const last = raw[raw.length-1], prev = raw[raw.length-2];
+    const close = +last?.close||0, open = +last?.open||0;
+    const chg   = prev ? ((close - +prev.close)/+prev.close*100) : 0;
+    const pos   = chg >= 0;
+    const te    = document.getElementById('priceLastVal');
+    const ce    = document.getElementById('priceChg');
+    const se    = document.getElementById('priceSub');
+    if(te){ te.textContent = close.toFixed(close>100?2:5); te.style.color = pos?'var(--green)':'var(--red)'; }
+    if(ce){ ce.textContent = (pos?'+':'')+chg.toFixed(2)+'%'; ce.style.color = pos?'var(--green)':'var(--red)'; }
+    if(se){ const tfL={'5min':'M5','15min':'M15','1h':'H1','4h':'H4','1day':'D1'}[_lwInterval]||_lwInterval;
+            se.textContent = tfL + ' · ' + raw.length + ' candles · TwelveData'; }
+
+    /* Add trade markers from allData */
+    try { addTradeMarkers(candles); } catch(e){}
+
+  } catch(e){ console.error('LW chart error:', e); }
+  _lwLoading = false;
+  document.getElementById('lwLoader')?.remove();
+}
+
+function addTradeMarkers(candles){
+  if(!_lwSeries || !allData?.length || !candles.length) return;
+  const sym = _lwSymbol.replace('/','').toUpperCase();
+  const start = candles[0].time * 1000;
+  const end   = candles[candles.length-1].time * 1000;
+  const markers = [];
+  allData.filter(r=>{
+    const s=(r.symbol||'').toUpperCase().replace('/','');
+    return (s===sym||s.includes(sym.slice(0,3))) && r.created_at;
+  }).forEach(r=>{
+    const t = Math.floor(new Date(r.created_at).getTime()/1000);
+    if(t < candles[0].time || t > candles[candles.length-1].time) return;
+    const ac = (r.trade_action||'').toUpperCase();
+    const px = +r.close_price||+r.open_price||0;
+    if(!px) return;
+    if(ac==='CLOSE'){
+      const win = (+r.profit||0) >= 0;
+      markers.push({ time:t, position:'aboveBar', color: win?'#4a9e6b':'#c0392b',
+        shape: win?'arrowDown':'arrowUp', text: win?'+$'+(+r.profit).toFixed(2):'-$'+Math.abs(+r.profit).toFixed(2) });
+    } else if(ac.includes('BUY')){
+      markers.push({ time:t, position:'belowBar', color:'#4a9e6b', shape:'arrowUp', text:'B' });
+    } else if(ac.includes('SELL')){
+      markers.push({ time:t, position:'aboveBar', color:'#c0392b', shape:'arrowDown', text:'S' });
+    }
+  });
+  markers.sort((a,b)=>a.time-b.time);
+  if(markers.length) _lwSeries.setMarkers(markers);
+}
+
+function updateLWChart(){
   const s = document.getElementById('tvSymSel');
-  if(s) _tvSymbol = s.value;
-  initTVChart();
+  if(s){
+    /* convert OANDA:XAUUSD → XAU/USD format for TwelveData */
+    const val = s.value;
+    const raw = val.split(':')[1]||val;
+    _lwSymbol = raw.slice(0,3)+'/'+raw.slice(3,6);
+  }
+  loadLWData();
 }
 
-function setTVInterval(btn, interval){
+function setLWInterval(btn, tf){
   document.querySelectorAll('.tv-tf').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  _tvInterval = interval;
-  initTVChart();
+  _lwInterval = TF_MAP[tf] || tf;
+  loadLWData();
 }
 
-/* Stubs so existing calls don't crash */
-function loadPriceChart(){ }
+/* Stubs for old calls */
+function loadPriceChart(){ loadLWData(); }
 function renderPriceChart(){ }
 function setTF(b,tf){ }
+function updateTVChart(){ updateLWChart(); }
+function setTVInterval(btn,tf){ setLWInterval(btn,tf); }
 
-/* Load TradingView library */
-/* Init TradingView after page fully loaded */
+/* Init on load */
 window.addEventListener('load', function(){
-  /* Wire TF buttons */
   document.querySelectorAll('.tv-tf').forEach(btn=>{
-    btn.addEventListener('click', ()=>setTVInterval(btn, btn.dataset.interval));
+    btn.addEventListener('click', ()=>setLWInterval(btn, btn.dataset.interval));
   });
-  /* Init chart directly — iframe approach needs no external library */
-  initTVChart();
+  document.getElementById('tvSymSel')?.addEventListener('change', updateLWChart);
+
+  /* Load Lightweight Charts library then init */
+  if(typeof LightweightCharts !== 'undefined'){
+    initLWChart();
+  } else {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js';
+    s.onload = ()=>{ initLWChart(); };
+    document.head.appendChild(s);
+  }
 });
 
 /* ══ SPARKLINE ══ */

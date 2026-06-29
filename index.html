@@ -1270,11 +1270,33 @@ function countTo(id,target,fmt,dur,delay){
 
 /* ══ FETCH ══ */
 async function fetchAll(){
-  let q=sbc.from('trade_history').select('*').order('created_at',{ascending:true});
-  if(!isAdmin&&myLicenseKey)q=q.eq('license_key',myLicenseKey);
-  const{data,error}=await q;
-  if(error){showAlert(error.message);return[]}
-  hideAlert();return data||[];
+  /* Supabase default limit = 1000 rows — must paginate to get ALL data */
+  const PAGE = 1000;
+  let allRows = [];
+  let from = 0;
+  let hasMore = true;
+
+  while(hasMore){
+    let q = sbc.from('trade_history')
+      .select('*')
+      .order('created_at', {ascending:true})
+      .range(from, from + PAGE - 1);
+
+    if(!isAdmin && myLicenseKey) q = q.eq('license_key', myLicenseKey);
+
+    const {data, error} = await q;
+    if(error){ showAlert(error.message); break; }
+
+    const rows = data || [];
+    allRows = allRows.concat(rows);
+
+    /* ถ้าได้น้อยกว่า PAGE แสดงว่าหมดแล้ว */
+    if(rows.length < PAGE) hasMore = false;
+    else from += PAGE;
+  }
+
+  hideAlert();
+  return allRows;
 }
 
 function getFiltered(d){
